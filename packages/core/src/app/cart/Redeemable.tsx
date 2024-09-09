@@ -156,11 +156,18 @@ const RedeemableForm: FunctionComponent<
                         <div className="form-prefixPostfix">
                             <TextInput
                                 {...field}
-                                aria-label={language.translate('redeemable.code_label')}
+                                aria-label="Discount Code"
                                 className="form-input optimizedCheckout-form-input"
                                 onKeyDown={handleKeyDown(setSubmitted)}
                                 testId="redeemableEntry-input"
+                                placeholder=" "                            
                             />
+                            <Label
+                                htmlFor="redeemableCode"
+                                isFloatingLabelEnabled={true}
+                            >
+                                Discount Code
+                            </Label>
 
                             <Button
                                 className="form-prefixPostfix-button--postfix"
@@ -171,8 +178,74 @@ const RedeemableForm: FunctionComponent<
                                 testId="redeemableEntry-submit"
                                 variant={ButtonVariant.Secondary}
                             >
-                                <TranslatedString id="redeemable.apply_action" />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <path d="M3.75 12H20.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M13.5 5.25L20.25 12L13.5 18.75" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
                             </Button>
+                        </div>
+
+                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews">
+                            <div className="jsx-e2877bf7fac87b3a">
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews-summary"><span
+                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://checkout.twinklingtree.com/trustpilot.svg"
+                                            className="jsx-e2877bf7fac87b3a trustpilotImg"/></span>
+                                    <p className="jsx-e2877bf7fac87b3a inStoreReviews">And more than 3,000 in store reviews</p>
+                                </div>
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-box">
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-header">
+                                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-buyer">
+                                            <h2 className="jsx-e2877bf7fac87b3a buyerName">Christina Z.,</h2>
+                                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-place">Dallas, TX</div>
+                                            <span className="jsx-e2877bf7fac87b3a twinkling-tree-review-verified">Verified Buyer</span>
+                                        </div>
+                                    </div>
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
+                                    <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">After my Fairy Light Spirit tree arrived I absolutely
+                                        fell in LOVE with it! I couldn’t help myself and ordered 3 more!</p>
+                                </div>
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-box">
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-header">
+                                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-buyer">
+                                            <h2 className="jsx-e2877bf7fac87b3a buyerName">Brittany M,</h2>
+                                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-place">Miami, FL</div>
+                                            <span className="jsx-e2877bf7fac87b3a twinkling-tree-review-verified">Verified Buyer</span>
+                                        </div>
+                                    </div>
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
+                                    <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">TwinklingTree is my go to store for home decor! All
+                                        their pieces are so stunning and unique! I don’t miss shopping in stores at all. This is as easy as it
+                                        comes. Check out online and receive a beautiful statement piece at your doorstep!</p>
+                                </div>
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-box">
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-header">
+                                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-buyer">
+                                            <h2 className="jsx-e2877bf7fac87b3a buyerName">Katy B.,</h2>
+                                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-place">London, UK</div>
+                                            <span className="jsx-e2877bf7fac87b3a twinkling-tree-review-verified">Verified Buyer</span>
+                                        </div>
+                                    </div>
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/>
+                                    </div>
+                                    <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">This was my first time buying home decor from
+                                        Facebook, and customer service came to the rescue. 10/10 service!</p>
+                                </div>
+                            </div>
                         </div>
                     </>
                 ),

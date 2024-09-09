@@ -345,15 +345,22 @@ class Checkout extends Component<
                         />
                     )}
 
+                    <div className="header-logo">
+                        <a className="checkoutHeader-link" href="/">
+                            <img alt="Twinkling Tree" className="checkoutHeader-logo" src="https://cdn11.bigcommerce.com/s-amififyoek/product_images/twinkling_tree_logo_1680695099__42464.png" />
+                        </a>
+                    </div>
+
                     <ol className="checkout-steps">
                         {steps
                             .filter((step) => step.isRequired)
                             .map((step) =>
                                 this.renderStep({
                                     ...step,
-                                    isActive: activeStepType
-                                        ? activeStepType === step.type
-                                        : defaultStepType === step.type,
+                                    // isActive: activeStepType
+                                    //     ? activeStepType === step.type
+                                    //     : defaultStepType === step.type,
+                                    isActive: true,
                                     isBusy: isPending,
                                 }),
                             )}

@@ -174,6 +174,13 @@ const PaymentSubmitButton: FunctionComponent<
         type="submit"
         variant={ButtonVariant.Action}
     >
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="13" fill="none">
+            <path
+                d="M8.499 4.667h-.584V3.5a2.918 2.918 0 00-5.833 0v1.167h-.583A1.17 1.17 0 00.332 5.834v5.833a1.17 1.17 0 001.167 1.167h7a1.17 1.17 0 001.166-1.167V5.834A1.17 1.17 0 008.5 4.667zm-3.5 5.25A1.17 1.17 0 013.832 8.75a1.17 1.17 0 011.167-1.167A1.17 1.17 0 016.165 8.75 1.17 1.17 0 015 9.917zm1.808-5.25H3.19V3.5a1.81 1.81 0 013.617 0v1.167z"
+                fill="#908F8F" />
+        </svg>
+
         <PaymentSubmitButtonText
             brandName={brandName}
             initialisationStrategyType={initialisationStrategyType}

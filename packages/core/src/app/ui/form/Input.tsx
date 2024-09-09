@@ -12,7 +12,7 @@ const Input = forwardRef(
         { className, testId, placeholder, name, isFloatingLabelEnabled, ...rest }: InputProps,
         ref: Ref<HTMLInputElement>,
     ) => {
-        const floatingLabelDisabledFieldNames = ['orderComment', 'redeemableCode'];
+        const floatingLabelDisabledFieldNames = ['orderComment'];
 
         return (
             <input

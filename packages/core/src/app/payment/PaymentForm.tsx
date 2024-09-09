@@ -18,7 +18,7 @@ import {
     PaymentMethodId,
     PaymentMethodList,
 } from './paymentMethod';
-import PaymentRedeemables from './PaymentRedeemables';
+// import PaymentRedeemables from './PaymentRedeemables';
 import PaymentSubmitButton from './PaymentSubmitButton';
 import SpamProtectionField from './SpamProtectionField';
 import { StoreCreditField, StoreCreditOverlay } from './storeCredit';
@@ -138,7 +138,7 @@ const PaymentForm: FunctionComponent<
                 values={values}
             />
 
-            <PaymentRedeemables />
+            {/* <PaymentRedeemables /> */}
 
             {isTermsConditionsRequired && (
                 <TermsConditions

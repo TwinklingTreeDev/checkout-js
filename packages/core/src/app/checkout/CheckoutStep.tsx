@@ -84,6 +84,10 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                     />
                 </div>
 
+                {(type == 'payment') && (
+                    <div className="payment-subheader">All transactions are secure and encrypted.</div>
+                )}
+
                 {suggestion && isClosed && !isActive && (
                     <div className="checkout-suggestion" data-test="step-suggestion">
                         {suggestion}

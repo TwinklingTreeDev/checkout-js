@@ -72,7 +72,6 @@ const OrderSummary: FunctionComponent<OrderSummaryProps & OrderSummarySubtotalsP
 
             <OrderSummarySection>
                 <OrderSummarySubtotals isTaxIncluded={isTaxIncluded} taxes={taxes} {...orderSummarySubtotalsProps} />
-                {additionalLineItems}
             </OrderSummarySection>
 
             <OrderSummarySection>
@@ -81,6 +80,7 @@ const OrderSummary: FunctionComponent<OrderSummaryProps & OrderSummarySubtotalsP
                     shopperCurrencyCode={shopperCurrency.code}
                     storeCurrencyCode={storeCurrency.code}
                 />
+                {additionalLineItems}
             </OrderSummarySection>
 
             {displayInclusiveTax && <OrderSummarySection>
