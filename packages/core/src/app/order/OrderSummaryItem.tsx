@@ -30,14 +30,16 @@ const OrderSummaryItem: FunctionComponent<OrderSummaryItemProps> = ({
     description,
 }) => (
     <div className="product" data-test="cart-item">
-        <figure className="product-column product-figure">{image}</figure>
+        <figure className="product-column product-figure">{image}
+            <div className="product-qty">{quantity}</div>
+        </figure>
 
         <div className="product-column product-body">
             <h4
                 className="product-title optimizedCheckout-contentPrimary"
                 data-test="cart-item-product-title"
             >
-                {`${quantity} x ${name}`}
+                {`${name}`}
             </h4>
             {productOptions && productOptions.length > 0 && (
                 <ul

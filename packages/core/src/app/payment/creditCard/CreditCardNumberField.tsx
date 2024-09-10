@@ -43,6 +43,7 @@ const CreditCardNumberField: FunctionComponent<CreditCardNumberFieldProps> = ({ 
             input={renderInput}
             labelContent={labelContent}
             name={name}
+            isFloatingLabelEnabled={true} 
         />
     );
 };

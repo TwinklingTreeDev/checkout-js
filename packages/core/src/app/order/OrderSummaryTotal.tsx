@@ -24,7 +24,6 @@ const OrderSummaryTotal: FunctionComponent<OrderSummaryTotalProps & WithCurrency
             ) : (
                 <TranslatedString id="cart.total_text" />
             )}
-            {` (${shopperCurrencyCode})`}
         </>
     );
 

@@ -341,7 +341,7 @@ const PaymentMethodTitle: FunctionComponent<
 
                 {titleText && (
                     <div aria-level={6} className="paymentProviderHeader-name" data-test="payment-method-name" role="heading">
-                        {titleText}
+                        {titleText == 'Checkout.com' ? 'Credit Card' : titleText}
                     </div>
                 )}
 

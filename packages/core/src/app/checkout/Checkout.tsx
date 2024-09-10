@@ -335,7 +335,6 @@ class Checkout extends Component<
                     <LoadingNotification isLoading={(!isShowingWalletButtonsOnTop && isPending) || extensionState.isShowingLoadingIndicator} />
 
                     <PromotionBannerList promotions={promotions} />
-
                     {isShowingWalletButtonsOnTop && this.state.buttonConfigs?.length > 0 && (
                         <CheckoutButtonContainer
                             checkEmbeddedSupport={this.checkEmbeddedSupport}
@@ -531,6 +530,8 @@ class Checkout extends Component<
                         onUnhandledError={this.handleUnhandledError}
                     />
                 </LazyContainer>
+                
+                <div className="all-rights-reserved">TwinklingTree, all rights reserved.</div>
             </CheckoutStep>
         );
     }
