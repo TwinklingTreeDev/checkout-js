@@ -23,11 +23,13 @@ export interface CheckoutStepProps {
 
 export interface CheckoutStepState {
     isClosed: boolean;
+    isBillingActive: boolean;
 }
 
 export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutStepState> {
     state = {
         isClosed: true,
+        isBillingActive: false
     };
 
     private containerRef = createRef<HTMLLIElement>();
@@ -51,6 +53,10 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         }
     }
 
+    private handleClick: (active: boolean) => void = (active) => {
+        this.setState({ isBillingActive: active });
+    }
+
     componentWillUnmount(): void {
         if (this.timeoutRef) {
             window.clearTimeout(this.timeoutRef);
@@ -63,7 +69,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         const { heading, isActive, isComplete, isEditable, onEdit, suggestion, summary, type } =
             this.props;
 
-        const { isClosed } = this.state;
+        const { isClosed, isBillingActive } = this.state;
 
         return (
             <li
@@ -94,7 +100,58 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                     </div>
                 )}
 
-                {this.renderContent()}
+                {(type == 'billing') && 
+                    <div className={`billing-container ${isBillingActive ? 'active' : ''}`}>
+                        <div className='billing-inner'>
+                            <button className={`billing-option same-address ${isBillingActive ? '' : 'active'}`} onClick={() => this.handleClick(false)}>
+                                <div className="billing-option-radio"></div>
+                                <div className="billing-option-info">
+                                    <p className="billing-option-info-label">Same as shipping address</p>
+                                </div>
+                            </button>
+                            <button className={`billing-option same-address ${isBillingActive ? 'active' : ''}`} onClick={() => this.handleClick(true)}>
+                                <div className="billing-option-radio"></div>
+                                <div className="billing-option-info">
+                                    <p className="billing-option-info-label">Use a different billing address</p>
+                                </div>
+                            </button>
+                        </div>
+                        <div className='billing-content'>
+                            {this.renderContent()}  
+                        </div>
+                    </div>
+                }
+
+                {(type != 'billing') && this.renderContent()}
+
+                {(type == 'billing') && (
+                    <div className="shipping-method-custom-container">
+                        <div className="checkout-view-header shipping-method-custom">
+                            <div className="stepHeader is-readonly">
+                                <div className="stepHeader-figure stepHeader-column">
+                                    <div className="stepHeader-title optimizedCheckout-headingPrimary">Shipping Method</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="shipping-method-options">
+                            <div className="icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="21" height="20" viewBox="0 0 21 20" fill="none">
+                                    <g clipPath="url(#clip0_111365_15870)">
+                                        <path
+                                            d="M17.1663 6.66634H14.6663V3.33301H2.99967C2.08301 3.33301 1.33301 4.08301 1.33301 4.99967V14.1663H2.99967C2.99967 15.5497 4.11634 16.6663 5.49967 16.6663C6.88301 16.6663 7.99967 15.5497 7.99967 14.1663H12.9997C12.9997 15.5497 14.1163 16.6663 15.4997 16.6663C16.883 16.6663 17.9997 15.5497 17.9997 14.1663H19.6663V9.99967L17.1663 6.66634ZM5.49967 15.4163C4.80801 15.4163 4.24967 14.858 4.24967 14.1663C4.24967 13.4747 4.80801 12.9163 5.49967 12.9163C6.19134 12.9163 6.74967 13.4747 6.74967 14.1663C6.74967 14.858 6.19134 15.4163 5.49967 15.4163ZM16.7497 7.91634L18.383 9.99967H14.6663V7.91634H16.7497ZM15.4997 15.4163C14.808 15.4163 14.2497 14.858 14.2497 14.1663C14.2497 13.4747 14.808 12.9163 15.4997 12.9163C16.1913 12.9163 16.7497 13.4747 16.7497 14.1663C16.7497 14.858 16.1913 15.4163 15.4997 15.4163Z"
+                                            fill="#908F8F" />
+                                    </g>
+                                    <defs>
+                                        <clipPath id="clip0_111365_15870">
+                                            <rect width="20" height="20" fill="white" transform="translate(0.5)" />
+                                        </clipPath>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <div>Free and Insured Shipping</div>
+                        </div>
+                    </div>
+                )}
             </li>
         );
     }
