@@ -96,6 +96,18 @@ class AddressForm extends Component<AddressFormProps & WithLanguageProps> {
             isFloatingLabelEnabled,
         } = this.props;
 
+        // Custom sort.
+        const isShipping = formFields.length && (formFields[0].id == 'field_14');
+        const isBilling = formFields.length && (formFields[0].id == 'field_4');
+        const customShippingSortOrder = ['field_14', 'field_15', 'field_16', 'field_21', 'field_18', 'field_19', 'field_20', 'field_22', 'field_23', 'field_17'];
+        const customBillingSortOrder = ['field_4', 'field_5', 'field_6', 'field_11', 'field_8', 'field_9', 'field_10', 'field_12', 'field_13', 'field_7'];
+        let customSortedFormFields = [...formFields];
+        if (isShipping) {
+            customSortedFormFields.sort((a, b) => customShippingSortOrder.indexOf(a.id) - customShippingSortOrder.indexOf(b.id));
+        } else if (isBilling) {
+            customSortedFormFields.sort((a, b) => customBillingSortOrder.indexOf(a.id) - customBillingSortOrder.indexOf(b.id));
+        }
+        
         return (
             <>
                 <Fieldset>
@@ -103,7 +115,7 @@ class AddressForm extends Component<AddressFormProps & WithLanguageProps> {
                         className="checkout-address"
                         ref={this.containerRef as RefObject<HTMLDivElement>}
                     >
-                        {formFields.map((field) => {
+                        {customSortedFormFields.map((field) => {
                             const addressFieldName = field.name;
                             const translatedPlaceholderId = PLACEHOLDER[addressFieldName];
 

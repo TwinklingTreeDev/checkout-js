@@ -49,6 +49,7 @@ const Redeemable: FunctionComponent<
     <Toggle openByDefault={!shouldCollapseCouponCode}>
         {({ toggle, isOpen }) => (
             <>
+                {shouldCollapseCouponCode = false}
                 {shouldCollapseCouponCode && (
                     <a
                         aria-controls="redeemable-collapsable"
