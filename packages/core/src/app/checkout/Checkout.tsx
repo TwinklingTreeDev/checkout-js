@@ -394,7 +394,7 @@ class Checkout extends Component<
         const { isGuestEnabled, isShowingWalletButtonsOnTop } = this.props;
         const {
             customerViewType = isGuestEnabled ? CustomerViewType.Guest : CustomerViewType.Login,
-            isSubscribed,
+            isSubscribed
         } = this.state;
 
         return (
@@ -545,6 +545,12 @@ class Checkout extends Component<
                             <LazyContainer>
                                 <ExtensionRegionSummaryAfter />
                                 <CartSummaryDrawer />
+                                <div className="layout-cart-mobile">
+                                    <LazyContainer>
+                                        <CartSummary />
+                                        <ExtensionRegionSummaryAfter />
+                                    </LazyContainer>
+                                </div>
                             </LazyContainer>
                         );
                     }

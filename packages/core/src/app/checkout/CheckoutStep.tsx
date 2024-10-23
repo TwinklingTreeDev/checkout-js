@@ -29,7 +29,7 @@ export interface CheckoutStepState {
 export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutStepState> {
     state = {
         isClosed: true,
-        isBillingActive: false
+        isBillingActive: false,
     };
 
     private containerRef = createRef<HTMLLIElement>();
@@ -187,6 +187,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
     }
 
     private focusStep(): void {
+        return; // disable focus on step containers (window.scrollTo)
         const delay = isMobileView() ? 0 : this.getTransitionDelay();
 
         this.setState({ isClosed: false });

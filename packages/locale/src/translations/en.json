@@ -36,8 +36,8 @@
             "save_in_addressbook": "Save this address in my address book.",
             "select_country_action": "Select a country",
             "select_state_action": "Select a state",
-            "state_label": "Region",
-            "state_required_error": "Region is required",
+            "state_label": "State",
+            "state_required_error": "State is required",
             "select": "Select",
             "select_all": "All",
             "select_none": "None"
