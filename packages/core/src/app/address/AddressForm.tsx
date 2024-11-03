@@ -97,8 +97,8 @@ class AddressForm extends Component<AddressFormProps & WithLanguageProps> {
         } = this.props;
 
         // Custom sort.
-        const isShipping = formFields.length && (formFields[0].id == 'field_14');
-        const isBilling = formFields.length && (formFields[0].id == 'field_4');
+        const isShipping = formFields.length ? (formFields[0].id == 'field_14') : false;
+        const isBilling = formFields.length ? (formFields[0].id == 'field_4') : false;
         const customShippingSortOrder = ['field_14', 'field_15', 'field_16', 'field_21', 'field_18', 'field_19', 'field_20', 'field_22', 'field_23', 'field_17'];
         const customBillingSortOrder = ['field_4', 'field_5', 'field_6', 'field_11', 'field_8', 'field_9', 'field_10', 'field_12', 'field_13', 'field_7'];
         let customSortedFormFields = [...formFields];
@@ -148,7 +148,7 @@ class AddressForm extends Component<AddressFormProps & WithLanguageProps> {
                                         addressFieldName,
                                     )}`}
                                     field={field}
-                                    inputId={getAddressFormFieldInputId(addressFieldName)}
+                                    inputId={(isBilling ? 'billing-' : '') + getAddressFormFieldInputId(addressFieldName)}
                                     // stateOrProvince can sometimes be a dropdown or input, so relying on id is not sufficient
                                     isFloatingLabelEnabled={isFloatingLabelEnabled}
                                     key={`${field.id}-${field.name}`}
@@ -171,6 +171,7 @@ class AddressForm extends Component<AddressFormProps & WithLanguageProps> {
                                         field,
                                         translatedPlaceholderId,
                                     )}
+                                    isBilling={isBilling}
                                 />
                             );
                         })}

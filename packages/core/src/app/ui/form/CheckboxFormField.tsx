@@ -14,6 +14,8 @@ export interface CheckboxFormFieldProps {
     labelContent: ReactNode;
     onChange?(isChecked: boolean): void;
     testId?: string;
+    isBillingSameAsShipping?: boolean;
+    onCheckBillingSameAsShipping?(isBillingSameAsShipping: boolean): void;
 }
 
 const CheckboxFormField: FunctionComponent<CheckboxFormFieldProps> = ({
@@ -24,6 +26,8 @@ const CheckboxFormField: FunctionComponent<CheckboxFormFieldProps> = ({
     name,
     id,
     testId,
+    isBillingSameAsShipping,
+    onCheckBillingSameAsShipping,
 }) => {
     const renderField = useCallback(
         ({ field }: FieldProps) => (
@@ -53,6 +57,8 @@ const CheckboxFormField: FunctionComponent<CheckboxFormFieldProps> = ({
             name={name}
             onChange={onChange}
             render={renderField}
+            isBillingSameAsShipping={isBillingSameAsShipping}
+            onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
         />
     );
 };

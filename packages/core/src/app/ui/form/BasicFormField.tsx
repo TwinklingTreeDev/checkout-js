@@ -17,6 +17,8 @@ export interface BasicFormFieldProps extends FieldConfig {
     className?: string;
     testId?: string;
     onChange?(value: any): void;
+    isBillingSameAsShipping?: boolean;
+    onCheckBillingSameAsShipping?(isBillingSameAsShipping: boolean): void;
 }
 
 const BasicFormField: FunctionComponent<BasicFormFieldProps> = ({
@@ -26,6 +28,8 @@ const BasicFormField: FunctionComponent<BasicFormFieldProps> = ({
     render,
     testId,
     onChange,
+    isBillingSameAsShipping,
+    onCheckBillingSameAsShipping,
     ...rest
 }) => {
     const renderInnerField = useCallback(
@@ -38,9 +42,11 @@ const BasicFormField: FunctionComponent<BasicFormFieldProps> = ({
                 onChange={onChange}
                 render={render}
                 testId={testId}
+                isBillingSameAsShipping={isBillingSameAsShipping}
+                onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
             />
         ),
-        [additionalClassName, className, component, render, testId, onChange],
+        [additionalClassName, className, component, render, testId, onChange, isBillingSameAsShipping, onCheckBillingSameAsShipping],
     );
 
     return <Field {...rest} render={renderInnerField} />;
@@ -49,7 +55,7 @@ const BasicFormField: FunctionComponent<BasicFormFieldProps> = ({
 type InnerFieldProps = Omit<BasicFormFieldProps, keyof FieldConfig> & InnerFieldInputProps;
 
 const InnerField: FunctionComponent<InnerFieldProps> = memo(
-    ({ additionalClassName, component, field, form, onChange, render, testId }) => {
+    ({ additionalClassName, component, field, form, onChange, render, testId, isBillingSameAsShipping, onCheckBillingSameAsShipping }) => {
         const input = useMemo(
             () => (
                 <InnerFieldInput
@@ -58,9 +64,11 @@ const InnerField: FunctionComponent<InnerFieldProps> = memo(
                     form={form}
                     onChange={onChange}
                     render={render}
+                    isBillingSameAsShipping={isBillingSameAsShipping}
+                    onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
                 />
             ),
-            [field, form, onChange, component, render],
+            [field, form, onChange, component, render, isBillingSameAsShipping, onCheckBillingSameAsShipping],
         );
 
         return (
@@ -85,6 +93,8 @@ const InnerField: FunctionComponent<InnerFieldProps> = memo(
 type InnerFieldInputProps = FieldProps &
     Pick<FieldConfig, 'component' | 'render'> & {
         onChange?(value: string): void;
+        isBillingSameAsShipping?: boolean;
+        onCheckBillingSameAsShipping?(isBillingSameAsShipping: boolean): void;
     };
 
 class InnerFieldInput extends Component<InnerFieldInputProps> {
@@ -92,6 +102,7 @@ class InnerFieldInput extends Component<InnerFieldInputProps> {
         const {
             field: { value },
             onChange = noop,
+            onCheckBillingSameAsShipping
         } = this.props;
         const comparableValue = isDate(value) ? value.getTime() : value;
         const comparablePrevValue = isDate(prevField.value)
@@ -100,6 +111,7 @@ class InnerFieldInput extends Component<InnerFieldInputProps> {
 
         if (comparableValue !== comparablePrevValue) {
             onChange(value);
+            onCheckBillingSameAsShipping && onCheckBillingSameAsShipping(value);
         }
     }
 

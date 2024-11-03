@@ -42,6 +42,7 @@ export interface ShippingProps {
     cartHasChanged: boolean;
     isMultiShippingMode: boolean;
     step: CheckoutStepStatus;
+    onCheckBillingSameAsShipping(isBillingSameAsShipping: boolean): void;
     onCreateAccount(): void;
     onToggleMultiShipping(): void;
     onReady?(): void;
@@ -129,6 +130,7 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
             updateShippingAddress,
             initializeShippingMethod,
             deinitializeShippingMethod,
+            onCheckBillingSameAsShipping,
             isMultiShippingMode,
             step,
             isFloatingLabelEnabled,
@@ -177,6 +179,7 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                         isFloatingLabelEnabled={isFloatingLabelEnabled}
                         isGuest={isGuest}
                         isMultiShippingMode={isMultiShippingMode}
+                        onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
                         onMultiShippingSubmit={this.handleMultiShippingSubmit}
                         onSingleShippingSubmit={this.handleSingleShippingSubmit}
                         onUseNewAddress={this.handleUseNewAddress}

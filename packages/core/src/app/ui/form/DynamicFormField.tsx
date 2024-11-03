@@ -27,6 +27,7 @@ export interface DynamicFormFieldProps {
     label?: ReactNode;
     isFloatingLabelEnabled?: boolean;
     onChange?(value: string | string[]): void;
+    isBilling?: boolean;
 }
 
 const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
@@ -50,6 +51,7 @@ const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
     label,
     extraClass,
     isFloatingLabelEnabled,
+    isBilling,
 }) => {
     const fieldInputId = inputId || name;
     const fieldName = parentFieldName ? `${parentFieldName}.${name}` : name;
@@ -148,6 +150,7 @@ const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
                     label={labelComponent}
                     name={fieldName}
                     onChange={onChange}
+                    isBilling={isBilling}
                 />
             )}
         </div>

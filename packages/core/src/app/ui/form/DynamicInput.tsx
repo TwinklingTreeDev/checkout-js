@@ -58,7 +58,7 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
                     <div
                         className={classNames(
                             { 'dropdown-chevron': !isFloatingLabelEnabled },
-                            { 'floating-select-chevron': isFloatingLabelEnabled },
+                            { 'floating-select-chevron ': isFloatingLabelEnabled },
                         )}>
                         <IconChevronDown />
                     </div>
@@ -67,6 +67,7 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
                         className={classNames(
                             { 'floating-select': isFloatingLabelEnabled },
                             'form-select optimizedCheckout-form-select',
+                            { 'has-value': (value != '' && value !== null)}
                         )}
                         data-test={`${id}-select`}
                         id={id}
@@ -74,7 +75,7 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
                         onChange={onChange}
                         value={value === null ? '' : value}
                     >
-                        {placeholder && <option value="">{placeholder}</option>}
+                        {placeholder && <option value="">{placeholder == 'Select a state' ? '' : placeholder}</option>}
                         {options &&
                             options.map(({ label, value: optionValue }) => (
                                 <option key={optionValue} value={optionValue}>

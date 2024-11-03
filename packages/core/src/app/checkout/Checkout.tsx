@@ -466,6 +466,7 @@ class Checkout extends Component<
                         isBillingSameAsShipping={isBillingSameAsShipping}
                         isMultiShippingMode={isMultiShippingMode}
                         navigateNextStep={this.handleShippingNextStep}
+                        onCheckBillingSameAsShipping={this.handleBillingSameAsShipping}
                         onCreateAccount={this.handleShippingCreateAccount}
                         onReady={this.handleReady}
                         onSignIn={this.handleShippingSignIn}
@@ -480,6 +481,7 @@ class Checkout extends Component<
 
     private renderBillingStep(step: CheckoutStepStatus): ReactNode {
         const { billingAddress } = this.props;
+        const { isBillingSameAsShipping  } = this.state;
 
         return (
             <CheckoutStep
@@ -488,6 +490,7 @@ class Checkout extends Component<
                 key={step.type}
                 onEdit={this.handleEditStep}
                 onExpanded={this.handleExpanded}
+                isBillingSameAsShipping={isBillingSameAsShipping}
                 summary={billingAddress && <StaticBillingAddress address={billingAddress} />}
             >
                 <LazyContainer loadingSkeleton={<AddressFormSkeleton />}>
@@ -755,6 +758,12 @@ class Checkout extends Component<
         } else {
             this.navigateToStep(CheckoutStepType.Billing);
         }
+    };
+    
+    private handleBillingSameAsShipping: (isBillingSameAsShipping: boolean) => void = (
+        isBillingSameAsShipping,
+    ) => {
+        this.setState({ isBillingSameAsShipping });
     };
 
     private handleShippingSignIn: () => void = () => {

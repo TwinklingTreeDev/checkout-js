@@ -62,6 +62,7 @@ export interface SingleShippingFormProps {
     onSubmit(values: SingleShippingFormValues): void;
     onUnhandledError?(error: Error): void;
     signOut(options?: CustomerRequestOptions): void;
+    onCheckBillingSameAsShipping(isBillingSameAsShipping: boolean): void;
     updateAddress(
         address: Partial<Address>,
         options?: RequestOptions<CheckoutParams>,
@@ -153,6 +154,8 @@ class SingleShippingForm extends PureComponent<
             values: { shippingAddress: addressForm },
             isShippingStepPending,
             isFloatingLabelEnabled,
+            isBillingSameAsShipping,
+            onCheckBillingSameAsShipping,
         } = this.props;
 
         const { isResettingAddress, isUpdatingShippingData, hasRequestedShippingOptions } =
@@ -189,7 +192,11 @@ class SingleShippingForm extends PureComponent<
                     />
                     {shouldShowBillingSameAsShipping && (
                         <div className="form-body">
-                            <BillingSameAsShippingField />
+
+                            <BillingSameAsShippingField 
+                                isBillingSameAsShipping={isBillingSameAsShipping}
+                                onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
+                            />
                         </div>
                     )}
                 </Fieldset>

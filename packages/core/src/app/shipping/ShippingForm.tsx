@@ -55,6 +55,7 @@ export interface ShippingFormProps {
     onUnhandledError(error: Error): void;
     onUseNewAddress(address: Address, itemId: string): void;
     signOut(options?: CustomerRequestOptions): void;
+    onCheckBillingSameAsShipping(isBillingSameAsShipping: boolean): void;
     updateAddress(
         address: Partial<Address>,
         options: RequestOptions<CheckoutParams>,
@@ -92,6 +93,7 @@ const ShippingForm = ({
     shouldShowSaveAddress,
     shouldShowAddAddressInCheckout,
     signOut,
+    onCheckBillingSameAsShipping,
     updateAddress,
     isShippingStepPending,
     isFloatingLabelEnabled,
@@ -164,6 +166,7 @@ const ShippingForm = ({
             shouldShowSaveAddress={shouldShowSaveAddress}
             signOut={signOut}
             updateAddress={updateAddress}
+            onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
         />
     );
 };

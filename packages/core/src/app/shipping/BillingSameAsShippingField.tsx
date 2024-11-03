@@ -6,10 +6,14 @@ import { CheckboxFormField } from '../ui/form';
 
 export interface BillingSameAsShippingFieldProps {
     onChange?(isChecked: boolean): void;
+    isBillingSameAsShipping?: boolean;
+    onCheckBillingSameAsShipping?(isBillingSameAsShipping: boolean): void;
 }
 
 const BillingSameAsShippingField: FunctionComponent<BillingSameAsShippingFieldProps> = ({
     onChange,
+    onCheckBillingSameAsShipping,
+    isBillingSameAsShipping,
 }) => {
     const labelContent = useMemo(
         () => <TranslatedString id="billing.use_shipping_address_label" />,
@@ -22,6 +26,8 @@ const BillingSameAsShippingField: FunctionComponent<BillingSameAsShippingFieldPr
             labelContent={labelContent}
             name="billingSameAsShipping"
             onChange={onChange}
+            onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
+            isBillingSameAsShipping={isBillingSameAsShipping}
             testId="billingSameAsShipping"
         />
     );

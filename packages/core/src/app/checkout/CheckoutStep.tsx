@@ -19,17 +19,16 @@ export interface CheckoutStepProps {
     type: CheckoutStepType;
     onExpanded?(step: CheckoutStepType): void;
     onEdit?(step: CheckoutStepType): void;
+    isBillingSameAsShipping ?: boolean;
 }
 
 export interface CheckoutStepState {
     isClosed: boolean;
-    isBillingActive: boolean;
 }
 
 export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutStepState> {
     state = {
         isClosed: true,
-        isBillingActive: false,
     };
 
     private containerRef = createRef<HTMLLIElement>();
@@ -53,9 +52,9 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         }
     }
 
-    private handleClick: (active: boolean) => void = (active) => {
-        this.setState({ isBillingActive: active });
-    }
+    // private handleClick: (active: boolean) => void = (active) => {
+    //     this.setState({ isBillingActive: active });
+    // }
 
     componentWillUnmount(): void {
         if (this.timeoutRef) {
@@ -66,64 +65,73 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
     }
 
     render(): ReactNode {
-        const { heading, isActive, isComplete, isEditable, onEdit, suggestion, summary, type } =
+        const { heading, isActive, isComplete, isEditable, onEdit, suggestion, summary, type, isBillingSameAsShipping } =
             this.props;
 
-        const { isClosed, isBillingActive } = this.state;
+        const { isClosed } = this.state;
 
         return (
             <li
-                className={classNames('checkout-step', 'optimizedCheckout-checkoutStep', {
+                className={classNames('checkout-step', 'optimizedCheckout-checkoutStep', `${isBillingSameAsShipping ? 'is-active' : ''}`, {
                     [`checkout-step--${type}`]: !!type,
                 })}
                 ref={this.containerRef}
             >
-                <div className="checkout-view-header">
-                    <CheckoutStepHeader
-                        heading={heading}
-                        isActive={isActive}
-                        isComplete={isComplete}
-                        isEditable={isEditable}
-                        onEdit={onEdit}
-                        summary={summary}
-                        type={type}
-                    />
+                <div className="billing-wrapper">
+                    <div className={`checkout-view-header`}>
+                        <CheckoutStepHeader
+                            heading={heading}
+                            isActive={isActive}
+                            isComplete={isComplete}
+                            isEditable={isEditable}
+                            onEdit={onEdit}
+                            summary={summary}
+                            type={type}
+                        />
+                    </div>
+
+                    {(type == 'payment') && (
+                        <div className="payment-subheader">All transactions are secure and encrypted.</div>
+                    )}
+
+                    {suggestion && isClosed && !isActive && (
+                        <div className="checkout-suggestion" data-test="step-suggestion">
+                            {suggestion}
+                        </div>
+                    )}
+                    
+                    {(type == 'billing') && 
+                        <div className="billing-container active">
+                            <div className='billing-content'>
+                                {this.renderContent()}  
+                            </div>
+                        </div>
+                    }
+
+                    {/* {(type == 'billing') && 
+                        <div className={`billing-container ${isBillingSameAsShipping ? 'active' : ''}`}>
+                            <div className='billing-inner'>
+                                <button className={`billing-option same-address ${isBillingSameAsShipping ? '' : 'active'}`}>
+                                    <div className="billing-option-radio"></div>
+                                    <div className="billing-option-info">
+                                        <p className="billing-option-info-label">Same as shipping address</p>
+                                    </div>
+                                </button>
+                                <button className={`billing-option same-address ${isBillingSameAsShipping ? 'active' : ''}`}>
+                                    <div className="billing-option-radio"></div>
+                                    <div className="billing-option-info">
+                                        <p className="billing-option-info-label">Use a different billing address</p>
+                                    </div>
+                                </button>
+                            </div>
+                            <div className='billing-content'>
+                                {this.renderContent()}  
+                            </div>
+                        </div>
+                    } */}
+
+                    {(type != 'billing') && this.renderContent()}
                 </div>
-
-                {(type == 'payment') && (
-                    <div className="payment-subheader">All transactions are secure and encrypted.</div>
-                )}
-
-                {suggestion && isClosed && !isActive && (
-                    <div className="checkout-suggestion" data-test="step-suggestion">
-                        {suggestion}
-                    </div>
-                )}
-
-                {(type == 'billing') && 
-                    <div className={`billing-container ${isBillingActive ? 'active' : ''}`}>
-                        <div className='billing-inner'>
-                            <button className={`billing-option same-address ${isBillingActive ? '' : 'active'}`} onClick={() => this.handleClick(false)}>
-                                <div className="billing-option-radio"></div>
-                                <div className="billing-option-info">
-                                    <p className="billing-option-info-label">Same as shipping address</p>
-                                </div>
-                            </button>
-                            <button className={`billing-option same-address ${isBillingActive ? 'active' : ''}`} onClick={() => this.handleClick(true)}>
-                                <div className="billing-option-radio"></div>
-                                <div className="billing-option-info">
-                                    <p className="billing-option-info-label">Use a different billing address</p>
-                                </div>
-                            </button>
-                        </div>
-                        <div className='billing-content'>
-                            {this.renderContent()}  
-                        </div>
-                    </div>
-                }
-
-                {(type != 'billing') && this.renderContent()}
-
                 {(type == 'billing') && (
                     <div className="shipping-method-custom-container">
                         <div className="checkout-view-header shipping-method-custom">

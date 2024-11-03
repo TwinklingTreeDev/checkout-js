@@ -16,6 +16,7 @@ export interface FormFieldProps {
     isFloatingLabelEnabled?: boolean;
     input(field: FieldProps<string>): ReactNode;
     onChange?(value: string): void;
+    isBilling?: boolean;
 }
 
 const FormField: FunctionComponent<FormFieldProps> = ({
@@ -28,6 +29,7 @@ const FormField: FunctionComponent<FormFieldProps> = ({
     name,
     id,
     isFloatingLabelEnabled,
+    isBilling,
 }) => {
     const renderField = useCallback(
         (props) => (
@@ -37,7 +39,7 @@ const FormField: FunctionComponent<FormFieldProps> = ({
                 {label && (typeof label === 'function' ? label(name) : label)}
                 {labelContent && !label && (
                     <Label
-                        htmlFor={name}
+                        htmlFor={(isBilling ? 'billing-' : '') + name}
                         id={`${id ?? name}-label`}
                         isFloatingLabelEnabled={isFloatingLabelEnabled}
                     >
