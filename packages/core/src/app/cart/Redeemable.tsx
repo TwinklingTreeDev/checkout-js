@@ -189,7 +189,7 @@ const RedeemableForm: FunctionComponent<
                         <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews">
                             <div className="jsx-e2877bf7fac87b3a">
                                 <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews-summary"><span
-                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://checkout.twinklingtree.com/trustpilot.svg"
+                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/trustpilot.png?t=1738245201"
                                             className="jsx-e2877bf7fac87b3a trustpilotImg"/></span>
                                     <p className="jsx-e2877bf7fac87b3a inStoreReviews">And more than 3,000 in store reviews</p>
                                 </div>
@@ -202,11 +202,11 @@ const RedeemableForm: FunctionComponent<
                                         </div>
                                     </div>
                                     <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
                                     <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">After my Fairy Light Spirit tree arrived I absolutely
                                         fell in LOVE with it! I couldn’t help myself and ordered 3 more!</p>
                                 </div>
@@ -219,11 +219,11 @@ const RedeemableForm: FunctionComponent<
                                         </div>
                                     </div>
                                     <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
                                     <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">TwinklingTree is my go to store for home decor! All
                                         their pieces are so stunning and unique! I don’t miss shopping in stores at all. This is as easy as it
                                         comes. Check out online and receive a beautiful statement piece at your doorstep!</p>
@@ -237,11 +237,11 @@ const RedeemableForm: FunctionComponent<
                                         </div>
                                     </div>
                                     <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
-                                            src="https://checkout.twinklingtree.com/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/>
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                            src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/>
                                     </div>
                                     <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">This was my first time buying home decor from
                                         Facebook, and customer service came to the rescue. 10/10 service!</p>

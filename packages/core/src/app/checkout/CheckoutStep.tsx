@@ -72,7 +72,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
 
         return (
             <li
-                className={classNames('checkout-step', 'optimizedCheckout-checkoutStep', `${isBillingSameAsShipping ? 'is-active' : ''}`, {
+                className={classNames('checkout-step', 'optimizedCheckout-checkoutStep', `${isBillingSameAsShipping ? '' : 'is-active'}`, {
                     [`checkout-step--${type}`]: !!type,
                 })}
                 ref={this.containerRef}
