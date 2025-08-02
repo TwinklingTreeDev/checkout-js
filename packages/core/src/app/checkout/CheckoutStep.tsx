@@ -99,16 +99,15 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                             {suggestion}
                         </div>
                     )}
-                    
-                    {(type == 'billing') && 
+                    {/* {(type == 'billing') && 
                         <div className="billing-container active">
                             <div className='billing-content'>
                                 {this.renderContent()}  
                             </div>
                         </div>
-                    }
+                    } */}
 
-                    {/* {(type == 'billing') && 
+                    {(type == 'billing') && 
                         <div className={`billing-container ${isBillingSameAsShipping ? 'active' : ''}`}>
                             <div className='billing-inner'>
                                 <button className={`billing-option same-address ${isBillingSameAsShipping ? '' : 'active'}`}>
@@ -128,8 +127,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                 {this.renderContent()}  
                             </div>
                         </div>
-                    } */}
-
+                    }
                     {(type != 'billing') && this.renderContent()}
                 </div>
                 {(type == 'billing') && (
@@ -156,7 +154,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                     </defs>
                                 </svg>
                             </div>
-                            <div>Free and Insured Shipping</div>
+                            <div>Tracked & Insured</div>
                         </div>
                     </div>
                 )}

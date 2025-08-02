@@ -308,10 +308,10 @@ class Checkout extends Component<
 
         return (
             <div className={classNames({ 'is-embedded': isEmbedded(), 'remove-checkout-step-numbers': isHidingStepNumbers })} data-test="checkout-page-container" id="checkout-page-container">
-                <div className="layout optimizedCheckout-contentPrimary">
-                    {this.renderContent()}
-                </div>
-                {errorModal}
+                    <div className="layout optimizedCheckout-contentPrimary">
+                        {this.renderContent()}
+                    </div>
+                    {errorModal}
             </div>
         );
     }
