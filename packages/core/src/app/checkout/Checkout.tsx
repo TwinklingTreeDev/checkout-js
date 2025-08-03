@@ -491,6 +491,7 @@ class Checkout extends Component<
                 onEdit={this.handleEditStep}
                 onExpanded={this.handleExpanded}
                 isBillingSameAsShipping={isBillingSameAsShipping}
+                onBillingSameAsShippingChange={this.handleBillingSameAsShipping}
                 summary={billingAddress && <StaticBillingAddress address={billingAddress} />}
             >
                 <LazyContainer loadingSkeleton={<AddressFormSkeleton />}>

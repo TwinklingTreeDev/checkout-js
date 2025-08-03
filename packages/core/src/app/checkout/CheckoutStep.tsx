@@ -19,7 +19,8 @@ export interface CheckoutStepProps {
     type: CheckoutStepType;
     onExpanded?(step: CheckoutStepType): void;
     onEdit?(step: CheckoutStepType): void;
-    isBillingSameAsShipping ?: boolean;
+    isBillingSameAsShipping?: boolean;
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 export interface CheckoutStepState {
@@ -65,7 +66,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
     }
 
     render(): ReactNode {
-        const { heading, isActive, isComplete, isEditable, onEdit, suggestion, summary, type, isBillingSameAsShipping } =
+        const { heading, isActive, isComplete, isEditable, onEdit, suggestion, summary, type, isBillingSameAsShipping, onBillingSameAsShippingChange } =
             this.props;
 
         const { isClosed } = this.state;
@@ -99,24 +100,25 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                             {suggestion}
                         </div>
                     )}
-                    {/* {(type == 'billing') && 
-                        <div className="billing-container active">
-                            <div className='billing-content'>
-                                {this.renderContent()}  
-                            </div>
-                        </div>
-                    } */}
 
                     {(type == 'billing') && 
-                        <div className={`billing-container ${isBillingSameAsShipping ? 'active' : ''}`}>
+                        <div className={`billing-container ${!isBillingSameAsShipping ? 'active' : ''}`}>
                             <div className='billing-inner'>
-                                <button className={`billing-option same-address ${isBillingSameAsShipping ? '' : 'active'}`}>
+                                <button 
+                                    className={`billing-option same-address ${isBillingSameAsShipping ? 'active' : ''}`}
+                                    onClick={() => onBillingSameAsShippingChange?.(true)}
+                                    type="button"
+                                >
                                     <div className="billing-option-radio"></div>
                                     <div className="billing-option-info">
                                         <p className="billing-option-info-label">Same as shipping address</p>
                                     </div>
                                 </button>
-                                <button className={`billing-option same-address ${isBillingSameAsShipping ? 'active' : ''}`}>
+                                <button 
+                                    className={`billing-option same-address ${isBillingSameAsShipping ? '' : 'active'}`}
+                                    onClick={() => onBillingSameAsShippingChange?.(false)}
+                                    type="button"
+                                >
                                     <div className="billing-option-radio"></div>
                                     <div className="billing-option-info">
                                         <p className="billing-option-info-label">Use a different billing address</p>
@@ -141,20 +143,12 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                         </div>
                         <div className="shipping-method-options">
                             <div className="icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="21" height="20" viewBox="0 0 21 20" fill="none">
-                                    <g clipPath="url(#clip0_111365_15870)">
-                                        <path
-                                            d="M17.1663 6.66634H14.6663V3.33301H2.99967C2.08301 3.33301 1.33301 4.08301 1.33301 4.99967V14.1663H2.99967C2.99967 15.5497 4.11634 16.6663 5.49967 16.6663C6.88301 16.6663 7.99967 15.5497 7.99967 14.1663H12.9997C12.9997 15.5497 14.1163 16.6663 15.4997 16.6663C16.883 16.6663 17.9997 15.5497 17.9997 14.1663H19.6663V9.99967L17.1663 6.66634ZM5.49967 15.4163C4.80801 15.4163 4.24967 14.858 4.24967 14.1663C4.24967 13.4747 4.80801 12.9163 5.49967 12.9163C6.19134 12.9163 6.74967 13.4747 6.74967 14.1663C6.74967 14.858 6.19134 15.4163 5.49967 15.4163ZM16.7497 7.91634L18.383 9.99967H14.6663V7.91634H16.7497ZM15.4997 15.4163C14.808 15.4163 14.2497 14.858 14.2497 14.1663C14.2497 13.4747 14.808 12.9163 15.4997 12.9163C16.1913 12.9163 16.7497 13.4747 16.7497 14.1663C16.7497 14.858 16.1913 15.4163 15.4997 15.4163Z"
-                                            fill="#908F8F" />
-                                    </g>
-                                    <defs>
-                                        <clipPath id="clip0_111365_15870">
-                                            <rect width="20" height="20" fill="white" transform="translate(0.5)" />
-                                        </clipPath>
-                                    </defs>
-                                </svg>
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" stroke-width="7"/>
+                            </svg>
                             </div>
-                            <div>Tracked & Insured</div>
+                            <div className='shipping-method-title'>Tracked & Insured</div>
+                            <span className='shipping-method-price'>Free</span>
                         </div>
                     </div>
                 )}

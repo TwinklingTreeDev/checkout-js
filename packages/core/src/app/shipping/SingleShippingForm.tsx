@@ -134,6 +134,22 @@ class SingleShippingForm extends PureComponent<
         );
     }
 
+    componentDidMount(): void {
+        const { isBillingSameAsShipping, setFieldValue } = this.props;
+        
+        // Initialize the form value with the prop value
+        setFieldValue('billingSameAsShipping', isBillingSameAsShipping);
+    }
+
+    componentDidUpdate(prevProps: SingleShippingFormProps & WithLanguageProps & FormikProps<SingleShippingFormValues>): void {
+        const { isBillingSameAsShipping, setFieldValue } = this.props;
+        
+        // Update the form value when the prop changes (e.g., when buttons are clicked)
+        if (prevProps.isBillingSameAsShipping !== isBillingSameAsShipping) {
+            setFieldValue('billingSameAsShipping', isBillingSameAsShipping);
+        }
+    }
+
     render(): ReactNode {
         const {
             addresses,
