@@ -39,7 +39,10 @@ const SimpleShippingOption: React.FC<{
     <div 
         className={`shipping-method-options ${isSelected ? 'selected' : ''} ${isLoading ? 'loading' : ''}`}
         onClick={() => !isLoading && onSelect()}
-        style={{ cursor: isLoading ? 'not-allowed' : 'pointer' }}
+        style={{
+            cursor: isLoading ? 'progress' : 'pointer',
+            opacity: isLoading ? 0.5 : 1,
+        }}
     >
         <div className="icon">
             {isSelected ? (
@@ -48,7 +51,7 @@ const SimpleShippingOption: React.FC<{
                 </svg>
             ) : (
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="11" cy="11" r="9" stroke="#D9D9D9" strokeWidth="2" fill="white"/>
+                    <circle cx="11" cy="11" r="9" stroke="#D9D9D9" strokeWidth="1" fill="white"/>
                 </svg>
             )}
         </div>

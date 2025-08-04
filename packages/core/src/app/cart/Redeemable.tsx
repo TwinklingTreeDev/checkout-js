@@ -154,7 +154,7 @@ const RedeemableForm: FunctionComponent<
                                 </Alert>
                             )}
 
-                        <div className="form-prefixPostfix">
+                        <div className="form-prefixPostfix redeemable-entry-container">
                             <TextInput
                                 {...field}
                                 aria-label="Discount Code"
