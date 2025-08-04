@@ -57,6 +57,8 @@ export default function mapToCheckoutProps({
         cartUrl,
         createAccountUrl,
         promotions,
+        selectShippingOption: checkoutService.selectConsignmentShippingOption,
+        isSelectingShippingOption: statuses.isSelectingShippingOption,
         subscribeToConsignments: subscribeToConsignmentsSelector({
             checkoutService,
             checkoutState,

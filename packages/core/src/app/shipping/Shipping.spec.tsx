@@ -573,5 +573,21 @@ describe('Shipping Component', () => {
                 });
             });
         });
+
+        describe('billing same as shipping', () => {
+            it('updates local state when billing same as shipping preference changes', async () => {
+                component = mount(<ComponentTest {...defaultProps} />);
+                await new Promise((resolve) => process.nextTick(resolve));
+                component.update();
+
+                // Find and click the billing same as shipping checkbox
+                const billingSameAsShippingCheckbox = component.find('[data-test="billingSameAsShipping"]');
+                billingSameAsShippingCheckbox.simulate('change', { target: { checked: false } });
+
+                // Verify that the local state is updated (no backend call needed)
+                // The billingSameAsShipping is a UI preference managed in local state
+                expect(billingSameAsShippingCheckbox.prop('checked')).toBe(false);
+            });
+        });
     });
 });

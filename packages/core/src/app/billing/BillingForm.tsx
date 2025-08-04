@@ -5,8 +5,9 @@ import {
     Customer,
     FormField,
 } from '@bigcommerce/checkout-sdk';
+import { debounce } from 'lodash';
 import { FormikProps, withFormik } from 'formik';
-import React, { RefObject, useRef, useState } from 'react';
+import React, { RefObject, useRef, useState, useCallback, useEffect } from 'react';
 import { lazy } from 'yup';
 
 import { TranslatedString, withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
@@ -22,6 +23,8 @@ import {
     getTranslateAddressError,
     isValidCustomerAddress,
     mapAddressToFormValues,
+    mapAddressFromFormValues,
+    isEqualAddress,
 } from '../address';
 import { getCustomFormFieldsValidationSchema } from '../formFields';
 import { OrderComments } from '../orderComments';
@@ -44,11 +47,16 @@ export interface BillingFormProps {
     methodId?: string;
     shouldShowOrderComments: boolean;
     isFloatingLabelEnabled?: boolean;
+    billingAutosaveDelay?: number;
     getFields(countryCode?: string): FormField[];
     onSubmit(values: BillingFormValues): void;
     onUnhandledError(error: Error): void;
     updateAddress(address: Partial<Address>): Promise<CheckoutSelectors>;
+    updateCheckout?(payload: any): Promise<CheckoutSelectors>;
 }
+
+// Auto-save delay constant (same as shipping)
+export const BILLING_AUTOSAVE_DELAY = 1700;
 
 const BillingForm = ({
     googleMapsApiKey,
@@ -64,11 +72,82 @@ const BillingForm = ({
     methodId,
     isFloatingLabelEnabled,
     updateAddress,
+    updateCheckout,
     onUnhandledError,
+    billingAutosaveDelay = BILLING_AUTOSAVE_DELAY,
 }: BillingFormProps & WithLanguageProps & FormikProps<BillingFormValues>) => {
     const [isResettingAddress, setIsResettingAddress] = useState(false);
+    const [isUpdatingBillingData, setIsUpdatingBillingData] = useState(false);
     const addressFormRef: RefObject<HTMLFieldSetElement> = useRef(null);
     const { isPayPalFastlaneEnabled, paypalFastlaneAddresses } = usePayPalFastlaneAddress();
+
+    // Create debounced update function
+    const debouncedUpdateBillingData = useCallback(
+        debounce(
+            async (address: Address, orderComment?: string) => {
+                try {
+                    const promises: Array<Promise<CheckoutSelectors>> = [];
+                    
+                    if (address && billingAddress && !isEqualAddress(address, billingAddress)) {
+                        promises.push(updateAddress(address));
+                    }
+
+                    if (updateCheckout && orderComment !== undefined && orderComment !== values.orderComment) {
+                        promises.push(updateCheckout({ customerMessage: orderComment }));
+                    }
+
+                    if (promises.length > 0) {
+                        await Promise.all(promises);
+                    }
+                } catch (error) {
+                    if (error instanceof Error) {
+                        onUnhandledError(error);
+                    }
+                } finally {
+                    setIsUpdatingBillingData(false);
+                }
+            },
+            billingAutosaveDelay,
+        ),
+        [billingAddress, updateAddress, updateCheckout, onUnhandledError, billingAutosaveDelay, values.orderComment],
+    );
+
+    // Handle field changes for auto-save
+    const handleFieldChange = useCallback(
+        async (fieldName: string, value: string | string[]) => {
+            // Update the form field
+            setFieldValue(fieldName, value);
+
+            // Wait for Formik to process the change
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            // Skip order comment field for now - handle in form submission
+            if (fieldName === 'orderComment') {
+                return;
+            }
+
+            // Check if the form is valid before auto-saving address
+            const addressForm = { ...values };
+            const { orderComment, ...addressFormValues } = addressForm; // Remove order comment from address form
+
+            const updatedAddress = mapAddressFromFormValues(addressFormValues);
+            
+            if (updatedAddress && billingAddress && !isEqualAddress(updatedAddress, billingAddress)) {
+                setIsUpdatingBillingData(true);
+                debouncedUpdateBillingData(updatedAddress, values.orderComment);
+            }
+        },
+        [setFieldValue, values, billingAddress, debouncedUpdateBillingData],
+    );
+
+
+
+    // Cleanup debounced function on unmount
+    useEffect(() => {
+        return () => {
+            debouncedUpdateBillingData.cancel();
+        };
+    }, [debouncedUpdateBillingData]);
 
     const shouldRenderStaticAddress = methodId === 'amazonpay';
     const allFormFields = getFields(values.countryCode);
@@ -139,6 +218,7 @@ const BillingForm = ({
                             googleMapsApiKey={googleMapsApiKey}
                             isFloatingLabelEnabled={isFloatingLabelEnabled}
                             setFieldValue={setFieldValue}
+                            onChange={handleFieldChange}
                             shouldShowSaveAddress={!isGuest}
                         />
                     </AddressFormSkeleton>
@@ -149,9 +229,9 @@ const BillingForm = ({
 
             <div className="form-actions">
                 <Button
-                    disabled={isUpdating || isResettingAddress}
+                    disabled={isUpdating || isResettingAddress || isUpdatingBillingData}
                     id="checkout-billing-continue"
-                    isLoading={isUpdating || isResettingAddress}
+                    isLoading={isUpdating || isResettingAddress || isUpdatingBillingData}
                     type="submit"
                     variant={ButtonVariant.Primary}
                 >

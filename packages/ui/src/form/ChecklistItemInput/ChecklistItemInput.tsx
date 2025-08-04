@@ -11,6 +11,7 @@ const ChecklistItemInput: FunctionComponent<ChecklistItemInputProps> = ({
     id,
     isSelected,
     children,
+    onChange,
     ...props
 }) => (
     <>
@@ -20,6 +21,7 @@ const ChecklistItemInput: FunctionComponent<ChecklistItemInputProps> = ({
             className="form-checklist-checkbox optimizedCheckout-form-checklist-checkbox"
             id={id}
             type="radio"
+            onChange={onChange}
         />
 
         <Label htmlFor={id}>{children}</Label>

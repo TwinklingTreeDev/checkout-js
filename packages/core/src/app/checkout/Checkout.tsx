@@ -42,6 +42,7 @@ import { ExtensionRegionSummaryAfter } from '../order';
 import { PromotionBannerList } from '../promotion';
 import { hasSelectedShippingOptions, isUsingMultiShipping, StaticConsignment } from '../shipping';
 import { ShippingOptionExpiredError } from '../shipping/shippingOption';
+import { isEqualAddress } from '../address';
 import { LazyContainer, LoadingNotification, LoadingOverlay } from '../ui/loading';
 import { MobileView } from '../ui/responsive';
 
@@ -148,6 +149,8 @@ export interface WithCheckoutProps {
     loadCheckout(id: string, options?: RequestOptions<CheckoutParams>): Promise<CheckoutSelectors>;
     loadPaymentMethodByIds(methodIds: string[]): Promise<CheckoutSelectors>;
     subscribeToConsignments(subscriber: (state: CheckoutSelectors) => void): () => void;
+    selectShippingOption(consignmentId: string, optionId: string): Promise<CheckoutSelectors>;
+    isSelectingShippingOption(consignmentId?: string): boolean;
 }
 
 class Checkout extends Component<
@@ -267,8 +270,30 @@ class Checkout extends Component<
                 hasMultiShippingEnabled &&
                 isUsingMultiShipping(consignments, cart.lineItems);
 
+            // Determine if billing should default to same as shipping based on actual addresses
+            const billingAddress = data.getBillingAddress();
+            const shippingAddress = data.getConsignments()?.[0]?.shippingAddress;
+            
+            // Check if user has a saved preference in session storage
+            let savedPreference: boolean | null = null;
+            try {
+                const saved = sessionStorage.getItem('billingSameAsShipping');
+                if (saved !== null) {
+                    savedPreference = saved === 'true';
+                }
+            } catch (error) {
+                // Ignore session storage errors
+            }
+            
+            // Use saved preference if available, otherwise determine based on addresses
+            const shouldDefaultToSameAsShipping = savedPreference !== null
+                ? savedPreference
+                : billingAddress && shippingAddress 
+                    ? isEqualAddress(billingAddress, shippingAddress)
+                    : checkoutBillingSameAsShippingEnabled;
+
             this.setState({
-                isBillingSameAsShipping: checkoutBillingSameAsShippingEnabled,
+                isBillingSameAsShipping: shouldDefaultToSameAsShipping,
                 isHidingStepNumbers: removeStepNumbersFlag,
                 isSubscribed: defaultNewsletterSignupOption,
             });
@@ -480,7 +505,7 @@ class Checkout extends Component<
     }
 
     private renderBillingStep(step: CheckoutStepStatus): ReactNode {
-        const { billingAddress } = this.props;
+        const { billingAddress, consignments, selectShippingOption, isSelectingShippingOption } = this.props;
         const { isBillingSameAsShipping  } = this.state;
 
         return (
@@ -493,6 +518,9 @@ class Checkout extends Component<
                 isBillingSameAsShipping={isBillingSameAsShipping}
                 onBillingSameAsShippingChange={this.handleBillingSameAsShipping}
                 summary={billingAddress && <StaticBillingAddress address={billingAddress} />}
+                consignments={consignments}
+                selectShippingOption={selectShippingOption}
+                isSelectingShippingOption={isSelectingShippingOption}
             >
                 <LazyContainer loadingSkeleton={<AddressFormSkeleton />}>
                     <Billing
@@ -534,6 +562,73 @@ class Checkout extends Component<
                         onUnhandledError={this.handleUnhandledError}
                     />
                 </LazyContainer>
+
+
+                <div className="tt-reviews-mobile-container">
+                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews">
+                        <div className="jsx-e2877bf7fac87b3a">
+                            <div><h2>What Happy Customers are Saying</h2></div>
+                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews-summary"><span
+                                    className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/trustpilot.png?t=1738245201"
+                                        className="jsx-e2877bf7fac87b3a trustpilotImg"/></span>
+                                <p className="jsx-e2877bf7fac87b3a inStoreReviews">And more than 3,000 in store reviews</p>
+                            </div>
+                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-box">
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-header">
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-buyer">
+                                        <h2 className="jsx-e2877bf7fac87b3a buyerName">Christina Z.,</h2>
+                                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-place">Dallas, TX</div>
+                                        <span className="jsx-e2877bf7fac87b3a twinkling-tree-review-verified">Verified Buyer</span>
+                                    </div>
+                                </div>
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
+                                <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">After my Fairy Light Spirit tree arrived I absolutely
+                                    fell in LOVE with it! I couldn’t help myself and ordered 3 more!</p>
+                            </div>
+                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-box">
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-header">
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-buyer">
+                                        <h2 className="jsx-e2877bf7fac87b3a buyerName">Brittany M,</h2>
+                                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-place">Miami, FL</div>
+                                        <span className="jsx-e2877bf7fac87b3a twinkling-tree-review-verified">Verified Buyer</span>
+                                    </div>
+                                </div>
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/></div>
+                                <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">TwinklingTree is my go to store for home decor! All
+                                    their pieces are so stunning and unique! I don’t miss shopping in stores at all. This is as easy as it
+                                    comes. Check out online and receive a beautiful statement piece at your doorstep!</p>
+                            </div>
+                            <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-box">
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-header">
+                                    <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-buyer">
+                                        <h2 className="jsx-e2877bf7fac87b3a buyerName">Katy B.,</h2>
+                                        <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-place">London, UK</div>
+                                        <span className="jsx-e2877bf7fac87b3a twinkling-tree-review-verified">Verified Buyer</span>
+                                    </div>
+                                </div>
+                                <div className="jsx-e2877bf7fac87b3a twinkling-tree-review-rating"><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/><img alt="star-icon"
+                                        src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/star.png" className="jsx-e2877bf7fac87b3a twinkling-tree-star-icon"/>
+                                </div>
+                                <p className="jsx-e2877bf7fac87b3a twinkling-tree-review">This was my first time buying home decor from
+                                    Facebook, and customer service came to the rescue. 10/10 service!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div className="all-rights-reserved">TwinklingTree, all rights reserved.</div>
             </CheckoutStep>
@@ -765,6 +860,14 @@ class Checkout extends Component<
         isBillingSameAsShipping,
     ) => {
         this.setState({ isBillingSameAsShipping });
+        
+        // Save user preference to session storage for persistence across page reloads
+        try {
+            sessionStorage.setItem('billingSameAsShipping', isBillingSameAsShipping.toString());
+        } catch (error) {
+            // Ignore session storage errors (e.g., in private browsing)
+            console.warn('Could not save billing preference to session storage:', error);
+        }
     };
 
     private handleShippingSignIn: () => void = () => {

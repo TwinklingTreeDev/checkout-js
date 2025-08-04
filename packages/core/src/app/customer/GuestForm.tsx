@@ -1,6 +1,7 @@
 import classNames from 'classnames';
+import { debounce } from 'lodash';
 import { FieldProps, FormikProps, withFormik } from 'formik';
-import React, { FunctionComponent, memo, ReactNode, useCallback } from 'react';
+import React, { FunctionComponent, memo, ReactNode, useCallback, useState, useEffect } from 'react';
 import { object, string } from 'yup';
 
 import { TranslatedString, withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
@@ -32,15 +33,21 @@ export interface GuestFormProps {
     privacyPolicyUrl?: string;
     isExpressPrivacyPolicy: boolean;
     isFloatingLabelEnabled?: boolean;
+    guestAutosaveDelay?: number;
     onChangeEmail(email: string): void;
     onContinueAsGuest(data: GuestFormValues): void;
     onShowLogin(): void;
+    updateCheckout?(payload: any): Promise<any>;
+    onUnhandledError?(error: Error): void;
 }
 
 export interface GuestFormValues {
     email: string;
     shouldSubscribe: boolean;
 }
+
+// Auto-save delay constant (same as other sections)
+export const GUEST_AUTOSAVE_DELAY = 1700;
 
 const GuestForm: FunctionComponent<
     GuestFormProps & WithLanguageProps & FormikProps<GuestFormValues>
@@ -55,7 +62,76 @@ const GuestForm: FunctionComponent<
     requiresMarketingConsent,
     isExpressPrivacyPolicy,
     isFloatingLabelEnabled,
+    guestAutosaveDelay = GUEST_AUTOSAVE_DELAY,
+    updateCheckout,
+    onUnhandledError,
+    values,
+    setFieldValue,
 }) => {
+    const [isUpdatingGuestData, setIsUpdatingGuestData] = useState(false);
+
+    // Create debounced update function
+    const debouncedUpdateGuestData = useCallback(
+        debounce(
+            async (email: string, shouldSubscribe: boolean) => {
+                try {
+                    if (updateCheckout) {
+                        await updateCheckout({ 
+                            customerMessage: '', // Keep existing customer message
+                            email,
+                            shouldSubscribe 
+                        });
+                    }
+                } catch (error) {
+                    if (error instanceof Error && onUnhandledError) {
+                        onUnhandledError(error);
+                    }
+                } finally {
+                    setIsUpdatingGuestData(false);
+                }
+            },
+            guestAutosaveDelay,
+        ),
+        [updateCheckout, onUnhandledError, guestAutosaveDelay],
+    );
+
+    // Handle field changes for auto-save
+    const handleFieldChange = useCallback(
+        async (fieldName: string, value: string | boolean) => {
+            // Update the form field
+            setFieldValue(fieldName, value);
+
+            // Wait for Formik to process the change
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            // Handle email changes
+            if (fieldName === 'email' && typeof value === 'string') {
+                onChangeEmail(value);
+                
+                if (updateCheckout && value !== values.email) {
+                    setIsUpdatingGuestData(true);
+                    debouncedUpdateGuestData(value, values.shouldSubscribe);
+                }
+            }
+
+            // Handle subscription changes
+            if (fieldName === 'shouldSubscribe' && typeof value === 'boolean') {
+                if (updateCheckout && value !== values.shouldSubscribe) {
+                    setIsUpdatingGuestData(true);
+                    debouncedUpdateGuestData(values.email, value);
+                }
+            }
+        },
+        [setFieldValue, values, onChangeEmail, updateCheckout, debouncedUpdateGuestData],
+    );
+
+    // Cleanup debounced function on unmount
+    useEffect(() => {
+        return () => {
+            debouncedUpdateGuestData.cancel();
+        };
+    }, [debouncedUpdateGuestData]);
+
     const renderField = useCallback(
         (fieldProps: FieldProps<boolean>) => (
             <SubscribeField {...fieldProps} requiresMarketingConsent={requiresMarketingConsent} />
@@ -78,7 +154,10 @@ const GuestForm: FunctionComponent<
             >
                 <div className="customerEmail-container">
                     <div className="customerEmail-body">
-                        <EmailField isFloatingLabelEnabled={isFloatingLabelEnabled} onChange={onChangeEmail}/>
+                        <EmailField 
+                            isFloatingLabelEnabled={isFloatingLabelEnabled} 
+                            onChange={(email) => handleFieldChange('email', email)}
+                        />
 
                         {(canSubscribe || requiresMarketingConsent) && (
                             <BasicFormField name="shouldSubscribe" render={renderField} />
@@ -93,37 +172,40 @@ const GuestForm: FunctionComponent<
                         <Button
                             className="customerEmail-button"
                             id="checkout-customer-continue"
-                            isLoading={isLoading}
+                            isLoading={isLoading || isUpdatingGuestData}
                             testId="customer-continue-as-guest-button"
                             type="submit"
                             variant={ButtonVariant.Primary}
                         >
                             <TranslatedString id={continueAsGuestButtonLabelId} />
                         </Button>
-                    </div>
-                </div>
 
-                {privacyPolicyUrl && (
-                    <PrivacyPolicyField isExpressPrivacyPolicy={isExpressPrivacyPolicy} url={privacyPolicyUrl} />
-                )}
-
-                {!isLoading && (
-                    <p>
-                        <TranslatedString id="customer.login_text" />{' '}
-                        <a
-                            data-test="customer-continue-button"
-                            id="checkout-customer-login"
+                        <Button
+                            className="customerEmail-button"
+                            id="checkout-customer-signin"
                             onClick={onShowLogin}
-                            role="button"
-                            tabIndex={0}
+                            testId="customer-signin-link"
+                            type="button"
+                            variant={ButtonVariant.Secondary}
                         >
-                            <TranslatedString id="customer.login_action" />
-                        </a>
-                    </p>
-                )}
+                            <TranslatedString id="customer.sign_in_text" />
+                        </Button>
+                    </div>
 
-                {checkoutButtons}
+                    {checkoutButtons && (
+                        <div className="customerEmail-checkoutButtons">
+                            {checkoutButtons}
+                        </div>
+                    )}
+                </div>
             </Fieldset>
+
+            {privacyPolicyUrl && (
+                <PrivacyPolicyField
+                    isExpressPrivacyPolicy={isExpressPrivacyPolicy}
+                    url={privacyPolicyUrl}
+                />
+            )}
         </Form>
     );
 };

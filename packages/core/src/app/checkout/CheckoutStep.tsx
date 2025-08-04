@@ -3,6 +3,9 @@ import { noop } from 'lodash';
 import React, { Component, createRef, ReactNode } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
+import { Consignment, ShippingOption } from '@bigcommerce/checkout-sdk';
+import { ShopperCurrency } from '../currency';
+
 import { isMobileView, MobileView } from '../ui/responsive';
 
 import CheckoutStepHeader from './CheckoutStepHeader';
@@ -21,11 +24,48 @@ export interface CheckoutStepProps {
     onEdit?(step: CheckoutStepType): void;
     isBillingSameAsShipping?: boolean;
     onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
+    consignments?: Consignment[];
+    selectShippingOption?(consignmentId: string, optionId: string): Promise<any>;
+    isSelectingShippingOption?(consignmentId?: string): boolean;
 }
+
+// Simple shipping option component that doesn't require Formik
+const SimpleShippingOption: React.FC<{
+    shippingOption: ShippingOption;
+    isSelected: boolean;
+    onSelect: () => void;
+    isLoading?: boolean;
+}> = ({ shippingOption, isSelected, onSelect, isLoading }) => (
+    <div 
+        className={`shipping-method-options ${isSelected ? 'selected' : ''} ${isLoading ? 'loading' : ''}`}
+        onClick={() => !isLoading && onSelect()}
+        style={{ cursor: isLoading ? 'not-allowed' : 'pointer' }}
+    >
+        <div className="icon">
+            {isSelected ? (
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" strokeWidth="7"/>
+                </svg>
+            ) : (
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="9" stroke="#D9D9D9" strokeWidth="2" fill="white"/>
+                </svg>
+            )}
+        </div>
+        <div className='shipping-method-title'>
+            {shippingOption.description === "Free Shipping" ? "Tracked & Insured" : shippingOption.description}
+        </div>
+        <span className='shipping-method-price'>
+            {shippingOption.cost === 0 ? "Free" : <ShopperCurrency amount={shippingOption.cost} />}
+        </span>
+    </div>
+);
 
 export interface CheckoutStepState {
     isClosed: boolean;
 }
+
+
 
 export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutStepState> {
     state = {
@@ -66,8 +106,21 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
     }
 
     render(): ReactNode {
-        const { heading, isActive, isComplete, isEditable, onEdit, suggestion, summary, type, isBillingSameAsShipping, onBillingSameAsShippingChange } =
-            this.props;
+        const { 
+            heading, 
+            isActive, 
+            isComplete, 
+            isEditable, 
+            onEdit, 
+            suggestion, 
+            summary, 
+            type, 
+            isBillingSameAsShipping, 
+            onBillingSameAsShippingChange, 
+            consignments,
+            selectShippingOption,
+            isSelectingShippingOption
+        } = this.props;
 
         const { isClosed } = this.state;
 
@@ -132,7 +185,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                     }
                     {(type != 'billing') && this.renderContent()}
                 </div>
-                {(type == 'billing') && (
+                {(type == 'billing') && consignments && consignments.length > 0 && (
                     <div className="shipping-method-custom-container">
                         <div className="checkout-view-header shipping-method-custom">
                             <div className="stepHeader is-readonly">
@@ -141,15 +194,50 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                 </div>
                             </div>
                         </div>
-                        <div className="shipping-method-options">
-                            <div className="icon">
-                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" stroke-width="7"/>
-                            </svg>
-                            </div>
-                            <div className='shipping-method-title'>Tracked & Insured</div>
-                            <span className='shipping-method-price'>Free</span>
-                        </div>
+                        {(() => {
+                            if (!consignments || consignments.length === 0) {
+                                return (
+                                    <div className="shipping-method-options">
+                                        <div className="icon">
+                                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" strokeWidth="7"/>
+                                            </svg>
+                                        </div>
+                                        <div className='shipping-method-title'>No shipping method selected</div>
+                                        <span className='shipping-method-price'>-</span>
+                                    </div>
+                                );
+                            }
+
+                            // Render shipping options for each consignment using simple component
+                            return consignments.map((consignment) => {
+                                const availableOptions = consignment.availableShippingOptions || [];
+                                const selectedOption = consignment.selectedShippingOption;
+                                
+                                if (availableOptions.length === 0) {
+                                    return null;
+                                }
+
+                                return (
+                                    <div key={consignment.id} className="shippingOptions-container form-fieldset">
+                                        {availableOptions.map((shippingOption) => {
+                                            const isSelected = selectedOption?.id === shippingOption.id;
+                                            const isLoading = isSelectingShippingOption?.(consignment.id) || false;
+                                            
+                                            return (
+                                                <SimpleShippingOption
+                                                    key={`${consignment.id}-${shippingOption.id}`}
+                                                    shippingOption={shippingOption}
+                                                    isSelected={isSelected}
+                                                    onSelect={() => selectShippingOption?.(consignment.id, shippingOption.id)}
+                                                    isLoading={isLoading}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            }).filter(Boolean);
+                        })()}
                     </div>
                 )}
             </li>

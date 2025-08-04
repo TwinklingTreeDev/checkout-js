@@ -96,6 +96,7 @@ export interface WithCheckoutCustomerProps {
     sendLoginEmail(params: { email: string }): Promise<CheckoutSelectors>;
     signIn(credentials: CustomerCredentials): Promise<CheckoutSelectors>;
     createAccount(values: CustomerAccountRequestBody): Promise<CheckoutSelectors>;
+    updateCheckout(payload: any): Promise<CheckoutSelectors>;
     shouldRenderStripeForm: boolean;
 }
 
@@ -241,6 +242,8 @@ class Customer extends Component<CustomerProps & WithCheckoutCustomerProps & Ana
                 onShowLogin={this.handleShowLogin}
                 privacyPolicyUrl={privacyPolicyUrl}
                 requiresMarketingConsent={requiresMarketingConsent}
+                updateCheckout={this.props.updateCheckout}
+                onUnhandledError={this.props.onUnhandledError}
             />
         );
     }
@@ -625,6 +628,7 @@ export function mapToWithCheckoutCustomerProps({
         requiresMarketingConsent,
         signIn: checkoutService.signInCustomer,
         signInError: getSignInError(),
+        updateCheckout: checkoutService.updateCheckout,
         isFloatingLabelEnabled: isFloatingLabelEnabled(config.checkoutSettings),
         isExpressPrivacyPolicy,
         isPaymentDataRequired: isPaymentDataRequired(),

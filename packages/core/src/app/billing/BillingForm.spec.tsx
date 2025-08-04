@@ -51,7 +51,6 @@ describe('BillingForm Component', () => {
             onUnhandledError: jest.fn(),
             updateAddress: jest.fn(),
             onSubmit: jest.fn(),
-            shouldValidateSafeInput: true,
         };
     });
 
@@ -200,5 +199,34 @@ describe('BillingForm Component', () => {
                 addresses: paypalFastlaneAddresses,
             }),
         );
+    });
+
+    it('supports auto-save functionality with debounced updates', async () => {
+        const mockUpdateAddress = jest.fn().mockResolvedValue({});
+        const mockUpdateCheckout = jest.fn().mockResolvedValue({});
+        
+        defaultProps = {
+            ...defaultProps,
+            updateAddress: mockUpdateAddress,
+            updateCheckout: mockUpdateCheckout,
+        };
+
+        component = mount(
+            <CheckoutProvider checkoutService={checkoutService}>
+                <LocaleContext.Provider value={localeContext}>
+                    <BillingForm {...defaultProps} />
+                </LocaleContext.Provider>
+            </CheckoutProvider>
+        );
+
+        // Simulate a field change that should trigger auto-save
+        const firstNameInput = component.find('input#firstNameInput');
+        firstNameInput.simulate('change', { target: { value: 'New Name', name: 'firstName' } });
+
+        // Wait for debounce delay
+        await new Promise((resolve) => setTimeout(resolve, 1800));
+
+        // Verify that updateAddress was called (auto-save triggered)
+        expect(mockUpdateAddress).toHaveBeenCalled();
     });
 });

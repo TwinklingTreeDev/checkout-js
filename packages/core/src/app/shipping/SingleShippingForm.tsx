@@ -211,7 +211,13 @@ class SingleShippingForm extends PureComponent<
 
                             <BillingSameAsShippingField 
                                 isBillingSameAsShipping={isBillingSameAsShipping}
-                                onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
+                                onCheckBillingSameAsShipping={(value) => {
+                                    // Call the original callback
+                                    onCheckBillingSameAsShipping(value);
+                                    
+                                    // Auto-save the billing same as shipping preference
+                                    // This will be handled by the parent component's handleBillingSameAsShipping
+                                }}
                             />
                         </div>
                     )}

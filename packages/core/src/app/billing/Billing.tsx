@@ -75,6 +75,7 @@ class Billing extends Component<BillingProps & WithCheckoutBillingProps> {
                         {...props}
                         onSubmit={this.handleSubmit}
                         updateAddress={updateAddress}
+                        updateCheckout={this.props.updateCheckout}
                     />
                 </div>
             </AddressFormSkeleton>

@@ -220,4 +220,31 @@ describe('GuestForm', () => {
             'Continue as guest',
         );
     });
+
+    it('supports auto-save functionality with debounced updates', async () => {
+        const mockUpdateCheckout = jest.fn().mockResolvedValue({});
+        const mockOnUnhandledError = jest.fn();
+        
+        const component = mount(
+            <TestComponent 
+                updateCheckout={mockUpdateCheckout}
+                onUnhandledError={mockOnUnhandledError}
+                email="test@bigcommerce.com"
+            />
+        );
+
+        // Simulate an email change that should trigger auto-save
+        const emailInput = component.find('input[name="email"]');
+        emailInput.simulate('change', { target: { value: 'newemail@bigcommerce.com', name: 'email' } });
+
+        // Wait for debounce delay
+        await new Promise((resolve) => setTimeout(resolve, 1800));
+
+        // Verify that updateCheckout was called (auto-save triggered)
+        expect(mockUpdateCheckout).toHaveBeenCalledWith({
+            customerMessage: '',
+            email: 'newemail@bigcommerce.com',
+            shouldSubscribe: false
+        });
+    });
 });
