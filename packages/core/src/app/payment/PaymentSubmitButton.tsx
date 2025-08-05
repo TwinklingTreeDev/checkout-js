@@ -14,8 +14,6 @@ interface PaymentSubmitButtonTextProps {
     methodType?: string;
     methodName?: string;
     initialisationStrategyType?: string;
-    brandName?: string;
-    isComplete?: boolean;
     isPaymentDataRequired?: boolean;
 }
 
@@ -28,8 +26,6 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
         methodType,
         methodGateway,
         initialisationStrategyType,
-        brandName,
-        isComplete,
         isPaymentDataRequired,
     }) => {
         if (!isPaymentDataRequired) {
@@ -73,38 +69,18 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
             methodType === PaymentMethodType.PaypalVenmo ||
             methodId === PaymentMethodId.BraintreeVenmo
         ) {
-            return <TranslatedString id="payment.paypal_venmo_continue_action" />;
+            // Always show "Complete Order" for PayPal Venmo instead of PayPal-specific text
+            return <TranslatedString id="payment.place_order_action" />;
         }
 
         if (methodType === PaymentMethodType.Paypal) {
-            const continueActionId = methodId === PaymentMethodId.PaypalCommerce
-                ? 'payment.place_order_action'
-                : 'payment.paypal_continue_action';
-
-            return <TranslatedString
-                data={{ isComplete }}
-                id={isComplete ? 'payment.paypal_complete_action' : continueActionId}
-            />;
+            // Always show "Complete Order" for PayPal instead of "Continue with PayPal"
+            return <TranslatedString id="payment.place_order_action" />;
         }
 
         if (methodType === PaymentMethodType.PaypalCredit) {
-            const continueTranslationId = brandName
-                ? 'payment.continue_with_brand'
-                : 'payment.paypal_pay_later_continue_action'
-            const completeTranslationId = brandName
-                ? 'payment.complete_with_brand'
-                : 'payment.paypal_pay_later_complete_action'
-
-            return (
-                <TranslatedString
-                    data={{ brandName, isComplete, continueTranslationId, completeTranslationId }}
-                    id={
-                        isComplete
-                            ? completeTranslationId
-                            : continueTranslationId
-                    }
-                />
-            );
+            // Always show "Complete Order" for PayPal Credit instead of PayPal-specific text
+            return <TranslatedString id="payment.place_order_action" />;
         }
 
         if (methodId === PaymentMethodId.Opy) {
@@ -134,8 +110,6 @@ export interface PaymentSubmitButtonProps {
     methodType?: string;
     isDisabled?: boolean;
     initialisationStrategyType?: string;
-    brandName?: string;
-    isComplete?: boolean;
     isPaymentDataRequired?: boolean;
 }
 
@@ -156,8 +130,6 @@ const PaymentSubmitButton: FunctionComponent<
     methodName,
     methodType,
     initialisationStrategyType,
-    brandName,
-    isComplete,
 }) => (
     <Button
         className={
@@ -182,9 +154,7 @@ const PaymentSubmitButton: FunctionComponent<
         </svg>
 
         <PaymentSubmitButtonText
-            brandName={brandName}
             initialisationStrategyType={initialisationStrategyType}
-            isComplete={isComplete}
             isPaymentDataRequired={isPaymentDataRequired}
             methodGateway={methodGateway}
             methodId={methodId}

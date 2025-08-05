@@ -76,7 +76,7 @@ function getPaymentMethodTitle(
             },
             [PaymentMethodId.PaypalCommerce]: {
                 logoUrl: cdnPath('/img/payment-providers/paypal_commerce_logo.svg'),
-                titleText: '',
+                titleText: language.translate('payment.paypal_name_text'),
             },
             [PaymentMethodId.PaypalCommerceCredit]: {
                 logoUrl: cdnPath('/img/payment-providers/paypal_commerce_logo_letter.svg'),
@@ -85,7 +85,7 @@ function getPaymentMethodTitle(
             },
             [PaymentMethodId.PaypalCommerceAlternativeMethod]: {
                 logoUrl: method.logoUrl || '',
-                titleText: method.logoUrl ? '' : methodDisplayName,
+                titleText: language.translate('payment.paypal_name_text'),
             },
             [PaymentMethodType.VisaCheckout]: {
                 logoUrl: cdnPath('/img/payment-providers/visa-checkout.png'),
@@ -159,7 +159,7 @@ function getPaymentMethodTitle(
                     method.id === PaymentMethodId.BraintreeVenmo && method.logoUrl
                         ? method.logoUrl
                         : cdnPath('/img/payment-providers/paypalpaymentsprouk.png'),
-                titleText: '',
+                titleText: language.translate('payment.paypal_name_text'),
             },
             [PaymentMethodId.Quadpay]: {
                 logoUrl: cdnPath('/img/payment-providers/quadpay.png'),
@@ -330,20 +330,13 @@ const PaymentMethodTitle: FunctionComponent<
                 className="paymentProviderHeader-nameContainer"
                 data-test={`payment-method-${method.id}`}
             >
-                {logoUrl && (
-                    <img
-                        alt={methodName}
-                        className="paymentProviderHeader-img"
-                        data-test="payment-method-logo"
-                        src={logoUrl}
-                    />
-                )}
-
-                {titleText && (
-                    <div aria-level={6} className="paymentProviderHeader-name" data-test="payment-method-name" role="heading">
-                        {titleText == 'Checkout.com' ? 'Credit Card' : titleText}
-                    </div>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    {titleText && (
+                        <div aria-level={6} className="paymentProviderHeader-name" data-test="payment-method-name" role="heading">
+                            {titleText == 'Checkout.com' ? 'Credit Card' : titleText}
+                        </div>
+                    )}
+                </div>
 
                 {getSubtitle()}
             </div>
@@ -352,6 +345,14 @@ const PaymentMethodTitle: FunctionComponent<
                     cardTypes={compact(method.supportedCards.map(mapFromPaymentMethodCardType))}
                     selectedCardType={getSelectedCardType()}
                 />
+                {logoUrl && (
+                    <img
+                        alt={methodName}
+                        className="paymentProviderHeader-img"
+                        data-test="payment-method-logo"
+                        src={logoUrl}
+                    />
+                )}
             </div>
         </div>
     );

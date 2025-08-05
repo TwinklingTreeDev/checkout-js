@@ -94,17 +94,6 @@ const PaymentForm: FunctionComponent<
         }
     }, [selectedMethod]);
 
-    const brandName = useMemo(() => {
-        if (!selectedMethod) {
-            return;
-        }
-
-        return (
-            selectedMethod.initializationData?.payPalCreditProductBrandName?.credit ||
-            selectedMethod.initializationData?.payPalCreditProductBrandName
-        );
-    }, [selectedMethod]);
-
     if (shouldExecuteSpamCheck) {
         return (
             <SpamProtectionField
@@ -146,17 +135,36 @@ const PaymentForm: FunctionComponent<
                     termsConditionsUrl={termsConditionsUrl}
                 />
             )}
+            {/* Discount Offer Section */}
+            <div className="discount-offer-section" style={{ marginTop: '20px', padding: '9px'}}>
+                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                    <input
+                        type="checkbox"
+                        id="discount-offer"
+                        style={{ marginRight: '20px', marginTop: '4px', transform: 'scale(2.5)' }}
+                    />
+                    <div>
+                        <div style={{ color: '#292929', fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' }}>
+                            Get 25% OFF on Your Next Order
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style={{ fontSize: '14px', color: '#292929', lineHeight: '1.4', marginBottom: '8px' }}>
+                Want exclusive deals? Check this box to receive the best offers to your phone. You can reply STOP to cancel or HELP for help. Msg frequency varies. Msg & data rates may apply.
+                 See <a href="#" style={{ textDecoration: 'underline', color: '#000', marginRight: '4px' }}>Terms</a>
+                &amp;
+                <a href="#" style={{ textDecoration: 'underline', color: '#000', marginLeft: '4px' }}>Privacy</a>
+            </div>
 
             <div className="form-actions">
                 {shouldHidePaymentSubmitButton ? (
                     <PaymentMethodSubmitButtonContainer />
                 ) : (
                     <PaymentSubmitButton
-                        brandName={brandName}
                         initialisationStrategyType={
                             selectedMethod && selectedMethod.initializationStrategy?.type
                         }
-                        isComplete={!!selectedMethod?.initializationData?.isComplete}
                         isDisabled={shouldDisableSubmit}
                         methodGateway={selectedMethod && selectedMethod.gateway}
                         methodId={selectedMethodId}

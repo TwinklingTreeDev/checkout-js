@@ -55,7 +55,9 @@ const CheckoutButtonContainer: FunctionComponent<CheckoutButtonContainerProps & 
 
     const renderButtons = () => availableMethodIds.map((methodId) => {
         if (isPaymentStepActive && isPayPalCommerce(methodId)) {
-            return null;
+            //return null;
+            console.log('isPaymentStepActive', isPaymentStepActive);
+            console.log('methodId', methodId);
         }
 
         const ResolvedCheckoutButton = resolveCheckoutButton({ id: methodId });
@@ -96,7 +98,7 @@ const CheckoutButtonContainer: FunctionComponent<CheckoutButtonContainerProps & 
                     </div>
                 </WalletButtonsContainerSkeleton>
             </div>
-            <div className='checkout-separator'><span><TranslatedString id='remote.or_text' /></span></div>
+            <div className='checkout-separator'><span>Or</span></div>
         </div>
     );
 };
