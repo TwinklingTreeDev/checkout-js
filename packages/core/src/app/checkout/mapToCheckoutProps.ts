@@ -64,5 +64,8 @@ export default function mapToCheckoutProps({
             checkoutState,
         }),
         steps: data.getCheckout() ? getCheckoutStepStatuses(checkoutState) : EMPTY_ARRAY,
+        // Discount-related props
+        checkoutService,
+        checkoutState,
     };
 }

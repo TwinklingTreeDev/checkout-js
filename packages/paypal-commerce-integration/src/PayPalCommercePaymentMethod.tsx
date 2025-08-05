@@ -10,7 +10,6 @@ import {
     PaymentMethodResolveId,
     toResolvableComponent,
 } from '@bigcommerce/checkout/payment-integration-api';
-import { LoadingOverlay } from '@bigcommerce/checkout/ui';
 
 import PayPalCommercePaymentMethodComponent from './components/PayPalCommercePaymentMethodComponent';
 import usePaypalCommerceInstrument from './hooks/usePaypalCommerceInstruments';
@@ -19,7 +18,6 @@ const PayPalCommercePaymentMethod: FunctionComponent<PaymentMethodProps> = (prop
     const {
         checkoutState: {
             data: { isPaymentDataRequired, getCustomer, getInstruments },
-            statuses: { isLoadingInstruments, isLoadingPaymentMethod },
         },
         method: {
             config: { isVaultingEnabled },
@@ -64,41 +62,38 @@ const PayPalCommercePaymentMethod: FunctionComponent<PaymentMethodProps> = (prop
         return null;
     }
 
-    const isLoading = isLoadingInstruments() || isLoadingPaymentMethod(method.id);
     const allInstruments = getInstruments() || [];
 
     return (
-        <LoadingOverlay hideContentWhenLoading isLoading={isLoading}>
-            <PayPalCommercePaymentMethodComponent
-                currentInstrument={currentInstrument}
-                providerOptionsKey="paypalcommerce"
-                shouldConfirmInstrument={shouldConfirmInstrument}
-                {...props}
-            >
-                {shouldShowInstrumentFieldset && (
-                    <AccountInstrumentFieldset
-                        instruments={trustedAccountInstruments}
-                        onSelectInstrument={handleSelectInstrument}
-                        onUseNewInstrument={handleUseNewInstrument}
-                        selectedInstrument={currentInstrument}
-                    />
-                )}
+        <PayPalCommercePaymentMethodComponent
+            currentInstrument={currentInstrument}
+            providerOptionsKey="paypalcommerce"
+            shouldConfirmInstrument={shouldConfirmInstrument}
+            {...props}
+        >
+            {shouldShowInstrumentFieldset && (
+                <AccountInstrumentFieldset
+                    instruments={trustedAccountInstruments}
+                    onSelectInstrument={handleSelectInstrument}
+                    onUseNewInstrument={handleUseNewInstrument}
+                    selectedInstrument={currentInstrument}
+                />
+            )}
 
-                {shouldConfirmInstrument && (
-                    <div>
-                        <TranslatedHtml id="payment.account_instrument_new_shipping_address" />
-                    </div>
-                )}
+            {shouldConfirmInstrument && (
+                <div>
+                    <TranslatedHtml id="payment.account_instrument_new_shipping_address" />
+                </div>
+            )}
 
-                {isInstrumentFeatureAvailable && (
-                    <StoreInstrumentFieldset
-                        instrumentId={currentInstrument?.bigpayToken}
-                        instruments={allInstruments}
-                        isAccountInstrument
-                    />
-                )}
-            </PayPalCommercePaymentMethodComponent>
-        </LoadingOverlay>
+            {isInstrumentFeatureAvailable && (
+                <StoreInstrumentFieldset
+                    instrumentId={currentInstrument?.bigpayToken}
+                    instruments={allInstruments}
+                    isAccountInstrument
+                />
+            )}
+        </PayPalCommercePaymentMethodComponent>
     );
 };
 

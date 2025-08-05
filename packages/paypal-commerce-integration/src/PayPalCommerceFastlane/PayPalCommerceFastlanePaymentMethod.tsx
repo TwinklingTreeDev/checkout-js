@@ -9,7 +9,7 @@ import {
     PaymentMethodResolveId,
     toResolvableComponent,
 } from '@bigcommerce/checkout/payment-integration-api';
-import { FormContext, LoadingOverlay } from '@bigcommerce/checkout/ui';
+import { FormContext } from '@bigcommerce/checkout/ui';
 
 import PayPalCommerceFastlaneForm from './components/PayPalCommerceFastlaneForm';
 
@@ -28,8 +28,6 @@ const PayPalCommerceFastlanePaymentMethod: FunctionComponent<PaymentMethodProps>
     paymentForm,
 }) => {
     const paypalCardComponentRef = useRef<PayPalFastlaneCardComponentRef>({});
-
-    const { isLoadingPaymentMethod, isInitializingPayment } = checkoutState.statuses;
 
     const initializePaymentOrThrow = async () => {
         try {
@@ -73,8 +71,6 @@ const PayPalCommerceFastlanePaymentMethod: FunctionComponent<PaymentMethodProps>
         };
     }, []);
 
-    const isLoading = isInitializingPayment() || isLoadingPaymentMethod(method.id);
-
     const formContextProps = {
         isSubmitted: paymentForm.isSubmitted(),
         setSubmitted: paymentForm.setSubmitted,
@@ -85,16 +81,14 @@ const PayPalCommerceFastlanePaymentMethod: FunctionComponent<PaymentMethodProps>
             <CheckoutContext.Provider value={{ checkoutState, checkoutService }}>
                 <LocaleProvider checkoutService={checkoutService}>
                     <PaymentFormContext.Provider value={{ paymentForm }}>
-                        <LoadingOverlay hideContentWhenLoading isLoading={isLoading}>
-                            <PayPalCommerceFastlaneForm
-                                renderPayPalCardComponent={
-                                    paypalCardComponentRef.current.renderPayPalCardComponent
-                                }
-                                showPayPalCardSelector={
-                                    paypalCardComponentRef.current.showPayPalCardSelector
-                                }
-                            />
-                        </LoadingOverlay>
+                        <PayPalCommerceFastlaneForm
+                            renderPayPalCardComponent={
+                                paypalCardComponentRef.current.renderPayPalCardComponent
+                            }
+                            showPayPalCardSelector={
+                                paypalCardComponentRef.current.showPayPalCardSelector
+                            }
+                        />
                     </PaymentFormContext.Provider>
                 </LocaleProvider>
             </CheckoutContext.Provider>

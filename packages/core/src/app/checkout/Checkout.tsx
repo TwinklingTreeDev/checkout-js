@@ -17,6 +17,7 @@ import React, { Component, lazy, ReactNode } from 'react';
 
 import { AnalyticsContextProps } from '@bigcommerce/checkout/analytics';
 import { ExtensionContextProps, withExtension } from '@bigcommerce/checkout/checkout-extension';
+import { CheckoutContextProps } from '@bigcommerce/checkout/payment-integration-api';
 import { ErrorLogger } from '@bigcommerce/checkout/error-handling-utils';
 import { TranslatedString, withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
 import { AddressFormSkeleton, ChecklistSkeleton } from '@bigcommerce/checkout/ui';
@@ -151,6 +152,9 @@ export interface WithCheckoutProps {
     subscribeToConsignments(subscriber: (state: CheckoutSelectors) => void): () => void;
     selectShippingOption(consignmentId: string, optionId: string): Promise<CheckoutSelectors>;
     isSelectingShippingOption(consignmentId?: string): boolean;
+    // Discount-related props
+    checkoutService: CheckoutContextProps['checkoutService'];
+    checkoutState: CheckoutContextProps['checkoutState'];
 }
 
 class Checkout extends Component<
@@ -505,8 +509,39 @@ class Checkout extends Component<
     }
 
     private renderBillingStep(step: CheckoutStepStatus): ReactNode {
-        const { billingAddress, consignments, selectShippingOption, isSelectingShippingOption } = this.props;
+        const { 
+            billingAddress, 
+            consignments, 
+            selectShippingOption, 
+            isSelectingShippingOption,
+            checkoutService,
+            checkoutState: {
+                statuses: { isApplyingCoupon, isApplyingGiftCertificate, isRemovingCoupon, isRemovingGiftCertificate },
+                errors: { getApplyCouponError, getApplyGiftCertificateError },
+                data: { getCoupons, getGiftCertificates }
+            }
+        } = this.props;
         const { isBillingSameAsShipping  } = this.state;
+
+        // Get applied redeemables
+        const coupons = getCoupons() || [];
+        const giftCertificates = getGiftCertificates() || [];
+        const appliedRedeemables = [
+            ...coupons.map(coupon => ({ 
+                code: coupon.code, 
+                type: 'coupon', 
+                remaining: 0,
+                displayName: coupon.displayName,
+                discountedAmount: coupon.discountedAmount
+            })),
+            ...giftCertificates.map(gc => ({ 
+                code: gc.code, 
+                type: 'gift_certificate', 
+                remaining: gc.remaining,
+                displayName: `$${(gc.used / 100).toFixed(2)} off the order total`,
+                used: gc.used
+            }))
+        ];
 
         return (
             <CheckoutStep
@@ -521,6 +556,27 @@ class Checkout extends Component<
                 consignments={consignments}
                 selectShippingOption={selectShippingOption}
                 isSelectingShippingOption={isSelectingShippingOption}
+                applyCoupon={checkoutService.applyCoupon}
+                applyGiftCertificate={checkoutService.applyGiftCertificate}
+                clearError={checkoutService.clearError}
+                isApplyingRedeemable={isApplyingCoupon() || isApplyingGiftCertificate() || isRemovingCoupon() || isRemovingGiftCertificate()}
+                appliedRedeemableError={getApplyCouponError() || getApplyGiftCertificateError()}
+                appliedRedeemables={appliedRedeemables}
+                onRemoveRedeemable={async (code: string) => {
+                    // Find the redeemable to determine its type
+                    const redeemable = appliedRedeemables.find(r => r.code === code);
+                    if (!redeemable) return;
+                    
+                    try {
+                        if (redeemable.type === 'gift_certificate') {
+                            await checkoutService.removeGiftCertificate(code);
+                        } else {
+                            await checkoutService.removeCoupon(code);
+                        }
+                    } catch (error) {
+                        console.error('Failed to remove redeemable:', error);
+                    }
+                }}
             >
                 <LazyContainer loadingSkeleton={<AddressFormSkeleton />}>
                     <Billing
