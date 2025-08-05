@@ -83,6 +83,21 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
             return <TranslatedString id="payment.place_order_action" />;
         }
 
+        if (methodId === PaymentMethodId.PayPalCommerceAcceleratedCheckout) {
+            // Always show "Complete Order" for PayPal Commerce Accelerated Checkout
+            return <TranslatedString id="payment.place_order_action" />;
+        }
+
+        if (methodId === PaymentMethodId.PaypalCommerceCreditCards) {
+            // Always show "Complete Order" for PayPal Commerce Credit Cards
+            return <TranslatedString id="payment.place_order_action" />;
+        }
+
+        if (methodId === PaymentMethodId.PaypalCommerce) {
+            // Always show "Complete Order" for PayPal Commerce
+            return <TranslatedString id="payment.place_order_action" />;
+        }
+
         if (methodId === PaymentMethodId.Opy) {
             return <TranslatedString data={{ methodName }} id="payment.opy_continue_action" />;
         }
