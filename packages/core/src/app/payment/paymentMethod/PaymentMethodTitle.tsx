@@ -76,7 +76,7 @@ function getPaymentMethodTitle(
             },
             [PaymentMethodId.PaypalCommerce]: {
                 logoUrl: cdnPath('/img/payment-providers/paypal_commerce_logo.svg'),
-                titleText: language.translate('payment.paypal_name_text'),
+                titleText: "Paypal",
             },
             [PaymentMethodId.PaypalCommerceCredit]: {
                 logoUrl: cdnPath('/img/payment-providers/paypal_commerce_logo_letter.svg'),
@@ -85,7 +85,7 @@ function getPaymentMethodTitle(
             },
             [PaymentMethodId.PaypalCommerceAlternativeMethod]: {
                 logoUrl: method.logoUrl || '',
-                titleText: language.translate('payment.paypal_name_text'),
+                titleText: "Paypal",
             },
             [PaymentMethodType.VisaCheckout]: {
                 logoUrl: cdnPath('/img/payment-providers/visa-checkout.png'),
@@ -159,7 +159,7 @@ function getPaymentMethodTitle(
                     method.id === PaymentMethodId.BraintreeVenmo && method.logoUrl
                         ? method.logoUrl
                         : cdnPath('/img/payment-providers/paypalpaymentsprouk.png'),
-                titleText: language.translate('payment.paypal_name_text'),
+                titleText: "Paypal",
             },
             [PaymentMethodId.Quadpay]: {
                 logoUrl: cdnPath('/img/payment-providers/quadpay.png'),
