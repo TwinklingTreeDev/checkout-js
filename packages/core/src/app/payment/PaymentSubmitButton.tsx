@@ -98,6 +98,11 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
             return <TranslatedString id="payment.place_order_action" />;
         }
 
+        if (methodId === PaymentMethodId.PaypalExpress) {
+            // Show PayPal continue action for PayPal Express
+            return <TranslatedString id="payment.paypal_continue_action" />;
+        }
+
         if (methodId === PaymentMethodId.Opy) {
             return <TranslatedString data={{ methodName }} id="payment.opy_continue_action" />;
         }

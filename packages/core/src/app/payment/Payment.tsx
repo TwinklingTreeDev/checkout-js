@@ -50,6 +50,8 @@ export interface PaymentProps {
     onSubmit?(): void;
     onSubmitError?(error: Error): void;
     onUnhandledError?(error: Error): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 interface WithCheckoutPaymentProps {
@@ -174,6 +176,7 @@ class Payment extends Component<
             isUsingMultiShipping,
             methods,
             applyStoreCredit,
+            onBillingSameAsShippingChange,
             ...rest
         } = this.props;
 

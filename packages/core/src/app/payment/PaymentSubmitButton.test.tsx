@@ -145,6 +145,12 @@ describe('PaymentSubmitButton', () => {
         expect(screen.getByText(languageService.translate('payment.zip_continue_action'))).toBeInTheDocument();
     });
 
+    it('renders button with special label for PayPal Express', () => {
+        render(<PaymentSubmitButtonTest methodId={PaymentMethodId.PaypalExpress} />);
+
+        expect(screen.getByText(languageService.translate('payment.paypal_continue_action'))).toBeInTheDocument();
+    });
+
     it('renders button with label of "Continue with ${methodName}"', () => {
         render(
             <PaymentSubmitButtonTest initialisationStrategyType="none" methodName="Foo" />,
