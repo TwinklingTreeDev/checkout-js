@@ -24,6 +24,17 @@ const HostedCreditCardPaymentMethod: FunctionComponent<
     hostedStoredCardValidationSchema,
     hostedValidationSchema,
     initializePayment,
+    // Billing address props
+    billingAddress,
+    countries,
+    countriesWithAutocomplete,
+    getFields,
+    isFloatingLabelEnabled,
+    googleMapsApiKey,
+    onBillingAddressChange,
+    onBillingSameAsShippingChange,
+    isBillingSameAsShipping,
+    shouldShowBillingAddress,
     ...rest
 }) => {
     const initializeHostedCreditCardPayment: CreditCardPaymentMethodProps['initializePayment'] =

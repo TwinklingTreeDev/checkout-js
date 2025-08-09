@@ -208,6 +208,7 @@ class Payment extends Component<
                             onStoreCreditChange={this.handleStoreCreditChange}
                             onSubmit={this.handleSubmit}
                             onUnhandledError={this.handleError}
+                            onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                             selectedMethod={selectedMethod}
                             shouldDisableSubmit={
                                 (uniqueSelectedMethodId &&

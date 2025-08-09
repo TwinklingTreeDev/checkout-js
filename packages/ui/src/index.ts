@@ -65,4 +65,4 @@ export {
 } from './icon';
 export { LoadingOverlay, LoadingSpinner } from './loading';
 export { Modal, ModalHeader, ModalTrigger, ModalTriggerModalProps } from './modal';
-export { TooltipTrigger } from './tooltip';
+export { Tooltip, TooltipTrigger } from './tooltip';

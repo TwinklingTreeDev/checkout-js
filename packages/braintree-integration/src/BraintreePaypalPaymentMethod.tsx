@@ -14,7 +14,7 @@ const BraintreePaypalPaymentMethod: FunctionComponent<PaymentMethodProps> = ({
 }) => {
     const initializeBraintreePaypalPaymentMethod = useCallback(
         (defaultOptions: PaymentInitializeOptions) => {
-            const { onUnhandledError, language, method, paymentForm } = rest;
+            const { onUnhandledError, language, paymentForm } = rest;
 
             return checkoutService.initializePayment({
                 ...defaultOptions,
@@ -33,9 +33,8 @@ const BraintreePaypalPaymentMethod: FunctionComponent<PaymentMethodProps> = ({
                             onUnhandledError?.(error);
                         }
                     },
-                    onRenderButton: () => {
-                        paymentForm.hidePaymentSubmitButton(method, true);
-                    },
+                    // Keep the native submit button; do not render/replace with a Braintree PayPal button
+                    onRenderButton: () => {},
                 },
             });
         },

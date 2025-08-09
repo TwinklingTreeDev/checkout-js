@@ -48,6 +48,8 @@ export interface PaymentFormProps {
     onStoreCreditChange?(useStoreCredit?: boolean): void;
     onSubmit?(values: PaymentFormValues): void;
     onUnhandledError?(error: Error): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 const PaymentForm: FunctionComponent<
@@ -66,6 +68,7 @@ const PaymentForm: FunctionComponent<
     onMethodSelect,
     onStoreCreditChange,
     onUnhandledError,
+    onBillingSameAsShippingChange,
     resetForm,
     selectedMethod,
     shouldDisableSubmit,
@@ -123,6 +126,7 @@ const PaymentForm: FunctionComponent<
                 methods={methods}
                 onMethodSelect={onMethodSelect}
                 onUnhandledError={onUnhandledError}
+                onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                 resetForm={resetForm}
                 values={values}
             />
@@ -136,21 +140,21 @@ const PaymentForm: FunctionComponent<
                 />
             )}
             {/* Discount Offer Section */}
-            <div className="discount-offer-section" style={{ marginTop: '20px', padding: '9px'}}>
+            <div className="discount-offer-section" style={{ marginTop: '20px', padding: '4px'}}>
                 <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                     <input
                         type="checkbox"
                         id="discount-offer"
-                        style={{ marginRight: '20px', marginTop: '4px', transform: 'scale(2.5)' }}
+                        style={{ marginRight: '13px', marginTop: '4px', transform: 'scale(1.4)' }}
                     />
                     <div>
-                        <div style={{ color: '#292929', fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' }}>
+                        <div style={{ color: '#292929', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px' }}>
                             Get 25% OFF on Your Next Order
                         </div>
                     </div>
                 </div>
             </div>
-            <div style={{ fontSize: '14px', color: '#292929', lineHeight: '1.4', marginBottom: '8px' }}>
+            <div style={{ fontSize: '13px', color: '#292929', lineHeight: '22px', marginBottom: '8px', fontWeight: '400' }}>
                 Want exclusive deals? Check this box to receive the best offers to your phone. You can reply STOP to cancel or HELP for help. Msg frequency varies. Msg & data rates may apply.
                  See <a href="#" style={{ textDecoration: 'underline', color: '#000', marginRight: '4px' }}>Terms</a>
                 &amp;
@@ -193,6 +197,8 @@ interface PaymentMethodListFieldsetProps {
     onMethodSelect?(method: PaymentMethod): void;
     onUnhandledError?(error: Error): void;
     resetForm(nextValues?: PaymentFormValues): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProps> = ({
@@ -203,6 +209,7 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
     methods,
     onMethodSelect = noop,
     onUnhandledError,
+    onBillingSameAsShippingChange,
     resetForm,
     values,
 }) => {
@@ -247,6 +254,7 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
                 methods={methods}
                 onSelect={handlePaymentMethodSelect}
                 onUnhandledError={onUnhandledError}
+                onBillingSameAsShippingChange={onBillingSameAsShippingChange}
             />
         </Fieldset>
     );

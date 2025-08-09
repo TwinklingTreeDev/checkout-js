@@ -40,6 +40,8 @@ export interface PaymentMethodProps {
     isUsingMultiShipping?: boolean;
     onUnhandledError?(error: Error): void;
     submitForm?(): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 export interface WithCheckoutPaymentMethodProps {

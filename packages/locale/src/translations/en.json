@@ -127,7 +127,7 @@
             "guest_temporary_disabled": "Guest checkout is temporarily disabled. Please sign in or <a href=\"{url}\" target=\"_blank\">create an account</a> to continue.",
             "customer_heading": "Contact Information",
             "email_invalid_error": "Email address must be valid",
-            "email_label": "Email",
+            "email_label": "Email Address",
             "email_required_error": "Email address is required",
             "forgot_password_action": "Forgot password?",
             "guest_customer_text": "Guest Customer",

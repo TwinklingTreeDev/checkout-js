@@ -27,6 +27,8 @@ export interface PaymentMethodProps {
         query: PaymentMethodResolveId,
     ): ComponentType<ResolvedPaymentMethodProps> | undefined;
     onUnhandledError(error: Error): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 function shouldUsePaymentMethodV1(method: PaymentMethod, checkoutState: CheckoutSelectors) {
@@ -59,6 +61,7 @@ const PaymentMethodContainer: ComponentType<
     language,
     method,
     onUnhandledError,
+    onBillingSameAsShippingChange,
     resolveComponent = resolvePaymentMethod,
     setSubmit,
     setSubmitted,
@@ -89,6 +92,7 @@ const PaymentMethodContainer: ComponentType<
                 isUsingMultiShipping={isUsingMultiShipping}
                 method={method}
                 onUnhandledError={onUnhandledError}
+                onBillingSameAsShippingChange={onBillingSameAsShippingChange}
             />
         );
     }

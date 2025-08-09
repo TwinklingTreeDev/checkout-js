@@ -100,7 +100,7 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
 
         if (methodId === PaymentMethodId.PaypalExpress) {
             // Show PayPal continue action for PayPal Express
-            return <TranslatedString id="payment.paypal_continue_action" />;
+            return <TranslatedString id="payment.place_order_action" />;
         }
 
         if (methodId === PaymentMethodId.Opy) {
@@ -151,38 +151,43 @@ const PaymentSubmitButton: FunctionComponent<
     methodType,
     initialisationStrategyType,
 }) => (
-    <Button
-        className={
-            providersWithCustomClasses.includes(methodId as PaymentMethodId)
-                ? `payment-submit-button-${methodId}`
-                : undefined
-        }
-        data-test="payment-submit-button"
-        disabled={isInitializing || isSubmitting || isDisabled}
-        id="checkout-payment-continue"
-        isFullWidth
-        isLoading={isSubmitting}
-        size={ButtonSize.Large}
-        type="submit"
-        variant={ButtonVariant.Action}
-    >
+        <Button
+            className={
+                providersWithCustomClasses.includes(methodId as PaymentMethodId)
+                    ? `payment-submit-button-${methodId}`
+                    : undefined
+            }
+            data-test="payment-submit-button"
+            disabled={isInitializing || isSubmitting || isDisabled}
+            id="checkout-payment-continue"
+            isFullWidth
+            isLoading={isSubmitting}
+            size={ButtonSize.Large}
+            type="submit"
+            variant={ButtonVariant.Action}
+        >
 
-        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="13" fill="none">
-            <path
-                d="M8.499 4.667h-.584V3.5a2.918 2.918 0 00-5.833 0v1.167h-.583A1.17 1.17 0 00.332 5.834v5.833a1.17 1.17 0 001.167 1.167h7a1.17 1.17 0 001.166-1.167V5.834A1.17 1.17 0 008.5 4.667zm-3.5 5.25A1.17 1.17 0 013.832 8.75a1.17 1.17 0 011.167-1.167A1.17 1.17 0 016.165 8.75 1.17 1.17 0 015 9.917zm1.808-5.25H3.19V3.5a1.81 1.81 0 013.617 0v1.167z"
-                fill="#908F8F" />
-        </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="24" viewBox="0 0 21 24" fill="none">
+                <g clipPath="url(#clip0_43_1339)">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M16.8418 10.708H17.8827C19.0319 10.708 19.9643 11.6198 19.9643 12.7437V20.8866C19.9643 22.0105 19.0319 22.9223 17.8827 22.9223H2.61734C1.46811 22.9223 0.535706 22.0105 0.535706 20.8866V12.7437C0.535706 11.6198 1.46811 10.708 2.61734 10.708H3.65815V7.65443C3.65815 4.10042 6.61581 1.20801 10.25 1.20801C13.8842 1.20801 16.8418 4.10042 16.8418 7.65443V10.708ZM6.55612 7.65443V10.708H13.9439V7.65443C13.9439 5.97073 12.5357 4.02943 10.25 4.02943C7.96428 4.02943 6.55612 5.97073 6.55612 7.65443ZM10.25 18.9223C9.61734 18.9223 9.10714 18.4461 9.10714 17.8556V15.4175C9.10714 14.827 9.61734 14.3508 10.25 14.3508C10.8827 14.3508 11.3929 14.827 11.3929 15.4175V17.8556C11.3929 18.4461 10.8827 18.9223 10.25 18.9223Z" fill="white" />
+                </g>
+                <defs>
+                    <clipPath id="clip0_43_1339">
+                        <rect width="20" height="22.8571" fill="white" transform="translate(0.25 0.540039)" />
+                    </clipPath>
+                </defs>
+            </svg>
 
-        <PaymentSubmitButtonText
-            initialisationStrategyType={initialisationStrategyType}
-            isPaymentDataRequired={isPaymentDataRequired}
-            methodGateway={methodGateway}
-            methodId={methodId}
-            methodName={methodName}
-            methodType={methodType}
-        />
-    </Button>
-);
+            <PaymentSubmitButtonText
+                initialisationStrategyType={initialisationStrategyType}
+                isPaymentDataRequired={isPaymentDataRequired}
+                methodGateway={methodGateway}
+                methodId={methodId}
+                methodName={methodName}
+                methodType={methodType}
+            />
+        </Button>
+    );
 
 export default withCheckout(({ checkoutState }) => {
     const {

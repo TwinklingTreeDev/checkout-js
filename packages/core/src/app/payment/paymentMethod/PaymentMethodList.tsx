@@ -17,6 +17,8 @@ export interface PaymentMethodListProps {
     methods: PaymentMethod[];
     onSelect?(method: PaymentMethod): void;
     onUnhandledError?(error: Error): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 function getPaymentMethodFromListValue(methods: PaymentMethod[], value: string): PaymentMethod {
@@ -40,6 +42,7 @@ const PaymentMethodList: FunctionComponent<
     methods,
     onSelect = noop,
     onUnhandledError,
+    onBillingSameAsShippingChange,
 }) => {
     const handleSelect = useCallback(
         (value: string) => {
@@ -75,6 +78,7 @@ const PaymentMethodList: FunctionComponent<
                         key={value}
                         method={method}
                         onUnhandledError={onUnhandledError}
+                        onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                         value={value}
                     />
                 );
@@ -90,6 +94,8 @@ interface PaymentMethodListItemProps {
     method: PaymentMethod;
     value: string;
     onUnhandledError?(error: Error): void;
+    // Billing address callback
+    onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
 }
 
 const PaymentMethodListItem: FunctionComponent<PaymentMethodListItemProps> = ({
@@ -98,6 +104,7 @@ const PaymentMethodListItem: FunctionComponent<PaymentMethodListItemProps> = ({
     isUsingMultiShipping,
     method,
     onUnhandledError,
+    onBillingSameAsShippingChange,
     value,
 }) => {
     const renderPaymentMethod = useMemo(() => {
@@ -107,9 +114,10 @@ const PaymentMethodListItem: FunctionComponent<PaymentMethodListItemProps> = ({
                 isUsingMultiShipping={isUsingMultiShipping}
                 method={method}
                 onUnhandledError={onUnhandledError || noop}
+                onBillingSameAsShippingChange={onBillingSameAsShippingChange}
             />
         );
-    }, [isEmbedded, isUsingMultiShipping, method, onUnhandledError]);
+    }, [isEmbedded, isUsingMultiShipping, method, onUnhandledError, onBillingSameAsShippingChange]);
 
     const renderPaymentMethodTitle = useCallback(
         (isSelected: boolean) => <PaymentMethodTitle isSelected={isSelected} method={method} onUnhandledError={onUnhandledError} />,

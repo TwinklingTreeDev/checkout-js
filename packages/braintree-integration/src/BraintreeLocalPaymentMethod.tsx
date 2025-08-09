@@ -25,9 +25,8 @@ const BraintreeLocalPaymentMethod: FunctionComponent<any> = ({
                     buttonText: language.translate('payment.continue_with_brand', {
                         brandName: methodId,
                     }),
-                    onRenderButton: () => {
-                        paymentForm.hidePaymentSubmitButton(method, true);
-                    },
+                    // Keep the native submit button visual; avoid swapping to provider button
+                    onRenderButton: () => {},
                     submitForm: () => {
                         paymentForm.setSubmitted(true);
                         paymentForm.submitForm();

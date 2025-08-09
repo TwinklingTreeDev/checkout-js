@@ -206,9 +206,9 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                         </div>
                                     </button>
                                 </div>
-                                <div className='billing-content'>
+                                {/* <div className='billing-content'>
                                     {this.renderContent()}  
-                                </div>
+                                </div> */}
                             </div>
                         }
                         {(type != 'billing') && this.renderContent()}

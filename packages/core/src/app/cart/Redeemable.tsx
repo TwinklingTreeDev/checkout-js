@@ -167,7 +167,7 @@ const RedeemableForm: FunctionComponent<
                                 htmlFor="redeemableCode"
                                 isFloatingLabelEnabled={true}
                             >
-                                Discount Code
+                                Discount code
                             </Label>
 
                             <Button

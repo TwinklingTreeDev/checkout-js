@@ -50,6 +50,8 @@ function appConfig(options, argv) {
                     ],
                 },
                 mode,
+                // Avoid module size computation during stats printing in dev-watch
+                stats: 'errors-warnings',
                 devtool: isProduction ? 'source-map' : 'eval-source-map',
                 resolve: {
                     alias,
@@ -237,6 +239,8 @@ function loaderConfig(options, argv) {
                     [AUTO_LOADER_ENTRY_NAME]: join(__dirname,  'packages', 'core', 'src', 'app', 'auto-loader.ts'),
                 },
                 mode,
+                // Avoid module size computation during stats printing in dev-watch
+                stats: 'errors-warnings',
                 devtool: isProduction ? 'source-map' : 'eval-source-map',
                 resolve: {
                     alias,

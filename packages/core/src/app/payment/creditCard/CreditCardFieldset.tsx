@@ -1,6 +1,7 @@
 import React, { FunctionComponent, memo } from 'react';
 
 import { TranslatedString } from '@bigcommerce/checkout/locale';
+import { Address, Country, FormField, CheckoutSelectors } from '@bigcommerce/checkout-sdk';
 
 import { Fieldset, Legend } from '../../ui/form';
 
@@ -9,16 +10,47 @@ import CreditCardCustomerCodeField from './CreditCardCustomerCodeField';
 import CreditCardExpiryField from './CreditCardExpiryField';
 import CreditCardNameField from './CreditCardNameField';
 import CreditCardNumberField from './CreditCardNumberField';
+import CreditCardBillingAddress from './CreditCardBillingAddress';
 
 export interface CreditCardFieldsetProps {
     shouldShowCardCodeField?: boolean;
     shouldShowCustomerCodeField?: boolean;
     shouldShowSaveCardField?: boolean;
+    // Billing address props
+    billingAddress?: Address;
+    countries?: Country[];
+    countriesWithAutocomplete?: string[];
+    getFields?(countryCode?: string): FormField[];
+    isFloatingLabelEnabled?: boolean;
+    googleMapsApiKey?: string;
+    onBillingAddressChange?(address: Partial<Address>): void;
+    onBillingSameAsShippingChange?(isSame: boolean): void;
+    isBillingSameAsShipping?: boolean;
+    shouldShowBillingAddress?: boolean;
+    // Auto-save props
+    updateAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
+    onUnhandledError?(error: Error): void;
+    billingAutosaveDelay?: number;
 }
 
 const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
     shouldShowCardCodeField,
     shouldShowCustomerCodeField,
+    // Billing address props
+    billingAddress,
+    countries,
+    countriesWithAutocomplete,
+    getFields,
+    isFloatingLabelEnabled,
+    googleMapsApiKey,
+    onBillingAddressChange,
+    onBillingSameAsShippingChange,
+    isBillingSameAsShipping = true,
+    shouldShowBillingAddress = false,
+    // Auto-save props
+    updateAddress,
+    onUnhandledError,
+    billingAutosaveDelay,
 }) => (
     <Fieldset
         additionalClassName="creditCardFieldset"
@@ -28,7 +60,7 @@ const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
             </Legend>
         }
     >
-        <div className="form-ccFields">
+        <div className="form-ccFields credit-card-fieldset">
             <CreditCardNumberField name="ccNumber" />
 
             <CreditCardExpiryField name="ccExpiry" />
@@ -39,6 +71,24 @@ const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
 
             {shouldShowCustomerCodeField && <CreditCardCustomerCodeField name="ccCustomerCode" />}
         </div>
+
+        {/* Billing Address Section - Only show for credit card payment methods */}
+        {shouldShowBillingAddress && countries && getFields && (
+            <CreditCardBillingAddress
+                billingAddress={billingAddress}
+                countries={countries}
+                countriesWithAutocomplete={countriesWithAutocomplete || []}
+                getFields={getFields}
+                isFloatingLabelEnabled={isFloatingLabelEnabled}
+                googleMapsApiKey={googleMapsApiKey}
+                onBillingAddressChange={onBillingAddressChange}
+                onBillingSameAsShippingChange={onBillingSameAsShippingChange}
+                isBillingSameAsShipping={isBillingSameAsShipping}
+                updateAddress={updateAddress}
+                onUnhandledError={onUnhandledError}
+                billingAutosaveDelay={billingAutosaveDelay}
+            />
+        )}
     </Fieldset>
 );
 

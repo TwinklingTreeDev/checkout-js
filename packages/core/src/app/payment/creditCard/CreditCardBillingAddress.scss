@@ -1,0 +1,122 @@
+@import "../../ui/Base";
+
+
+.billing-address-checkbox {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: spacing("base");
+    margin-left: 4px;
+}
+
+.billing-checkbox {
+    margin-right: spacing("half");
+    margin-top: 2px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.billing-checkbox-label {
+    color: color("blacks", "primary");
+    line-height: 1.4;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: color("primary", "primary");
+    }
+}
+
+.billing-address-form-container {
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+
+    &.expanded {
+        max-height: 1000px;
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.billing-address-form {
+    // Use the same styling as the default checkout address form
+    .checkout-address {
+        display: flex;
+        flex-flow: row wrap;
+        margin-left: -2px;
+        margin-right: -2px;
+
+        .dynamic-form-addressState,
+        .dynamic-form-field {
+            display: block;
+            flex: 1;
+            flex-basis: 100%;
+            margin-bottom: spacing("half");
+            max-width: 100%;
+            padding: 0 spacing("half");
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        .dynamic-form-field.floating-form-field {
+            margin-bottom: $floating-form-field-spacing;
+            padding: 0 0.5 * $floating-form-field-spacing;
+        }
+
+        .dynamic-form-field--province,
+        .dynamic-form-field--provinceCode,
+        .dynamic-form-field--firstName,
+        .dynamic-form-field--lastName,
+        .dynamic-form-field--phone,
+        .dynamic-form-field--city {
+            @include breakpoint("small") {
+                flex-basis: 50%;
+            }
+        }
+
+        .dynamic-form-field--postCode {
+            @include breakpoint("small") {
+                flex-basis: 30%;
+            }
+        }
+
+        // Custom
+        .dynamic-form-field--city,
+        .dynamic-form-field--provinceCode,
+        .dynamic-form-field--postCode {
+            @include breakpoint("small") {
+                flex-basis: 33.33%;
+            }
+        }
+        .dynamic-form-field--phone {
+            @include breakpoint("small") {
+                flex-basis: 100%;
+            }
+        }
+        .dynamic-form-field--addressLine2,
+        .dynamic-form-field--phone,
+        .dynamic-form-field--city,
+        .dynamic-form-field--postCode {
+            small {
+                text-transform: lowercase;
+            }
+        }
+        .dynamic-form-field--provinceCode {
+            small {
+                display: none;
+            }
+        }
+    }
+
+    // Remove the custom background and border styling to match default form
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+} 

@@ -7,6 +7,9 @@ import {
     PaymentInstrument,
     PaymentMethod,
     PaymentRequestOptions,
+    Address,
+    Country,
+    FormField,
 } from '@bigcommerce/checkout-sdk';
 import { memoizeOne } from '@bigcommerce/memoize';
 import { find, noop } from 'lodash';
@@ -55,6 +58,20 @@ export interface CreditCardPaymentMethodProps {
         selectedInstrument?: CardInstrument,
     ): Promise<CheckoutSelectors>;
     onUnhandledError?(error: Error): void;
+    // Billing address props
+    billingAddress?: Address;
+    countries?: Country[];
+    countriesWithAutocomplete?: string[];
+    getFields?(countryCode?: string): FormField[];
+    isFloatingLabelEnabled?: boolean;
+    googleMapsApiKey?: string;
+    onBillingAddressChange?(address: Partial<Address>): void;
+    onBillingSameAsShippingChange?(isSame: boolean): void;
+    isBillingSameAsShipping?: boolean;
+    // Auto-save props
+    updateAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
+    onUnhandledError?(error: Error): void;
+    billingAutosaveDelay?: number;
 }
 
 export type CreditCardPaymentMethodValues = CreditCardFieldsetValues | CardInstrumentFieldsetValues;
@@ -70,6 +87,13 @@ interface WithCheckoutCreditCardPaymentMethodProps {
     isInstrumentCardCodeRequired(instrument: Instrument, method: PaymentMethod): boolean;
     isInstrumentCardNumberRequired(instrument: Instrument): boolean;
     loadInstruments(): Promise<CheckoutSelectors>;
+    // Billing address props from checkout context
+    billingAddress?: Address;
+    countries?: Country[];
+    countriesWithAutocomplete?: string[];
+    getFields?(countryCode?: string): FormField[];
+    isFloatingLabelEnabled?: boolean;
+    googleMapsApiKey?: string;
 }
 
 interface CreditCardPaymentMethodState {
@@ -192,6 +216,20 @@ class CreditCardPaymentMethod extends Component<
             isLoadingInstruments,
             shouldShowInstrumentFieldset,
             method,
+            // Billing address props
+            billingAddress,
+            countries,
+            countriesWithAutocomplete,
+            getFields,
+            isFloatingLabelEnabled,
+            googleMapsApiKey,
+            onBillingAddressChange,
+            onBillingSameAsShippingChange,
+            isBillingSameAsShipping = true,
+            // Auto-save props
+            updateAddress,
+            onUnhandledError,
+            billingAutosaveDelay,
         } = this.props;
 
         const { isAddingNewCard } = this.state;
@@ -205,6 +243,9 @@ class CreditCardPaymentMethod extends Component<
         const shouldShowCardCodeField = selectedInstrument
             ? isInstrumentCardCodeRequiredProp(selectedInstrument, method)
             : false;
+
+        // Only show billing address for credit card payment methods (including Checkout.com)
+        const shouldShowBillingAddress = (method.method === 'credit-card' || method.gateway === 'checkoutcom') && !!countries && !!getFields;
 
         return (
             <LoadingOverlay hideContentWhenLoading isLoading={isLoading}>
@@ -237,6 +278,20 @@ class CreditCardPaymentMethod extends Component<
                                 method.config.cardCode || method.config.cardCode === null
                             }
                             shouldShowCustomerCodeField={method.config.requireCustomerCode}
+                            // Billing address props
+                            billingAddress={billingAddress}
+                            countries={countries}
+                            countriesWithAutocomplete={countriesWithAutocomplete}
+                            getFields={getFields}
+                            isFloatingLabelEnabled={isFloatingLabelEnabled}
+                            googleMapsApiKey={googleMapsApiKey}
+                            onBillingAddressChange={onBillingAddressChange}
+                            onBillingSameAsShippingChange={onBillingSameAsShippingChange}
+                            isBillingSameAsShipping={isBillingSameAsShipping}
+                            shouldShowBillingAddress={shouldShowBillingAddress}
+                            updateAddress={updateAddress}
+                            onUnhandledError={onUnhandledError}
+                            billingAutosaveDelay={billingAutosaveDelay}
                         />
                     )}
 
@@ -381,7 +436,7 @@ const mapFromCheckoutProps: MapToPropsFactory<
         const { checkoutService, checkoutState } = context;
 
         const {
-            data: { getConfig, getCustomer, getInstruments, isPaymentDataRequired },
+            data: { getConfig, getCustomer, getInstruments, isPaymentDataRequired, getBillingAddress, getBillingCountries, getBillingAddressFields },
             statuses: { isLoadingInstruments },
         } = checkoutState;
 
@@ -412,6 +467,20 @@ const mapFromCheckoutProps: MapToPropsFactory<
             loadInstruments: checkoutService.loadInstruments,
             shouldShowInstrumentFieldset:
                 isInstrumentFeatureAvailableProp && instruments.length > 0,
+            // Billing address props from checkout context
+            billingAddress: getBillingAddress(),
+            countries: getBillingCountries() || [],
+            countriesWithAutocomplete: config.checkoutSettings.features['PAYMENT_REQUEST_BUTTON'] ? ['US', 'CA'] : [],
+            getFields: getBillingAddressFields,
+            isFloatingLabelEnabled: true, // Always enable floating labels for billing address
+            googleMapsApiKey: config.checkoutSettings.googleMapsApiKey,
+            // Auto-save props from checkout context
+            updateAddress: checkoutService.updateBillingAddress,
+            onUnhandledError: (error: Error) => {
+                // Handle error appropriately
+                console.error('Billing address update error:', error);
+            },
+            billingAutosaveDelay: 1700, // Same as BILLING_AUTOSAVE_DELAY
         };
     };
 };

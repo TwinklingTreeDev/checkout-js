@@ -7,11 +7,9 @@ import {
 import React, { FunctionComponent, ReactNode, useEffect, useMemo } from 'react';
 
 import { ExtensionRegionContainer, useExtensions } from '@bigcommerce/checkout/checkout-extension';
-import { TranslatedString } from '@bigcommerce/checkout/locale';
 
 import OrderSummaryHeader from './OrderSummaryHeader';
 import OrderSummaryItems from './OrderSummaryItems';
-import OrderSummaryPrice from './OrderSummaryPrice';
 import OrderSummarySection from './OrderSummarySection';
 import OrderSummarySubtotals, { OrderSummarySubtotalsProps } from './OrderSummarySubtotals';
 import OrderSummaryTotal from './OrderSummaryTotal';
@@ -43,7 +41,6 @@ const OrderSummary: FunctionComponent<OrderSummaryProps & OrderSummarySubtotalsP
             extensionService.isRegionEnabled(ExtensionRegion.SummaryLastItemAfter),
     );
     const nonBundledLineItems = useMemo(() => removeBundledItems(lineItems), [lineItems]);
-    const displayInclusiveTax = isTaxIncluded && taxes && taxes.length > 0;
 
     useEffect(() => {
         if (isSummaryLastItemAfterExtensionRegionEnabled) {
@@ -82,25 +79,6 @@ const OrderSummary: FunctionComponent<OrderSummaryProps & OrderSummarySubtotalsP
                 />
                 {additionalLineItems}
             </OrderSummarySection>
-
-            {displayInclusiveTax && <OrderSummarySection>
-                <h5
-                    className="cart-taxItem cart-taxItem--subtotal optimizedCheckout-contentPrimary"
-                    data-test="tax-text"
-                >
-                    <TranslatedString
-                        id="tax.inclusive_label"
-                    />
-                </h5>
-                {(taxes || []).map((tax, index) => (
-                    <OrderSummaryPrice
-                        amount={tax.amount}
-                        key={index}
-                        label={tax.name}
-                        testId="cart-taxes"
-                    />
-                ))}
-            </OrderSummarySection>}
         </article>
     );
 };

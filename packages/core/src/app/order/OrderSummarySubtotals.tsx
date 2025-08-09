@@ -87,6 +87,28 @@ const OrderSummarySubtotals: FunctionComponent<OrderSummarySubtotalsProps> = ({
                 />
             )}
 
+            {isTaxIncluded && taxes && taxes.length > 0 && (
+                <>
+                    {(taxes || []).map((tax, index) => (
+                        <OrderSummaryPrice
+                            amount={tax.amount}
+                            key={index}
+                            label="Tax"
+                            testId="cart-taxes"
+                        />
+                    ))}
+                </>
+            )}
+
+            {!isTaxIncluded && (taxes || []).map((tax, index) => (
+                <OrderSummaryPrice
+                    amount={tax.amount}
+                    key={index}
+                    label="Tax"
+                    testId="cart-taxes"
+                />
+            ))}
+
             <OrderSummaryPrice
                 amount={shippingAmount}
                 label={<TranslatedString id="cart.shipping_text" />}
@@ -108,15 +130,6 @@ const OrderSummarySubtotals: FunctionComponent<OrderSummarySubtotalsProps> = ({
                     key={index}
                     label={isOrderFee(fee) ? fee.customerDisplayName : fee.displayName}
                     testId="cart-fees"
-                />
-            ))}
-
-            {!isTaxIncluded && (taxes || []).map((tax, index) => (
-                <OrderSummaryPrice
-                    amount={tax.amount}
-                    key={index}
-                    label={tax.name}
-                    testId="cart-taxes"
                 />
             ))}
 

@@ -73,6 +73,20 @@
             right: $input-horizontalPadding;
             top: $floating-chevron-top + $fontSize-root * lineHeight("large");
         }
+        .optional-indicator {
+            position: absolute;
+            right: $input-horizontalPadding;
+            top: 16.7px;
+            cursor: help;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .floating-input ~ .optional-indicator,
+        .floating-select ~ .optional-indicator,
+        textarea.floating-input ~ .optional-indicator {
+            top: $floating-chevron-top;
+        }
 
         .floating-select-chevron {
             top: $floating-chevron-top;
@@ -89,6 +103,13 @@
             small {
                 font-size: $floating-label-font-size--default;
                 vertical-align: baseline;
+            }
+
+            .optional-icon {
+                display: inline-flex;
+                align-items: center;
+                vertical-align: middle;
+                margin-left: spacing("quarter");
             }
         }
 
@@ -107,6 +128,11 @@
 
             small {
                 font-size: fontSize("tiny");
+            }
+
+            .optional-icon svg {
+                width: 14px;
+                height: 14px;
             }
         }
     }

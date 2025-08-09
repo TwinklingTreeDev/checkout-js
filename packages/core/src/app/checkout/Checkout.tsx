@@ -616,6 +616,7 @@ class Checkout extends Component<
                         onSubmit={this.navigateToOrderConfirmation}
                         onSubmitError={this.handleError}
                         onUnhandledError={this.handleUnhandledError}
+                        onBillingSameAsShippingChange={this.handleBillingSameAsShipping}
                     />
                 </LazyContainer>
 

@@ -3,6 +3,10 @@ import {
     HostedFormOptions,
     Instrument,
     PaymentMethod,
+    Address,
+    Country,
+    FormField,
+    CheckoutSelectors,
 } from '@bigcommerce/checkout-sdk';
 import { compact, forIn } from 'lodash';
 import React, { ComponentType, FunctionComponent, ReactNode, useCallback, useState } from 'react';
@@ -46,6 +50,17 @@ export interface WithInjectedHostedCreditCardFieldsetProps {
     hostedValidationSchema: ObjectSchema<HostedCreditCardValidationSchemaShape>;
     getHostedFormOptions(selectedInstrument?: CardInstrument): Promise<HostedFormOptions>;
     getHostedStoredCardValidationFieldset(selectedInstrument?: CardInstrument): ReactNode;
+    // Billing address props
+    billingAddress?: Address;
+    countries?: Country[];
+    countriesWithAutocomplete?: string[];
+    getFields?(countryCode?: string): FormField[];
+    isFloatingLabelEnabled?: boolean;
+    googleMapsApiKey?: string;
+    onBillingAddressChange?(address: Partial<Address>): void;
+    onBillingSameAsShippingChange?(isSame: boolean): void;
+    isBillingSameAsShipping?: boolean;
+    shouldShowBillingAddress?: boolean;
 }
 
 interface WithCheckoutContextProps {
@@ -53,6 +68,20 @@ interface WithCheckoutContextProps {
     isInstrumentFeatureAvailable: boolean;
     isInstrumentCardCodeRequired(instrument: Instrument, method: PaymentMethod): boolean;
     isInstrumentCardNumberRequired(instrument: Instrument): boolean;
+    // Billing address props from checkout context
+    billingAddress?: Address;
+    countries?: Country[];
+    countriesWithAutocomplete?: string[];
+    getFields?(countryCode?: string): FormField[];
+    isFloatingLabelEnabled?: boolean;
+    googleMapsApiKey?: string;
+    onBillingAddressChange?(address: Partial<Address>): void;
+    onBillingSameAsShippingChange?(isSame: boolean): void;
+    shouldShowBillingAddress?: boolean;
+    // Auto-save props from checkout context
+    updateAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
+    onUnhandledError?(error: Error): void;
+    billingAutosaveDelay?: number;
 }
 
 export default function withHostedCreditCardFieldset<
@@ -76,6 +105,20 @@ export default function withHostedCreditCardFieldset<
         language,
         method,
         setSubmitted,
+        // Billing address props from checkout context
+        billingAddress,
+        countries,
+        countriesWithAutocomplete,
+        getFields,
+        isFloatingLabelEnabled,
+        googleMapsApiKey,
+        onBillingAddressChange,
+        onBillingSameAsShippingChange,
+        shouldShowBillingAddress,
+        // Auto-save props from checkout context
+        updateAddress,
+        onUnhandledError,
+        billingAutosaveDelay,
         ...rest
     }) => {
         const [focusedFieldType, setFocusedFieldType] = useState<string>();
@@ -273,6 +316,20 @@ export default function withHostedCreditCardFieldset<
                         cardNameId={getHostedFieldId('ccName')}
                         cardNumberId={getHostedFieldId('ccNumber')}
                         focusedFieldType={focusedFieldType}
+                        // Billing address props
+                        billingAddress={billingAddress}
+                        countries={countries}
+                        countriesWithAutocomplete={countriesWithAutocomplete}
+                        getFields={getFields}
+                        isFloatingLabelEnabled={isFloatingLabelEnabled}
+                        googleMapsApiKey={googleMapsApiKey}
+                        onBillingAddressChange={onBillingAddressChange}
+                        onBillingSameAsShippingChange={onBillingSameAsShippingChange}
+                        isBillingSameAsShipping={true}
+                        shouldShowBillingAddress={shouldShowBillingAddress}
+                        updateAddress={updateAddress}
+                        onUnhandledError={onUnhandledError}
+                        billingAutosaveDelay={billingAutosaveDelay}
                     />
                 }
                 hostedStoredCardValidationSchema={getHostedInstrumentValidationSchema({ language })}
@@ -292,9 +349,9 @@ const mapFromCheckoutProps: MapToPropsFactory<
     WithCheckoutContextProps,
     WithHostedCreditCardFieldsetProps & ConnectFormikProps<PaymentFormValues>
 > = () => {
-    return ({ checkoutState }, { isUsingMultiShipping = false, method }) => {
+    return ({ checkoutState, checkoutService }, { isUsingMultiShipping = false, method }) => {
         const {
-            data: { getConfig, getCustomer },
+            data: { getConfig, getCustomer, getBillingAddress, getBillingCountries, getBillingAddressFields },
         } = checkoutState;
 
         const config = getConfig();
@@ -311,12 +368,30 @@ const mapFromCheckoutProps: MapToPropsFactory<
             paymentMethod: method,
         });
 
+        // Only show billing address for credit card payment methods (including Checkout.com)
+        const shouldShowBillingAddress = (method.method === 'credit-card' || method.gateway === 'checkoutcom') && !!getBillingCountries && !!getBillingAddressFields;
+
         return {
             method,
             isCardCodeRequired: method.config.cardCode || method.config.cardCode === null,
             isInstrumentCardCodeRequired: isInstrumentCardCodeRequiredSelector(checkoutState),
             isInstrumentCardNumberRequired: isInstrumentCardNumberRequiredSelector(checkoutState),
             isInstrumentFeatureAvailable: isInstrumentFeatureAvailableProp,
+            // Billing address props from checkout context
+            billingAddress: getBillingAddress(),
+            countries: getBillingCountries() || [],
+            countriesWithAutocomplete: config.checkoutSettings.features['PAYMENT_REQUEST_BUTTON'] ? ['US', 'CA'] : [],
+            getFields: getBillingAddressFields,
+            isFloatingLabelEnabled: true, // Always enable floating labels for billing address
+            googleMapsApiKey: config.checkoutSettings.googleMapsApiKey,
+            shouldShowBillingAddress,
+            // Auto-save props from checkout context
+            updateAddress: checkoutService.updateBillingAddress,
+            onUnhandledError: (error: Error) => {
+                // Handle error appropriately
+                console.error('Billing address update error:', error);
+            },
+            billingAutosaveDelay: 1700, // Same as BILLING_AUTOSAVE_DELAY
         };
     };
 };
