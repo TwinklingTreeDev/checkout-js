@@ -129,6 +129,10 @@ function appConfig(options, argv) {
                         transform: assets => transformManifest(assets, appVersion),
                         output: 'manifest.json'
                     }),
+                    // Expose selected environment variables to the app bundle
+                    new DefinePlugin({
+                        'process.env.INSURANCE_PRODUCT_ID': JSON.stringify(process.env.INSURANCE_PRODUCT_ID || ''),
+                    }),
                     new BuildHookPlugin({
                         onSuccess() {
                             eventEmitter.emit('app:done');

@@ -68,7 +68,12 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                         .slice(0, isExpanded ? undefined : collapsedLimit)
                         .map((summaryItemProps) => (
                             <li className="productList-item is-visible" key={summaryItemProps.id}>
-                                <OrderSummaryItem {...summaryItemProps} />
+                                <OrderSummaryItem
+                                    {...summaryItemProps}
+                                    {...(isInsuranceItem(summaryItemProps.name) && {
+                                        onRemove: () => removeInsuranceItem(summaryItemProps.id),
+                                    })}
+                                />
                             </li>
                         ))}
                 </ul>
@@ -131,3 +136,26 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
 }
 
 export default OrderSummaryItems;
+
+function isInsuranceItem(name: string): boolean {
+    // Basic identification by name; adjust if there is a more reliable flag
+    return /insurance/i.test(name) || /delivery guarantee/i.test(name);
+}
+
+async function removeInsuranceItem(lineItemId: string | number): Promise<void> {
+    try {
+        const cartId = (window as any).__bc_cart_id;
+        if (!cartId) {
+            console.warn('Cart id not available for delete line item');
+            return;
+        }
+        await fetch(`/api/storefront/carts/${cartId}/items/${lineItemId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        // Best-effort soft refresh - emit event so checkout can reload state without full page reload
+        window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
+    } catch (e) {
+        console.warn('Failed to remove insurance item:', e);
+    }
+}

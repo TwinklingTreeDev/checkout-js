@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { isNumber } from 'lodash';
-import React, { FunctionComponent, memo, ReactNode } from 'react';
+import React, { FunctionComponent, memo, ReactNode, useEffect, useRef, useState } from 'react';
 
 import { ShopperCurrency } from '../currency';
 
@@ -13,6 +13,8 @@ export interface OrderSummaryItemProps {
     image?: ReactNode;
     description?: ReactNode;
     productOptions?: OrderSummaryItemOption[];
+    // Optional remove handler (used for special insurance item)
+    onRemove?: () => Promise<void> | void;
 }
 
 export interface OrderSummaryItemOption {
@@ -28,7 +30,69 @@ const OrderSummaryItem: FunctionComponent<OrderSummaryItemProps> = ({
     productOptions,
     quantity,
     description,
-}) => (
+    onRemove,
+    id,
+}) => {
+    const [isRemoving, setIsRemoving] = useState(false);
+    const removingResetTimeoutRef = useRef<number | undefined>(undefined);
+    const lineItemIdRef = useRef<string | number | null>(null);
+
+    const handleRemoveClick = async (): Promise<void> => {
+        if (!onRemove || isRemoving) {
+            return;
+        }
+        try {
+            setIsRemoving(true);
+            lineItemIdRef.current = id;
+            await Promise.resolve(onRemove());
+        } finally {
+            // Delay resetting the label to account for cart refresh lag
+            if (removingResetTimeoutRef.current) {
+                window.clearTimeout(removingResetTimeoutRef.current);
+            }
+            removingResetTimeoutRef.current = window.setTimeout(() => {
+                setIsRemoving(false);
+                removingResetTimeoutRef.current = undefined;
+            }, 3000);
+        }
+    };
+
+    useEffect(() => {
+        // Listen for external removing status changes (e.g., checkbox initiated removal)
+        const handler = (e: Event) => {
+            const evt = e as CustomEvent<{ lineItemId: string | number; removing: boolean }>;
+            if (!evt?.detail) return;
+            const { lineItemId, removing } = evt.detail;
+            if (lineItemId === id) {
+                if (removing) {
+                    // Set immediately, cancel any pending reset
+                    if (removingResetTimeoutRef.current) {
+                        window.clearTimeout(removingResetTimeoutRef.current);
+                        removingResetTimeoutRef.current = undefined;
+                    }
+                    setIsRemoving(true);
+                } else {
+                    // Delay resetting the label to allow UI/cart refresh to catch up
+                    if (removingResetTimeoutRef.current) {
+                        window.clearTimeout(removingResetTimeoutRef.current);
+                    }
+                    removingResetTimeoutRef.current = window.setTimeout(() => {
+                        setIsRemoving(false);
+                        removingResetTimeoutRef.current = undefined;
+                    }, 3000);
+                }
+            }
+        };
+        window.addEventListener('cart-line-item-removing', handler as EventListener);
+        return () => {
+            if (removingResetTimeoutRef.current) {
+                window.clearTimeout(removingResetTimeoutRef.current);
+            }
+            window.removeEventListener('cart-line-item-removing', handler as EventListener);
+        };
+    }, []);
+
+    return (
     <div className="product" data-test="cart-item">
         <figure className="product-column product-figure">{image}
             <div className="product-qty">{quantity}</div>
@@ -61,6 +125,18 @@ const OrderSummaryItem: FunctionComponent<OrderSummaryItemProps> = ({
                     {description}
                 </div>
             )}
+            
+
+            {onRemove && (
+                <button
+                    type="button"
+                    className="product-actions-remove"
+                    onClick={handleRemoveClick}
+                    disabled={isRemoving}
+                >
+                    {isRemoving ? 'Removing...' : 'Remove'}
+                </button>
+            )}
         </div>
 
         <div className="product-column product-actions">
@@ -81,6 +157,7 @@ const OrderSummaryItem: FunctionComponent<OrderSummaryItemProps> = ({
             )}
         </div>
     </div>
-);
+    );
+};
 
 export default memo(OrderSummaryItem);

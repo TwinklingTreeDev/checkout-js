@@ -186,6 +186,7 @@ class Checkout extends Component<
         }
 
         window.removeEventListener('beforeunload', this.handleBeforeExit);
+        window.removeEventListener('soft-cart-refresh', this.handleSoftCartRefresh as EventListener);
         this.handleBeforeExit();
     }
 
@@ -257,6 +258,65 @@ class Checkout extends Component<
 
             const consignments = data.getConsignments();
             const cart = data.getCart();
+            console.log('[Checkout] Loaded checkout', { checkoutId, cartId: cart?.id });
+            try { (window as any).__bc_cart_id = cart?.id; } catch {}
+
+            // Auto-add shipping insurance product if configured and not present yet
+            try {
+                const insuranceProductId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+                const hasInsuranceConfigured = Boolean(insuranceProductId);
+                // Local quick check using current checkout state (insurance is a digital product)
+                const insuranceItem = cart?.lineItems?.digitalItems?.find(
+                    (item) => String(item.productId) === insuranceProductId,
+                );
+                const alreadyHasInsurance = Boolean(insuranceItem);
+
+                if (hasInsuranceConfigured && !alreadyHasInsurance && cart?.id) {
+                    console.log('[Insurance] Attempting to auto-add insurance product', { insuranceProductId, checkoutId, cartId: cart?.id });
+                    // Extra server-side validation using Storefront Get Cart API
+                    try {
+                        const verifyRes = await fetch(`/api/storefront/carts/${cart.id}`, { credentials: 'include' });
+                        if (verifyRes.ok) {
+                            const verifyJson: any = await verifyRes.json();
+                            const serverHasInsurance = Boolean(
+                                verifyJson?.lineItems?.digitalItems?.some((i: any) => String(i.productId) === insuranceProductId),
+                            );
+                            if (serverHasInsurance) {
+                                console.log('[Insurance] Skipping add; item already present on server');
+                                await loadCheckout(checkoutId);
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('[Insurance] Verify cart failed; proceeding with cautious add', e);
+                    }
+                    const createRes = await fetch(`/api/storefront/carts/${cart.id}/items`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Accept: 'application/vnd.api+json',
+                        },
+                        body: JSON.stringify({
+                            lineItems: [
+                                { productId: Number(insuranceProductId), quantity: 1 },
+                            ],
+                        }),
+                        credentials: 'include',
+                    });
+                    if (!createRes.ok) {
+                        let body = '';
+                        try { body = await createRes.text(); } catch {}
+                        console.warn('[Insurance] Add-to-cart failed', { status: createRes.status, body });
+                    } else {
+                        console.log('[Insurance] Added insurance to cart');
+                    }
+                    // Soft refresh of checkout/cart state without full page reload
+                    await loadCheckout(checkoutId);
+                }
+            } catch (e) {
+                // Non-blocking: log and continue
+                console.warn('Failed to auto-add insurance product:', e);
+            }
 
             const hasMultiShippingEnabled =
                 data.getConfig()?.checkoutSettings.hasMultiShippingEnabled;
@@ -302,6 +362,16 @@ class Checkout extends Component<
                 isSubscribed: defaultNewsletterSignupOption,
             });
 
+            // If insurance is present in cart, default the checkbox to checked ASAP
+            try {
+                const insuranceProductId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+                const hasInsurance = Boolean(cart?.lineItems?.digitalItems?.some(i => String(i.productId) === insuranceProductId));
+                if (hasInsurance) {
+                    // trigger a tiny sync so the UI mounts with checked state
+                    window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
+                }
+            } catch {}
+
             if (isMultiShippingMode) {
                 this.setState({ isMultiShippingMode }, this.handleReady);
             } else {
@@ -309,6 +379,7 @@ class Checkout extends Component<
             }
 
             window.addEventListener('beforeunload', this.handleBeforeExit);
+            window.addEventListener('soft-cart-refresh', this.handleSoftCartRefresh as EventListener);
 
         } catch (error) {
             if (error instanceof Error) {
@@ -556,6 +627,7 @@ class Checkout extends Component<
                 consignments={consignments}
                 selectShippingOption={selectShippingOption}
                 isSelectingShippingOption={isSelectingShippingOption}
+                cart={this.props.cart}
                 applyCoupon={checkoutService.applyCoupon}
                 applyGiftCertificate={checkoutService.applyGiftCertificate}
                 clearError={checkoutService.clearError}
@@ -866,6 +938,19 @@ class Checkout extends Component<
     private handleReady: () => void = () => {
         this.navigateToNextIncompleteStep({ isDefault: true });
     };
+
+    // Listen for soft cart refresh requests (e.g., after removing insurance)
+    private handleSoftCartRefresh = async (): Promise<void> => {
+        try {
+            const { checkoutId, loadCheckout } = this.props;
+            console.log('[Cart] Soft refresh requested');
+            await loadCheckout(checkoutId);
+        } catch (e) {
+            console.warn('Soft cart refresh failed:', e);
+        }
+    };
+
+    
 
     private handleNewsletterSubscription: (subscribed: boolean) => void = (subscribed) => {
         this.setState({ isSubscribed: subscribed });

@@ -3,7 +3,7 @@ import { noop } from 'lodash';
 import React, { Component, createRef, ReactNode } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { Consignment, ShippingOption } from '@bigcommerce/checkout-sdk';
+import { Cart, Consignment, ShippingOption } from '@bigcommerce/checkout-sdk';
 import { ShopperCurrency } from '../currency';
 
 import { isMobileView, MobileView } from '../ui/responsive';
@@ -43,6 +43,9 @@ export interface CheckoutStepProps {
         used?: number;
     }>;
     onRemoveRedeemable?(code: string): Promise<any>;
+    // Cart context to manage shipping protection
+    cart?: Cart;
+    reloadCheckout?: () => Promise<any>;
 }
 
 // Simple shipping option component that doesn't require Formik
@@ -86,6 +89,8 @@ export interface CheckoutStepState {
     isApplyingDiscount: boolean;
     discountError?: string;
     removingRedeemable?: string; // Track which redeemable is being removed
+    // Shipping protection/insurance upsell state
+    isShippingProtectionSelected: boolean;
 }
 
 
@@ -97,6 +102,8 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         isApplyingDiscount: false,
         discountError: undefined,
         removingRedeemable: undefined,
+        // Preselect the checkbox on page load
+        isShippingProtectionSelected: true,
     };
 
     private containerRef = createRef<HTMLLIElement>();
@@ -110,6 +117,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         if (isActive) {
             this.focusStep();
         }
+        // Do NOT sync from cart on mount to keep default checked UI; we'll sync when cart updates
     }
 
     componentDidUpdate(prevProps: Readonly<CheckoutStepProps>): void {
@@ -117,6 +125,10 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
 
         if (isActive && isActive !== prevProps.isActive) {
             this.focusStep();
+        }
+
+        if (this.props.cart !== prevProps.cart) {
+            this.syncInsuranceSelectionFromCart();
         }
     }
 
@@ -266,6 +278,42 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                     );
                                 }).filter(Boolean);
                             })()}
+                        </div>
+                    )}
+
+                    {/* Shipping Protection / Insurance Upsell */}
+                    {(type == 'billing') && (
+                        <div className="shipping-protection-container">
+                            <button
+                                type="button"
+                                className={`shipping-protection-card ${this.state.isShippingProtectionSelected ? 'selected' : ''}`}
+                                onClick={() => this.handleShippingProtectionToggle(!this.state.isShippingProtectionSelected)}
+                                aria-pressed={this.state.isShippingProtectionSelected}
+                            >
+                                <div className="shipping-protection-content">
+                                    <div className="shipping-protection-icon" aria-hidden="true">
+                                        {/* simple box icon */}
+                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M3 7l9-4 9 4-9 4-9-4z" fill="#F4B000"/>
+                                            <path d="M3 7v10l9 4 9-4V7" stroke="#D59A00" strokeWidth="1" fill="none"/>
+                                        </svg>
+                                    </div>
+                                    <div className="shipping-protection-text">
+                                        <div className="shipping-protection-title">Extra Priority when packing & 100% insurance</div>
+                                        <div className="shipping-protection-subtitle">from damage, theft or loss for just <span className="shipping-protection-price">$10.74</span></div>
+                                        <div className="shipping-protection-description">Enjoy peace of mind with our Delivery Guarantee, covering any damage, theft, or loss that may occur during transit.</div>
+                                    </div>
+                                </div>
+                                <div className="shipping-protection-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        checked={this.state.isShippingProtectionSelected}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={() => this.handleShippingProtectionToggle(!this.state.isShippingProtectionSelected)}
+                                        aria-label="Add shipping protection"
+                                    />
+                                </div>
+                            </button>
                         </div>
                     )}
                     
@@ -575,6 +623,78 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         } finally {
             // Clear loading state
             this.setState({ removingRedeemable: undefined });
+        }
+    };
+
+    // old local toggle kept for reference; superseded by handleShippingProtectionToggle
+
+    private syncInsuranceSelectionFromCart(): void {
+        try {
+            const { cart } = this.props;
+            const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+            if (!cart || !productId) return;
+            const present = cart.lineItems?.digitalItems?.some(
+                (item) => String(item.productId) === productId,
+            );
+            if (present !== undefined) {
+                this.setState({ isShippingProtectionSelected: !!present });
+            }
+        } catch (e) {
+            console.warn('Failed to sync insurance selection from cart:', e);
+        }
+    }
+
+    private handleShippingProtectionToggle = async (shouldSelect: boolean): Promise<void> => {
+        const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+        if (!productId) return;
+        // Validate against current cart first to avoid duplicates or no-op removals
+        const exists = Boolean(this.props.cart?.lineItems?.digitalItems?.some(i => String(i.productId) === productId));
+        // Update UI immediately for responsiveness
+        this.setState({ isShippingProtectionSelected: shouldSelect });
+        try {
+            if (shouldSelect && this.props.cart?.id) {
+                if (exists) {
+                    // Already present; nothing to do
+                    window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
+                    return;
+                }
+                // Add via Storefront Cart Items API (same as page-load path)
+                await fetch(`/api/storefront/carts/${this.props.cart.id}/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/vnd.api+json',
+                    },
+                    body: JSON.stringify({
+                        lineItems: [{ productId: Number(productId), quantity: 1 }],
+                    }),
+                    credentials: 'include',
+                });
+            } else if (!shouldSelect && this.props.cart?.id) {
+                // Remove via Storefront Cart Items API (same as remove button)
+                const insurance = this.props.cart?.lineItems?.digitalItems?.find(
+                    (i) => String(i.productId) === productId,
+                );
+                if (insurance) {
+                    // Tell the summary to switch label to "Removing..."
+                    window.dispatchEvent(new CustomEvent('cart-line-item-removing', { detail: { lineItemId: insurance.id, removing: true } }));
+                    await fetch(`/api/storefront/carts/${this.props.cart.id}/items/${insurance.id}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+                    // Reset the label back after deletion completes (summary will also get refreshed)
+                    window.dispatchEvent(new CustomEvent('cart-line-item-removing', { detail: { lineItemId: insurance.id, removing: false } }));
+                } else {
+                    // Nothing to remove
+                    window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to update insurance item:', e);
+        } finally {
+            // Soft refresh to re-sync UI with cart
+            window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
         }
     };
 }
