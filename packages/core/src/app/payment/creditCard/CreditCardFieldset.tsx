@@ -1,7 +1,7 @@
 import React, { FunctionComponent, memo } from 'react';
 
 import { TranslatedString } from '@bigcommerce/checkout/locale';
-import { Address, Country, FormField, CheckoutSelectors } from '@bigcommerce/checkout-sdk';
+import { Address, Country, FormField } from '@bigcommerce/checkout-sdk';
 
 import { Fieldset, Legend } from '../../ui/form';
 
@@ -18,6 +18,8 @@ export interface CreditCardFieldsetProps {
     shouldShowSaveCardField?: boolean;
     // Billing address props
     billingAddress?: Address;
+    shippingAddress?: Address; // Add shipping address prop
+    customerEmail?: string; // Add customer email prop
     countries?: Country[];
     countriesWithAutocomplete?: string[];
     getFields?(countryCode?: string): FormField[];
@@ -28,7 +30,6 @@ export interface CreditCardFieldsetProps {
     isBillingSameAsShipping?: boolean;
     shouldShowBillingAddress?: boolean;
     // Auto-save props
-    updateAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
     onUnhandledError?(error: Error): void;
     billingAutosaveDelay?: number;
 }
@@ -38,6 +39,8 @@ const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
     shouldShowCustomerCodeField,
     // Billing address props
     billingAddress,
+    shippingAddress,
+    customerEmail,
     countries,
     countriesWithAutocomplete,
     getFields,
@@ -48,7 +51,6 @@ const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
     isBillingSameAsShipping = true,
     shouldShowBillingAddress = false,
     // Auto-save props
-    updateAddress,
     onUnhandledError,
     billingAutosaveDelay,
 }) => (
@@ -76,6 +78,8 @@ const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
         {shouldShowBillingAddress && countries && getFields && (
             <CreditCardBillingAddress
                 billingAddress={billingAddress}
+                shippingAddress={shippingAddress}
+                customerEmail={customerEmail}
                 countries={countries}
                 countriesWithAutocomplete={countriesWithAutocomplete || []}
                 getFields={getFields}
@@ -84,7 +88,6 @@ const CreditCardFieldset: FunctionComponent<CreditCardFieldsetProps> = ({
                 onBillingAddressChange={onBillingAddressChange}
                 onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                 isBillingSameAsShipping={isBillingSameAsShipping}
-                updateAddress={updateAddress}
                 onUnhandledError={onUnhandledError}
                 billingAutosaveDelay={billingAutosaveDelay}
             />

@@ -1,4 +1,5 @@
 import {
+    Address,
     CheckoutPaymentMethodExecutedOptions,
     CheckoutSelectors,
     CustomerAccountRequestBody,
@@ -97,6 +98,9 @@ export interface WithCheckoutCustomerProps {
     signIn(credentials: CustomerCredentials): Promise<CheckoutSelectors>;
     createAccount(values: CustomerAccountRequestBody): Promise<CheckoutSelectors>;
     updateCheckout(payload: any): Promise<CheckoutSelectors>;
+
+    billingAddress?: Address;
+    shippingAddress?: Address;
     shouldRenderStripeForm: boolean;
 }
 
@@ -242,7 +246,7 @@ class Customer extends Component<CustomerProps & WithCheckoutCustomerProps & Ana
                 onShowLogin={this.handleShowLogin}
                 privacyPolicyUrl={privacyPolicyUrl}
                 requiresMarketingConsent={requiresMarketingConsent}
-                updateCheckout={this.props.updateCheckout}
+
                 onUnhandledError={this.props.onUnhandledError}
             />
         );
@@ -629,6 +633,8 @@ export function mapToWithCheckoutCustomerProps({
         signIn: checkoutService.signInCustomer,
         signInError: getSignInError(),
         updateCheckout: checkoutService.updateCheckout,
+        billingAddress,
+        shippingAddress: checkout.consignments?.[0]?.shippingAddress,
         isFloatingLabelEnabled: isFloatingLabelEnabled(config.checkoutSettings),
         isExpressPrivacyPolicy,
         isPaymentDataRequired: isPaymentDataRequired(),

@@ -60,6 +60,8 @@ export interface CreditCardPaymentMethodProps {
     onUnhandledError?(error: Error): void;
     // Billing address props
     billingAddress?: Address;
+    shippingAddress?: Address; // Add shipping address prop
+    customerEmail?: string; // Add customer email prop
     countries?: Country[];
     countriesWithAutocomplete?: string[];
     getFields?(countryCode?: string): FormField[];
@@ -69,7 +71,6 @@ export interface CreditCardPaymentMethodProps {
     onBillingSameAsShippingChange?(isSame: boolean): void;
     isBillingSameAsShipping?: boolean;
     // Auto-save props
-    updateAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
     onUnhandledError?(error: Error): void;
     billingAutosaveDelay?: number;
 }
@@ -89,6 +90,8 @@ interface WithCheckoutCreditCardPaymentMethodProps {
     loadInstruments(): Promise<CheckoutSelectors>;
     // Billing address props from checkout context
     billingAddress?: Address;
+    shippingAddress?: Address; // Add shipping address prop
+    customerEmail?: string; // Add customer email prop
     countries?: Country[];
     countriesWithAutocomplete?: string[];
     getFields?(countryCode?: string): FormField[];
@@ -218,6 +221,8 @@ class CreditCardPaymentMethod extends Component<
             method,
             // Billing address props
             billingAddress,
+            shippingAddress,
+            customerEmail,
             countries,
             countriesWithAutocomplete,
             getFields,
@@ -227,7 +232,6 @@ class CreditCardPaymentMethod extends Component<
             onBillingSameAsShippingChange,
             isBillingSameAsShipping = true,
             // Auto-save props
-            updateAddress,
             onUnhandledError,
             billingAutosaveDelay,
         } = this.props;
@@ -244,12 +248,12 @@ class CreditCardPaymentMethod extends Component<
             ? isInstrumentCardCodeRequiredProp(selectedInstrument, method)
             : false;
 
-        // Only show billing address for credit card payment methods (including Checkout.com)
-        const shouldShowBillingAddress = (method.method === 'credit-card' || method.gateway === 'checkoutcom') && !!countries && !!getFields;
+        // Only show billing address for credit card payment methods (including Checkout.com) and test payments
+        const shouldShowBillingAddress = (method.method === 'credit-card' || method.gateway === 'checkoutcom' || method.gateway === 'null') && !!countries && !!getFields;
 
         return (
             <LoadingOverlay hideContentWhenLoading isLoading={isLoading}>
-                <div className="paymentMethod paymentMethod--creditCard" data-test='credit-cart-payment-method'>
+                <div className={`paymentMethod paymentMethod--creditCard ${method.gateway}`} data-test='credit-cart-payment-method'>
                     {shouldShowInstrumentFieldset && (
                         <CardInstrumentFieldset
                             instruments={instruments}
@@ -280,6 +284,8 @@ class CreditCardPaymentMethod extends Component<
                             shouldShowCustomerCodeField={method.config.requireCustomerCode}
                             // Billing address props
                             billingAddress={billingAddress}
+                            shippingAddress={shippingAddress}
+                            customerEmail={customerEmail}
                             countries={countries}
                             countriesWithAutocomplete={countriesWithAutocomplete}
                             getFields={getFields}
@@ -289,7 +295,6 @@ class CreditCardPaymentMethod extends Component<
                             onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                             isBillingSameAsShipping={isBillingSameAsShipping}
                             shouldShowBillingAddress={shouldShowBillingAddress}
-                            updateAddress={updateAddress}
                             onUnhandledError={onUnhandledError}
                             billingAutosaveDelay={billingAutosaveDelay}
                         />
@@ -436,7 +441,7 @@ const mapFromCheckoutProps: MapToPropsFactory<
         const { checkoutService, checkoutState } = context;
 
         const {
-            data: { getConfig, getCustomer, getInstruments, isPaymentDataRequired, getBillingAddress, getBillingCountries, getBillingAddressFields },
+            data: { getConfig, getCustomer, getInstruments, isPaymentDataRequired, getBillingAddress, getBillingCountries, getBillingAddressFields, getShippingAddress },
             statuses: { isLoadingInstruments },
         } = checkoutState;
 
@@ -469,13 +474,14 @@ const mapFromCheckoutProps: MapToPropsFactory<
                 isInstrumentFeatureAvailableProp && instruments.length > 0,
             // Billing address props from checkout context
             billingAddress: getBillingAddress(),
+            shippingAddress: getShippingAddress(),
+            customerEmail: customer.email,
             countries: getBillingCountries() || [],
             countriesWithAutocomplete: config.checkoutSettings.features['PAYMENT_REQUEST_BUTTON'] ? ['US', 'CA'] : [],
             getFields: getBillingAddressFields,
             isFloatingLabelEnabled: true, // Always enable floating labels for billing address
             googleMapsApiKey: config.checkoutSettings.googleMapsApiKey,
             // Auto-save props from checkout context
-            updateAddress: checkoutService.updateBillingAddress,
             onUnhandledError: (error: Error) => {
                 // Handle error appropriately
                 console.error('Billing address update error:', error);

@@ -7,9 +7,9 @@ import HostedCreditCardFieldset from './HostedCreditCardFieldset';
 // Mock the CreditCardBillingAddress component
 jest.mock('../creditCard/CreditCardBillingAddress', () => ({
     __esModule: true,
-    default: ({ shouldShowBillingAddress }: { shouldShowBillingAddress?: boolean }) => (
+    default: () => (
         <div data-testid="credit-card-billing-address">
-            {shouldShowBillingAddress ? 'Billing Address Component' : 'No Billing Address'}
+            Billing Address Component
         </div>
     ),
 }));
@@ -68,14 +68,13 @@ describe('HostedCreditCardFieldset', () => {
     it('does not show billing address by default', () => {
         render(<HostedCreditCardFieldset {...defaultProps} />);
         
-        expect(screen.getByTestId('credit-card-billing-address')).toHaveTextContent('No Billing Address');
+        expect(screen.queryByTestId('credit-card-billing-address')).not.toBeInTheDocument();
     });
 
-    it('shows billing address when shouldShowBillingAddress is true and required props are provided', () => {
+    it('shows billing address when required props are provided', () => {
         const billingProps = {
             countries: [{ code: 'US', name: 'United States' }],
             getFields: jest.fn(),
-            shouldShowBillingAddress: true,
         };
         
         render(<HostedCreditCardFieldset {...defaultProps} {...billingProps} />);
@@ -83,16 +82,14 @@ describe('HostedCreditCardFieldset', () => {
         expect(screen.getByTestId('credit-card-billing-address')).toHaveTextContent('Billing Address Component');
     });
 
-    it('does not show billing address when shouldShowBillingAddress is false', () => {
+    it('does not show billing address when countries is not provided', () => {
         const billingProps = {
-            countries: [{ code: 'US', name: 'United States' }],
             getFields: jest.fn(),
-            shouldShowBillingAddress: false,
         };
         
         render(<HostedCreditCardFieldset {...defaultProps} {...billingProps} />);
         
-        expect(screen.getByTestId('credit-card-billing-address')).toHaveTextContent('No Billing Address');
+        expect(screen.queryByTestId('credit-card-billing-address')).not.toBeInTheDocument();
     });
 
     it('does not show billing address when countries is not provided', () => {

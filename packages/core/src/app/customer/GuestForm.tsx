@@ -3,6 +3,7 @@ import { debounce } from 'lodash';
 import { FieldProps, FormikProps, withFormik } from 'formik';
 import React, { FunctionComponent, memo, ReactNode, useCallback, useState, useEffect } from 'react';
 import { object, string } from 'yup';
+import { useCheckoutForm } from '../checkout/CheckoutFormContext';
 
 import { TranslatedString, withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
 
@@ -37,7 +38,7 @@ export interface GuestFormProps {
     onChangeEmail(email: string): void;
     onContinueAsGuest(data: GuestFormValues): void;
     onShowLogin(): void;
-    updateCheckout?(payload: any): Promise<any>;
+
     onUnhandledError?(error: Error): void;
 }
 
@@ -63,25 +64,50 @@ const GuestForm: FunctionComponent<
     isExpressPrivacyPolicy,
     isFloatingLabelEnabled,
     guestAutosaveDelay = GUEST_AUTOSAVE_DELAY,
-    updateCheckout,
     onUnhandledError,
     values,
     setFieldValue,
 }) => {
     const [isUpdatingGuestData, setIsUpdatingGuestData] = useState(false);
 
-    // Create debounced update function
+    // Use centralized form state manager
+    const { updateEmail } = useCheckoutForm();
+
+    // Sync prefilled data to consignment on component mount
+    useEffect(() => {
+        const syncPrefilledData = async () => {
+            if (values.email && values.email.trim()) {
+                console.log('GuestForm: Syncing prefilled email to consignment on mount:', values.email);
+                try {
+                    // Use centralized form state manager
+                    await updateEmail(values.email, values.shouldSubscribe);
+                    console.log('GuestForm: Prefilled data synced successfully');
+                } catch (error) {
+                    console.error('GuestForm: Error syncing prefilled data:', error);
+                    if (error instanceof Error && onUnhandledError) {
+                        onUnhandledError(error);
+                    }
+                }
+            }
+        };
+
+        // Run sync after a short delay to ensure component is fully mounted
+        const timeoutId = setTimeout(syncPrefilledData, 100);
+        
+        return () => clearTimeout(timeoutId);
+    }, [updateEmail, values.email, values.shouldSubscribe]); // Include dependencies
+
+    // Create debounced update function using centralized form state manager
     const debouncedUpdateGuestData = useCallback(
         debounce(
             async (email: string, shouldSubscribe: boolean) => {
                 try {
-                    if (updateCheckout) {
-                        await updateCheckout({ 
-                            customerMessage: '', // Keep existing customer message
-                            email,
-                            shouldSubscribe 
-                        });
-                    }
+                    console.log('GuestForm: Starting centralized email sync for:', email, 'shouldSubscribe:', shouldSubscribe);
+                    setIsUpdatingGuestData(true);
+                    
+                    // Use centralized form state manager
+                    await updateEmail(email, shouldSubscribe);
+                    
                 } catch (error) {
                     if (error instanceof Error && onUnhandledError) {
                         onUnhandledError(error);
@@ -92,7 +118,7 @@ const GuestForm: FunctionComponent<
             },
             guestAutosaveDelay,
         ),
-        [updateCheckout, onUnhandledError, guestAutosaveDelay],
+        [updateEmail, onUnhandledError, guestAutosaveDelay],
     );
 
     // Handle field changes for auto-save
@@ -106,23 +132,30 @@ const GuestForm: FunctionComponent<
 
             // Handle email changes
             if (fieldName === 'email' && typeof value === 'string') {
+                console.log('GuestForm: handleFieldChange called for email:', value, 'current values.email:', values.email);
                 onChangeEmail(value);
                 
-                if (updateCheckout && value !== values.email) {
+                // Always trigger auto-save when email changes
+                if (value.trim()) {
+                    console.log('GuestForm: Email changed, triggering auto-save:', value);
                     setIsUpdatingGuestData(true);
                     debouncedUpdateGuestData(value, values.shouldSubscribe);
+                } else {
+                    console.log('GuestForm: Email change condition not met - value.trim():', value.trim());
                 }
             }
 
             // Handle subscription changes
             if (fieldName === 'shouldSubscribe' && typeof value === 'boolean') {
-                if (updateCheckout && value !== values.shouldSubscribe) {
-                    setIsUpdatingGuestData(true);
-                    debouncedUpdateGuestData(values.email, value);
-                }
+                console.log('GuestForm: handleFieldChange called for shouldSubscribe:', value, 'current values.shouldSubscribe:', values.shouldSubscribe);
+                
+                // Always trigger auto-save when marketing consent changes
+                console.log('GuestForm: Marketing consent changed, triggering auto-save:', value);
+                setIsUpdatingGuestData(true);
+                debouncedUpdateGuestData(values.email, value);
             }
         },
-        [setFieldValue, values, onChangeEmail, updateCheckout, debouncedUpdateGuestData],
+        [setFieldValue, values, onChangeEmail, debouncedUpdateGuestData],
     );
 
     // Cleanup debounced function on unmount
@@ -160,7 +193,11 @@ const GuestForm: FunctionComponent<
                         />
 
                         {(canSubscribe || requiresMarketingConsent) && (
-                            <BasicFormField name="shouldSubscribe" render={renderField} />
+                            <BasicFormField 
+                                name="shouldSubscribe" 
+                                render={renderField}
+                                onChange={(value) => handleFieldChange('shouldSubscribe', value)}
+                            />
                         )}
                     </div>
 

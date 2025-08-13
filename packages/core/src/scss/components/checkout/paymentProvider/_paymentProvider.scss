@@ -5,6 +5,10 @@
     align-items: start;
     display: flex;
     justify-content: space-between;
+
+    @media screen and (max-width: 968px) {
+        margin-top: 7px;
+    }
 }
 
 .paymentProviderHeader-subtitleContainer {
@@ -15,6 +19,9 @@
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
+    @media screen and (min-width: 969px) {
+        margin-top: -1px;
+    }
 }
 
 .paymentProviderHeader-img {
@@ -48,6 +55,10 @@
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
+
+    @media screen and (max-width: 968px) {
+        font-size: 14px;
+    }
 }
 
 @media (max-width: $screen-xsmall) {

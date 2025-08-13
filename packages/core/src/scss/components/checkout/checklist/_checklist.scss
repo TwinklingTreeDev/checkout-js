@@ -53,10 +53,15 @@
     font-size: $checklist-label-fontSize;
     line-height: 2.2;
     margin-bottom: 0;
-    min-height: $checklist-label-height;
+    max-height: 56px;
     padding: $checklist-spacing $checklist-spacingRight $checklist-spacing $checklist-spacingLeft--small;
     position: relative;
 
+    @media screen and (max-width: 968px) {
+        max-height: 41px;
+        min-height: 41px;
+        padding: 0;
+    }
     @include breakpoint("small") {
         padding-left: $checklist-spacingLeft;
     }

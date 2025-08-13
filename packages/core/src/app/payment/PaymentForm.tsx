@@ -140,25 +140,25 @@ const PaymentForm: FunctionComponent<
                 />
             )}
             {/* Discount Offer Section */}
-            <div className="discount-offer-section" style={{ marginTop: '20px', padding: '4px'}}>
-                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <div className="discount-offer-section">
+                <div className="discount-offer-container">
                     <input
                         type="checkbox"
                         id="discount-offer"
-                        style={{ marginRight: '13px', marginTop: '4px', transform: 'scale(1.4)' }}
+                        className="discount-offer-checkbox"
                     />
                     <div>
-                        <div style={{ color: '#292929', fontWeight: 'bold', fontSize: '14px', marginBottom: '8px' }}>
+                        <div className="discount-offer-title">
                             Get 25% OFF on Your Next Order
                         </div>
                     </div>
                 </div>
             </div>
-            <div style={{ fontSize: '13px', color: '#292929', lineHeight: '22px', marginBottom: '8px', fontWeight: '400' }}>
+            <div className="discount-offer-description">
                 Want exclusive deals? Check this box to receive the best offers to your phone. You can reply STOP to cancel or HELP for help. Msg frequency varies. Msg & data rates may apply.
-                 See <a href="#" style={{ textDecoration: 'underline', color: '#000', marginRight: '4px' }}>Terms</a>
+                See <a href="#" className="discount-offer-link discount-offer-link-terms">Terms</a>
                 &amp;
-                <a href="#" style={{ textDecoration: 'underline', color: '#000', marginLeft: '4px' }}>Privacy</a>
+                <a href="#" className="discount-offer-link discount-offer-link-privacy">Privacy</a>
             </div>
 
             <div className="form-actions">

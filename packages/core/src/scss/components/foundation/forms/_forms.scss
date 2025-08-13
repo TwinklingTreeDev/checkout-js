@@ -75,7 +75,7 @@
         }
         .optional-indicator {
             position: absolute;
-            right: $input-horizontalPadding;
+            right: 16px;
             top: 16.7px;
             cursor: help;
             display: inline-flex;
@@ -90,6 +90,23 @@
 
         .floating-select-chevron {
             top: $floating-chevron-top;
+        }
+
+        .select-placeholder {
+            position: absolute;
+            left: 1rem;
+            top: 12px;
+            pointer-events: none;
+            z-index: 1;
+            color: #737373;
+            font-size: 15px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 24px;
+        }
+
+        .hide-floating-label + .floating-label {
+            display: none;
         }
 
         .floating-label {
@@ -123,7 +140,7 @@
             color: $floating-label-color;
             display: block;
             font-size: fontSize("tiny");
-            line-height: $floating-label-line-height--focus;
+            line-height: 2.5;
             top: $floating-label-top--focus;
 
             small {

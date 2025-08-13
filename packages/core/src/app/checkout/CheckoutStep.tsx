@@ -293,10 +293,11 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                 <div className="shipping-protection-content">
                                     <div className="shipping-protection-icon" aria-hidden="true">
                                         {/* simple box icon */}
-                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M3 7l9-4 9 4-9 4-9-4z" fill="#F4B000"/>
-                                            <path d="M3 7v10l9 4 9-4V7" stroke="#D59A00" strokeWidth="1" fill="none"/>
-                                        </svg>
+                                        <img alt="Shipping Insurance against damage, lost and theft!" 
+                                            data-test="cart-item-image" 
+                                            src="https://cdn11.bigcommerce.com/s-dgqj8t7y1p/products/114/images/382/11052983__04773.1754742857.220.290.png?c=1" 
+                                            style={{ width: '69px' }}
+                                        />
                                     </div>
                                     <div className="shipping-protection-text">
                                         <div className="shipping-protection-title">Extra Priority when packing & 100% insurance</div>

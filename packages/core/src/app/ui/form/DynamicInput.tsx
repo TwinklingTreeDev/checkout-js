@@ -53,6 +53,9 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
 
     switch (fieldType) {
         case DynamicFormFieldType.dropdown:
+            const isEmpty = value === '' || value === null || value === undefined;
+            const showPlaceholder = isFloatingLabelEnabled && isEmpty && placeholder;
+            
             return (
                 <>
                     <div
@@ -62,12 +65,18 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
                         )}>
                         <IconChevronDown />
                     </div>
+                    {showPlaceholder && (
+                        <div className="select-placeholder">
+                            {placeholder}
+                        </div>
+                    )}
                     <select
                         {...(rest as any)}
                         className={classNames(
                             { 'floating-select': isFloatingLabelEnabled },
                             'form-select optimizedCheckout-form-select',
-                            { 'has-value': (value != '' && value !== null)}
+                            { 'has-value': (value != '' && value !== null)},
+                            { 'hide-floating-label': showPlaceholder }
                         )}
                         data-test={`${id}-select`}
                         id={id}
@@ -75,7 +84,7 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
                         onChange={onChange}
                         value={value === null ? '' : value}
                     >
-                        {placeholder && <option value="">{placeholder == 'Select a state' ? '' : placeholder}</option>}
+                        <option value=""></option>
                         {options &&
                             options.map(({ label, value: optionValue }) => (
                                 <option key={optionValue} value={optionValue}>

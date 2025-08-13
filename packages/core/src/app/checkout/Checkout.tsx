@@ -46,6 +46,7 @@ import { ShippingOptionExpiredError } from '../shipping/shippingOption';
 import { isEqualAddress } from '../address';
 import { LazyContainer, LoadingNotification, LoadingOverlay } from '../ui/loading';
 import { MobileView } from '../ui/responsive';
+import { CheckoutFormProvider } from './CheckoutFormContext';
 
 import CheckoutStep from './CheckoutStep';
 import CheckoutStepStatus from './CheckoutStepStatus';
@@ -406,13 +407,26 @@ class Checkout extends Component<
             }
         }
 
+        const { checkoutService, checkoutState } = this.props;
+        
         return (
-            <div className={classNames({ 'is-embedded': isEmbedded(), 'remove-checkout-step-numbers': isHidingStepNumbers })} data-test="checkout-page-container" id="checkout-page-container">
-                    <div className="layout optimizedCheckout-contentPrimary">
-                        {this.renderContent()}
-                    </div>
-                    {errorModal}
-            </div>
+            <CheckoutFormProvider
+                props={{
+                    updateCheckout: checkoutService.updateCheckout,
+                    updateShippingAddress: checkoutService.updateShippingAddress,
+                    updateBillingAddress: checkoutService.updateBillingAddress,
+                    getShippingAddress: () => checkoutState.data.getShippingAddress(),
+                    getBillingAddress: () => checkoutState.data.getBillingAddress(),
+                    onUnhandledError: this.handleUnhandledError,
+                }}
+            >
+                <div className={classNames({ 'is-embedded': isEmbedded(), 'remove-checkout-step-numbers': isHidingStepNumbers })} data-test="checkout-page-container" id="checkout-page-container">
+                        <div className="layout optimizedCheckout-contentPrimary">
+                            {this.renderContent()}
+                        </div>
+                        {errorModal}
+                </div>
+            </CheckoutFormProvider>
         );
     }
 

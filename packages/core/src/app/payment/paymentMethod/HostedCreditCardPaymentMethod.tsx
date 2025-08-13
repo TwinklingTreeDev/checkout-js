@@ -34,7 +34,6 @@ const HostedCreditCardPaymentMethod: FunctionComponent<
     onBillingAddressChange,
     onBillingSameAsShippingChange,
     isBillingSameAsShipping,
-    shouldShowBillingAddress,
     ...rest
 }) => {
     const initializeHostedCreditCardPayment: CreditCardPaymentMethodProps['initializePayment'] =

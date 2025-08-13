@@ -55,11 +55,25 @@ const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
     const fieldName = parentFieldName ? `${parentFieldName}.${name}` : name;
 
     const labelComponent = useMemo(
-        () => (
-            <Label htmlFor={fieldInputId} id={`${fieldInputId}-label`}>
-                {label || fieldLabel}
-            </Label>
-        ),
+        () => {
+            const fieldLabelText = typeof fieldLabel === 'string' ? fieldLabel : '';
+            const labelText = typeof label === 'string' ? label : '';
+            const isPhoneField = fieldLabelText.toLowerCase().includes('phone') || labelText.toLowerCase().includes('phone');
+            
+            return (
+                <Label htmlFor={fieldInputId} id={`${fieldInputId}-label`}>
+                    {label || fieldLabel}
+                    {!required && !isPhoneField && (
+                        <>
+                            {' '}
+                            <small className="optimizedCheckout-contentSecondary">
+                                <TranslatedString id="common.optional_text" />
+                            </small>
+                        </>
+                    )}
+                </Label>
+            );
+        },
         [fieldInputId, fieldLabel, required, label],
     );
 
@@ -67,6 +81,16 @@ const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
         if (required) {
             return null;
         }
+        
+        // Only show optional indicator for Phone field
+        const fieldLabelText = typeof fieldLabel === 'string' ? fieldLabel : '';
+        const labelText = typeof label === 'string' ? label : '';
+        const isPhoneField = fieldLabelText.toLowerCase().includes('phone') || labelText.toLowerCase().includes('phone');
+        
+        if (!isPhoneField) {
+            return null;
+        }
+
         return (
             <>
                 <span className="optional-indicator" aria-hidden="true">
@@ -79,7 +103,7 @@ const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
                 </span>
             </>
         );
-    }, [required]);
+    }, [required, fieldLabel, label]);
 
     const dynamicFormFieldType = useMemo((): DynamicFormFieldType => {
         if (fieldType === 'text') {

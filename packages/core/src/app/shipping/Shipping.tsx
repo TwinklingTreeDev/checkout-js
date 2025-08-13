@@ -113,6 +113,9 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
         try {
             await Promise.all([loadShippingAddressFields(), loadShippingOptions(), loadBillingAddressFields()]);
 
+            // Sync prefilled data to consignment after loading
+            await this.syncPrefilledData();
+
             onReady();
         } catch (error) {
             onUnhandledError(error);
@@ -120,6 +123,67 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
             this.setState({ isInitializing: false });
         }
     }
+
+    private syncPrefilledData = async (): Promise<void> => {
+        const {
+            updateShippingAddress,
+            updateBillingAddress,
+            shippingAddress,
+            billingAddress,
+            customer,
+            onUnhandledError = noop,
+        } = this.props;
+
+        try {
+            const promises: Array<Promise<any>> = [];
+
+            // Sync prefilled shipping address if it has data
+            if (shippingAddress && updateShippingAddress) {
+                const hasShippingData = shippingAddress.firstName || 
+                                       shippingAddress.lastName || 
+                                       shippingAddress.address1 || 
+                                       shippingAddress.city || 
+                                       shippingAddress.postalCode;
+                
+                if (hasShippingData) {
+                    console.log('Shipping: Syncing prefilled shipping address to consignment on mount');
+                    const shippingAddressWithEmail = {
+                        ...shippingAddress,
+                        email: customer.email || (shippingAddress as any).email,
+                    };
+                    promises.push(updateShippingAddress(shippingAddressWithEmail));
+                }
+            }
+
+            // Sync prefilled billing address if it has data and billing same as shipping
+            if (billingAddress && updateBillingAddress && this.props.isBillingSameAsShipping) {
+                const hasBillingData = billingAddress.firstName || 
+                                      billingAddress.lastName || 
+                                      billingAddress.address1 || 
+                                      billingAddress.city || 
+                                      billingAddress.postalCode;
+                
+                if (hasBillingData) {
+                    console.log('Shipping: Syncing prefilled billing address to consignment on mount');
+                    const billingAddressWithEmail = {
+                        ...billingAddress,
+                        email: customer.email || (billingAddress as any).email,
+                    };
+                    promises.push(updateBillingAddress(billingAddressWithEmail));
+                }
+            }
+
+            if (promises.length > 0) {
+                await Promise.allSettled(promises);
+                console.log('Shipping: Prefilled data synced successfully');
+            }
+        } catch (error) {
+            console.error('Shipping: Error syncing prefilled data:', error);
+            if (error instanceof Error) {
+                onUnhandledError(error);
+            }
+        }
+    };
 
     render(): ReactNode {
         const {
@@ -222,6 +286,7 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
         orderComment,
     }) => {
         const {
+            customer,
             customerMessage,
             updateCheckout,
             updateShippingAddress,
@@ -238,7 +303,13 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
         const hasRemoteBilling = this.hasRemoteBilling(methodId);
 
         if (!isEqualAddress(updatedShippingAddress, shippingAddress) || shippingAddress?.shouldSaveAddress !== updatedShippingAddress?.shouldSaveAddress) {
-            promises.push(updateShippingAddress(updatedShippingAddress || {}));
+            // Include customer email in shipping address if available
+            const shippingAddressWithEmail = updatedShippingAddress ? {
+                ...updatedShippingAddress,
+                email: customer.email || (updatedShippingAddress as any).email,
+            } : {};
+            
+            promises.push(updateShippingAddress(shippingAddressWithEmail));
         }
 
         if (
@@ -247,7 +318,13 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
             !isEqualAddress(updatedShippingAddress, billingAddress) &&
             !hasRemoteBilling
         ) {
-            promises.push(updateBillingAddress(updatedShippingAddress));
+            // Sync shipping address to billing address, but preserve existing email if it exists
+            const billingAddressWithEmail = {
+                ...updatedShippingAddress,
+                email: (billingAddress as any)?.email || customer.email || (updatedShippingAddress as any).email,
+            };
+            
+            promises.push(updateBillingAddress(billingAddressWithEmail));
         }
 
         if (customerMessage !== orderComment) {
