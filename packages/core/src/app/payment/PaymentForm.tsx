@@ -158,7 +158,7 @@ const PaymentForm: FunctionComponent<
                 Want exclusive deals? Check this box to receive the best offers to your phone. You can reply STOP to cancel or HELP for help. Msg frequency varies. Msg & data rates may apply.
                 See <a href="#" className="discount-offer-link discount-offer-link-terms">Terms</a>
                 &amp;
-                <a href="#" className="discount-offer-link discount-offer-link-privacy">Privacy</a>
+                <a href="#" className="discount-offer-link discount-offer-link-privacy">Privacy</a>.
             </div>
 
             <div className="form-actions">
