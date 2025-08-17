@@ -189,7 +189,7 @@ const RedeemableForm: FunctionComponent<
                         <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews">
                             <div className="jsx-e2877bf7fac87b3a">
                                 <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews-summary"><span
-                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://cdn11.bigcommerce.com/s-5k26roxhw/images/stencil/original/image-manager/trustpilot.png?t=1738245201"
+                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://store-dgqj8t7y1p.mybigcommerce.com/content/checkout-assets/trustpilot.png"
                                             className="jsx-e2877bf7fac87b3a trustpilotImg"/></span>
                                     <p className="jsx-e2877bf7fac87b3a inStoreReviews">And more than 3,000 in store reviews</p>
                                 </div>

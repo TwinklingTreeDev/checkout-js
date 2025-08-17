@@ -168,7 +168,6 @@ export class CheckoutFormStateManager {
 
             console.log('CheckoutFormStateManager: Shipping address update completed');
         } catch (error) {
-            console.error('CheckoutFormStateManager: Error updating shipping address:', error);
             if (error instanceof Error && this.props.onUnhandledError) {
                 this.props.onUnhandledError(error);
             }
@@ -217,7 +216,6 @@ export class CheckoutFormStateManager {
 
             console.log('CheckoutFormStateManager: Billing address update completed');
         } catch (error) {
-            console.error('CheckoutFormStateManager: Error updating billing address:', error);
             if (error instanceof Error && this.props.onUnhandledError) {
                 this.props.onUnhandledError(error);
             }

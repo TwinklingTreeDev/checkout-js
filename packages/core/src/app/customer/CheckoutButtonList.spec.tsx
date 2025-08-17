@@ -9,11 +9,20 @@ import { getStoreConfig } from '../config/config.mock';
 import CheckoutButton from './CheckoutButton';
 import CheckoutButtonList from './CheckoutButtonList';
 
+// Mock the isAppleDevice function
+jest.mock('../common/utility', () => ({
+    ...jest.requireActual('../common/utility'),
+    isAppleDevice: jest.fn(),
+}));
+
+import { isAppleDevice } from '../common/utility';
+
 describe('CheckoutButtonList', () => {
     let localeContext: LocaleContextType;
 
     beforeEach(() => {
         localeContext = createLocaleContext(getStoreConfig());
+        jest.clearAllMocks();
     });
 
     it('matches snapshot', () => {
@@ -122,5 +131,43 @@ describe('CheckoutButtonList', () => {
         expect(checkEmbeddedSupport).toHaveBeenCalledWith(methodIds);
 
         expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    });
+
+    it('filters out Google Pay methods on Apple devices', () => {
+        (isAppleDevice as jest.Mock).mockReturnValue(true);
+        
+        const component = mount(
+            <LocaleContext.Provider value={localeContext}>
+                <CheckoutButtonList
+                    deinitialize={noop}
+                    initialize={noop}
+                    methodIds={['amazonpay', 'googlepayadyenv2', 'googlepaystripe', 'paypalcommerce']}
+                />
+            </LocaleContext.Provider>,
+        );
+
+        expect(component.find(CheckoutButton)).toHaveLength(2);
+        expect(component.find(CheckoutButton).at(0).props().methodId).toBe('amazonpay');
+        expect(component.find(CheckoutButton).at(1).props().methodId).toBe('paypalcommerce');
+    });
+
+    it('shows Google Pay methods on non-Apple devices', () => {
+        (isAppleDevice as jest.Mock).mockReturnValue(false);
+        
+        const component = mount(
+            <LocaleContext.Provider value={localeContext}>
+                <CheckoutButtonList
+                    deinitialize={noop}
+                    initialize={noop}
+                    methodIds={['amazonpay', 'googlepayadyenv2', 'googlepaystripe', 'paypalcommerce']}
+                />
+            </LocaleContext.Provider>,
+        );
+
+        expect(component.find(CheckoutButton)).toHaveLength(4);
+        expect(component.find(CheckoutButton).at(0).props().methodId).toBe('amazonpay');
+        expect(component.find(CheckoutButton).at(1).props().methodId).toBe('googlepayadyenv2');
+        expect(component.find(CheckoutButton).at(2).props().methodId).toBe('googlepaystripe');
+        expect(component.find(CheckoutButton).at(3).props().methodId).toBe('paypalcommerce');
     });
 });
