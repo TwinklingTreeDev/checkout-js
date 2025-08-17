@@ -482,9 +482,9 @@ const mapFromCheckoutProps: MapToPropsFactory<
             isFloatingLabelEnabled: true, // Always enable floating labels for billing address
             googleMapsApiKey: config.checkoutSettings.googleMapsApiKey,
             // Auto-save props from checkout context
-            onUnhandledError: (error: Error) => {
-                // Handle error appropriately
-                console.error('Billing address update error:', error);
+            onUnhandledError: () => {
+                // Let the error be handled by the existing error handling infrastructure
+                // The error will be caught by ErrorBoundary or ErrorModal components
             },
             billingAutosaveDelay: 1700, // Same as BILLING_AUTOSAVE_DELAY
         };

@@ -16,6 +16,7 @@ import { ErrorLogger } from '@bigcommerce/checkout/error-handling-utils';
 import { withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
 import { CheckoutContextProps, PaymentFormValues } from '@bigcommerce/checkout/payment-integration-api';
 import { ChecklistSkeleton } from '@bigcommerce/checkout/ui';
+import PaymentPreloader from './PaymentPreloader';
 
 import { withAnalytics } from '../analytics';
 import { withCheckout } from '../checkout';
@@ -78,6 +79,7 @@ interface WithCheckoutPaymentProps {
     loadPaymentMethods(): Promise<CheckoutSelectors>;
     submitOrder(values: OrderRequestBody): Promise<CheckoutSelectors>;
     checkoutServiceSubscribe: CheckoutService['subscribe'];
+    checkoutService: CheckoutService;
 }
 
 interface PaymentState {
@@ -177,6 +179,7 @@ class Payment extends Component<
             methods,
             applyStoreCredit,
             onBillingSameAsShippingChange,
+            checkoutService,
             ...rest
         } = this.props;
 
@@ -194,6 +197,22 @@ class Payment extends Component<
 
         return (
             <PaymentContext.Provider value={this.getContextValue()}>
+                {/* Payment Preloader for background initialization - wrapped in error boundary */}
+                {(() => {
+                    try {
+                        return (
+                            <PaymentPreloader
+                                methods={methods}
+                                checkoutService={checkoutService}
+                                onUnhandledError={this.handleError}
+                            />
+                        );
+                    } catch (error) {
+                        console.warn('[Payment] PaymentPreloader failed to render:', error);
+                        return null;
+                    }
+                })()}
+                
                 <ChecklistSkeleton isLoading={!isReady}>
                     {!isEmpty(methods) && defaultMethod && (
                         <PaymentForm
@@ -700,6 +719,7 @@ export function mapToPaymentProps({
         submitOrder: checkoutService.submitOrder,
         submitOrderError: getSubmitOrderError(),
         checkoutServiceSubscribe: checkoutService.subscribe,
+        checkoutService,
         termsConditionsText:
             isTermsConditionsRequired && termsConditionsType === TermsConditionsType.TextArea
                 ? termsCondtitionsText

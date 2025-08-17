@@ -389,8 +389,9 @@ const mapFromCheckoutProps: MapToPropsFactory<
 
             // Auto-save props from checkout context
             onUnhandledError: (error: Error) => {
-                // Handle error appropriately
-                console.warn('Billing address update:', error);
+                console.info('onUnhandledError', error);
+                // Let the error be handled by the existing error handling infrastructure
+                // The error will be caught by ErrorBoundary or ErrorModal components
             },
             billingAutosaveDelay: 1700, // Same as BILLING_AUTOSAVE_DELAY
         };

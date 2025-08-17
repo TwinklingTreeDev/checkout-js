@@ -178,7 +178,6 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                 console.log('Shipping: Prefilled data synced successfully');
             }
         } catch (error) {
-            console.error('Shipping: Error syncing prefilled data:', error);
             if (error instanceof Error) {
                 onUnhandledError(error);
             }

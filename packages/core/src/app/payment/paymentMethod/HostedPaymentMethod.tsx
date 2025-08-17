@@ -10,6 +10,8 @@ import { memoizeOne } from '@bigcommerce/memoize';
 import { find, noop } from 'lodash';
 import React, { Component, ReactNode } from 'react';
 
+import getUniquePaymentMethodId from './getUniquePaymentMethodId';
+
 import { MapToPropsFactory } from '@bigcommerce/checkout/legacy-hoc';
 import { withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
 import { CheckoutContextProps, PaymentFormValues } from '@bigcommerce/checkout/payment-integration-api';
@@ -62,39 +64,28 @@ class HostedPaymentMethod extends Component<
     };
 
     async componentDidMount(): Promise<void> {
-        const {
-            initializePayment,
-            isInstrumentFeatureAvailable: isInstrumentFeatureAvailableProp,
-            loadInstruments,
-            method,
-            onUnhandledError = noop,
-        } = this.props;
+        // Only initialize if this is the currently selected method
+        if (this.isSelectedMethod()) {
+            await this.initializeMethod();
+        }
+    }
 
-        try {
-            await initializePayment({
-                gatewayId: method.gateway,
-                methodId: method.id,
-            });
-
-            if (isInstrumentFeatureAvailableProp) {
-                await loadInstruments();
-            }
-        } catch (error) {
-            onUnhandledError(error);
+    async componentDidUpdate(prevProps: Readonly<HostedPaymentMethodProps & WithCheckoutHostedPaymentMethodProps & WithPaymentProps & WithLanguageProps & ConnectFormikProps<PaymentFormValues>>): Promise<void> {
+        const prevMethod = prevProps.method;
+        
+        // Initialize when this method becomes selected
+        if (!this.isSelectedMethod(prevMethod) && this.isSelectedMethod()) {
+            await this.initializeMethod();
+        }
+        
+        // Deinitialize when this method is no longer selected
+        if (this.isSelectedMethod(prevMethod) && !this.isSelectedMethod()) {
+            await this.deinitializeMethod();
         }
     }
 
     async componentWillUnmount(): Promise<void> {
-        const { deinitializePayment, method, onUnhandledError = noop } = this.props;
-
-        try {
-            await deinitializePayment({
-                gatewayId: method.gateway,
-                methodId: method.id,
-            });
-        } catch (error) {
-            onUnhandledError(error);
-        }
+        await this.deinitializeMethod();
     }
 
     render(): ReactNode {
@@ -168,6 +159,49 @@ class HostedPaymentMethod extends Component<
             selectedInstrument: find(instruments, { bigpayToken: id }),
         });
     };
+
+    private isSelectedMethod(method?: PaymentMethod): boolean {
+        const { formik: { values } } = this.props;
+        const currentMethod = method || this.props.method;
+        const selectedMethodId = getUniquePaymentMethodId(currentMethod.id, currentMethod.gateway);
+        return values.paymentProviderRadio === selectedMethodId;
+    }
+
+    private async initializeMethod(): Promise<void> {
+        const {
+            initializePayment,
+            isInstrumentFeatureAvailable: isInstrumentFeatureAvailableProp,
+            loadInstruments,
+            method,
+            onUnhandledError = noop,
+        } = this.props;
+
+        try {
+            await initializePayment({
+                gatewayId: method.gateway,
+                methodId: method.id,
+            });
+
+            if (isInstrumentFeatureAvailableProp) {
+                await loadInstruments();
+            }
+        } catch (error) {
+            onUnhandledError(error);
+        }
+    }
+
+    private async deinitializeMethod(): Promise<void> {
+        const { deinitializePayment, method, onUnhandledError = noop } = this.props;
+
+        try {
+            await deinitializePayment({
+                gatewayId: method.gateway,
+                methodId: method.id,
+            });
+        } catch (error) {
+            onUnhandledError(error);
+        }
+    }
 }
 
 const mapFromCheckoutProps: MapToPropsFactory<

@@ -38,6 +38,7 @@ import {
 import StoreInstrumentFieldset from '../StoreInstrumentFieldset';
 import withPayment, { WithPaymentProps } from '../withPayment';
 
+import getUniquePaymentMethodId from './getUniquePaymentMethodId';
 import SignOutLink from './SignOutLink';
 
 export interface HostedWidgetPaymentMethodProps {
@@ -119,20 +120,23 @@ class HostedWidgetPaymentMethod extends Component<
 
         setValidationSchema(method, this.getValidationSchema());
 
-        try {
-            if (isInstrumentFeatureAvailable({
-                config: this.props.config,
-                customer: this.props.customer,
-                isUsingMultiShipping: this.props.isUsingMultiShipping,
-                paymentMethod: this.props.paymentMethod, 
-                shouldSavingCardsBeEnabled: this.props.shouldSavingCardsBeEnabled,
-        })) {
-                await loadInstruments();
-            }
+        // Only initialize if this is the currently selected method
+        if (this.isSelectedMethod()) {
+            try {
+                if (isInstrumentFeatureAvailable({
+                    config: this.props.config,
+                    customer: this.props.customer,
+                    isUsingMultiShipping: this.props.isUsingMultiShipping,
+                    paymentMethod: this.props.paymentMethod, 
+                    shouldSavingCardsBeEnabled: this.props.shouldSavingCardsBeEnabled,
+                })) {
+                    await loadInstruments();
+                }
 
-            await this.initializeMethod();
-        } catch (error) {
-            onUnhandledError(error);
+                await this.initializeMethod();
+            } catch (error) {
+                onUnhandledError(error);
+            }
         }
     }
 
@@ -155,10 +159,42 @@ class HostedWidgetPaymentMethod extends Component<
 
         setValidationSchema(method, this.getValidationSchema());
 
+        // Initialize when this method becomes selected
+        if (!this.isSelectedMethod(prevProps.method) && this.isSelectedMethod()) {
+            try {
+                if (isInstrumentFeatureAvailable({
+                    config: this.props.config,
+                    customer: this.props.customer,
+                    isUsingMultiShipping: this.props.isUsingMultiShipping,
+                    paymentMethod: this.props.paymentMethod, 
+                    shouldSavingCardsBeEnabled: this.props.shouldSavingCardsBeEnabled,
+                })) {
+                    await this.props.loadInstruments();
+                }
+                await this.initializeMethod();
+            } catch (error) {
+                onUnhandledError(error);
+            }
+        }
+
+        // Deinitialize when this method is no longer selected
+        if (this.isSelectedMethod(prevProps.method) && !this.isSelectedMethod()) {
+            try {
+                await deinitializePayment({
+                    gatewayId: method.gateway,
+                    methodId: method.id,
+                });
+            } catch (error) {
+                onUnhandledError(error);
+            }
+        }
+
+        // Handle instrument changes for the currently selected method
         if (
-            selectedInstrumentId !== prevState.selectedInstrumentId ||
+            this.isSelectedMethod() &&
+            (selectedInstrumentId !== prevState.selectedInstrumentId ||
             (prevProps.instruments.length > 0 && instruments.length === 0) ||
-            prevProps.isPaymentDataRequired !== isPaymentDataRequired
+            prevProps.isPaymentDataRequired !== isPaymentDataRequired)
         ) {
             try {
                 await deinitializePayment({
@@ -182,10 +218,10 @@ class HostedWidgetPaymentMethod extends Component<
             setValidationSchema,
         } = this.props;
 
-        setValidationSchema(method, null);
-        setSubmit(method, null);
-
         try {
+            setSubmit(method, null);
+            setValidationSchema(method, null);
+
             await deinitializePayment({
                 gatewayId: method.gateway,
                 methodId: method.id,
@@ -538,6 +574,13 @@ class HostedWidgetPaymentMethod extends Component<
             onSignOutError(error);
         }
     };
+
+    private isSelectedMethod(method?: PaymentMethod): boolean {
+        const { formik: { values } } = this.props;
+        const currentMethod = method || this.props.method;
+        const selectedMethodId = getUniquePaymentMethodId(currentMethod.id, currentMethod.gateway);
+        return values.paymentProviderRadio === selectedMethodId;
+    }
 }
 
 const mapFromCheckoutProps: MapToPropsFactory<

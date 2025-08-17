@@ -58,7 +58,6 @@ const PaymentForm: FunctionComponent<
     availableStoreCredit = 0,
     didExceedSpamLimit,
     isEmbedded,
-    isInitializingPayment,
     isPaymentDataRequired,
     isTermsConditionsRequired,
     isStoreCreditApplied,
@@ -120,7 +119,6 @@ const PaymentForm: FunctionComponent<
 
             <PaymentMethodListFieldset
                 isEmbedded={isEmbedded}
-                isInitializingPayment={isInitializingPayment}
                 isPaymentDataRequired={isPaymentDataRequired}
                 isUsingMultiShipping={isUsingMultiShipping}
                 methods={methods}
@@ -189,7 +187,6 @@ const PaymentMethodSubmitButtonContainer: FunctionComponent = () => {
 
 interface PaymentMethodListFieldsetProps {
     isEmbedded?: boolean;
-    isInitializingPayment?: boolean;
     isUsingMultiShipping?: boolean;
     methods: PaymentMethod[];
     values: PaymentFormValues;
@@ -203,7 +200,6 @@ interface PaymentMethodListFieldsetProps {
 
 const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProps> = ({
     isEmbedded,
-    isInitializingPayment,
     isPaymentDataRequired,
     isUsingMultiShipping,
     methods,
@@ -249,7 +245,6 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
 
             <PaymentMethodList
                 isEmbedded={isEmbedded}
-                isInitializingPayment={isInitializingPayment}
                 isUsingMultiShipping={isUsingMultiShipping}
                 methods={methods}
                 onSelect={handlePaymentMethodSelect}
