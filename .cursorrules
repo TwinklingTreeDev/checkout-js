@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "pattern": "**/*.{ts,tsx,js,jsx}",
+      "language": "typescript",
+      "style": {
+        "indent_size": 2,
+        "semi": true,
+        "single_quote": true,
+        "trailing_comma": "all",
+        "max_line_length": 100
+      },
+      "guidelines": [
+        "Use functional components with React hooks (no class components).",
+        "Always type props with TypeScript interfaces.",
+        "Use explicit typing instead of `any`.",
+        "Prefer controlled components for forms.",
+        "Organize imports: external libraries → internal modules → styles.",
+        "Avoid unused imports and variables."
+      ]
+    },
+    {
+      "pattern": "src/**/*.{ts,tsx}",
+      "language": "typescript",
+      "guidelines": [
+        "Enable strict TypeScript checks.",
+        "Use async/await with try/catch for async code.",
+        "Never ignore promise rejections.",
+        "All errors should surface via UI components (ErrorModal, ErrorBoundary), not console logs.",
+        "Prefer composition over inheritance.",
+        "Avoid deep prop drilling — use context providers."
+      ]
+    },
+    {
+      "pattern": "src/**/*.{test.ts,test.tsx,spec.ts,spec.tsx}",
+      "language": "typescript",
+      "guidelines": [
+        "Use Jest and Testing Library for tests.",
+        "Test UI behavior, not implementation details.",
+        "Mock checkout state/service where possible.",
+        "Ensure accessibility queries (getByRole, getByLabelText) are preferred over text-based queries."
+      ]
+    },
+    {
+      "pattern": "src/**/*.scss",
+      "language": "scss",
+      "guidelines": [
+        "Follow BEM naming convention (e.g., `.checkout-step`, `.checkout-step--active`).",
+        "Keep styles colocated with their components.",
+        "Avoid global overrides unless absolutely necessary."
+      ]
+    },
+    {
+      "pattern": "**/*",
+      "guidelines": [
+        "Use Conventional Commits (`feat:`, `fix:`, `chore:`).",
+        "Keep pull requests small, focused, and well-documented.",
+        "Write self-documenting code; add comments only for complex logic.",
+        "Respect accessibility (a11y) standards: use aria-labels, roles, and keyboard navigation."
+      ]
+    }
+  ]
+}

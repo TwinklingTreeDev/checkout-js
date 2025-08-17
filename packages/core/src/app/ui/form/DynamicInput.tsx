@@ -54,7 +54,12 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
     switch (fieldType) {
         case DynamicFormFieldType.dropdown:
             const isEmpty = value === '' || value === null || value === undefined;
+            const valueExistsInOptions = options && options.some(option => option.value === value);
+            const hasValidValue = (value != '' && value !== null) && valueExistsInOptions;
             const showPlaceholder = isFloatingLabelEnabled && isEmpty && placeholder;
+            
+            // Reset value to empty string if it doesn't exist in options
+            const displayValue = valueExistsInOptions ? (value === null ? '' : value) : '';
             
             return (
                 <>
@@ -75,14 +80,14 @@ const DynamicInput: FunctionComponent<DynamicInputProps & WithDateProps> = ({
                         className={classNames(
                             { 'floating-select': isFloatingLabelEnabled },
                             'form-select optimizedCheckout-form-select',
-                            { 'has-value': (value != '' && value !== null)},
+                            { 'has-value': hasValidValue},
                             { 'hide-floating-label': showPlaceholder }
                         )}
                         data-test={`${id}-select`}
                         id={id}
                         name={name}
                         onChange={onChange}
-                        value={value === null ? '' : value}
+                        value={displayValue}
                     >
                         <option value=""></option>
                         {options &&

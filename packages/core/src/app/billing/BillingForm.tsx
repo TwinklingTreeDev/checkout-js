@@ -247,13 +247,22 @@ export default withLanguage(
         handleSubmit: (values, { props: { onSubmit } }) => {
             onSubmit(values);
         },
-        mapPropsToValues: ({ getFields, customerMessage, billingAddress }) => ({
-            ...mapAddressToFormValues(
-                getFields(billingAddress && billingAddress.countryCode),
-                billingAddress,
-            ),
-            orderComment: customerMessage,
-        }),
+        mapPropsToValues: ({ getFields, customerMessage, billingAddress }) => {
+            // Force empty country values to disable automatic country detection
+            const addressWithEmptyCountry = billingAddress ? {
+                ...billingAddress,
+                countryCode: '',
+                country: '',
+            } : undefined;
+            
+            return {
+                ...mapAddressToFormValues(
+                    getFields(''), // Use empty string to get default fields
+                    addressWithEmptyCountry,
+                ),
+                orderComment: customerMessage,
+            };
+        },
         isInitialValid: ({ billingAddress, getFields, language }) =>
             !!billingAddress &&
             getAddressFormFieldsValidationSchema({

@@ -24,6 +24,10 @@ export interface OrderSummaryItemsProps {
 interface OrderSummaryItemsState {
     isExpanded: boolean;
     collapsedLimit: number;
+    // Insurance caching for instant UI updates
+    cachedInsuranceItem: any | null;
+    isInsuranceVisible: boolean;
+    isInsuranceTransitioning: boolean;
 }
 
 class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSummaryItemsState> {
@@ -33,12 +37,164 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
         this.state = {
             isExpanded: false,
             collapsedLimit: this.getCollapsedLimit(),
+            // Insurance caching state
+            cachedInsuranceItem: null,
+            isInsuranceVisible: false,
+            isInsuranceTransitioning: false,
         };
     }
 
+    componentDidMount(): void {
+        this.setupInsuranceEventListeners();
+        this.initializeInsuranceCache();
+    }
+
+    componentWillUnmount(): void {
+        this.cleanupInsuranceEventListeners();
+    }
+
+    componentDidUpdate(prevProps: OrderSummaryItemsProps): void {
+        // Update cache when items change
+        if (prevProps.items !== this.props.items) {
+            this.updateInsuranceCache();
+        }
+    }
+
+    private setupInsuranceEventListeners = (): void => {
+        // Listen for insurance toggle changes from checkout
+        window.addEventListener('insurance-toggle-changed', this.handleInsuranceToggleChanged);
+    };
+
+    private cleanupInsuranceEventListeners = (): void => {
+        window.removeEventListener('insurance-toggle-changed', this.handleInsuranceToggleChanged);
+    };
+
+    private handleInsuranceToggleChanged = (event: Event): void => {
+        const evt = event as CustomEvent<{
+            isSelected: boolean;
+            cachedItem: any;
+            operation: 'add' | 'remove' | 'rollback';
+        }>;
+        
+        if (!evt?.detail) return;
+        
+        const { isSelected, cachedItem, operation } = evt.detail;
+        
+        console.log('Insurance toggle event received:', { isSelected, cachedItem, operation });
+        
+        if (operation === 'rollback') {
+            // Rollback to previous state
+            this.setState({
+                isInsuranceVisible: !isSelected,
+                isInsuranceTransitioning: false
+            });
+        } else {
+            // Update visibility immediately
+            this.setState({
+                isInsuranceVisible: isSelected,
+                isInsuranceTransitioning: true,
+                cachedInsuranceItem: cachedItem
+            });
+            
+            console.log('Updated insurance state:', { isSelected, hasCachedItem: !!cachedItem });
+            
+            // Clear transition state after a short delay
+            setTimeout(() => {
+                this.setState({ isInsuranceTransitioning: false });
+            }, 1000);
+        }
+    };
+
+    private initializeInsuranceCache = (): void => {
+        const { items } = this.props;
+        const insuranceItem = items.digitalItems?.find(item => isInsuranceItem(item.name));
+        
+        if (insuranceItem) {
+            const cachedItem = mapFromDigital(insuranceItem);
+            this.setState({
+                cachedInsuranceItem: cachedItem,
+                isInsuranceVisible: true
+            });
+        } else {
+            // Create a default cached item if insurance is not in cart but might be added
+            const defaultCachedItem = {
+                id: 'insurance-cached',
+                quantity: 1,
+                amount: 1074, // $10.74 in cents
+                amountAfterDiscount: 1074,
+                name: 'Delivery Guarantee',
+                image: this.getInsuranceItemImage(),
+                productOptions: [
+                    {
+                        testId: 'cart-item-product-option',
+                        content: 'Delivery Guarantee',
+                    }
+                ],
+            };
+            this.setState({
+                cachedInsuranceItem: defaultCachedItem,
+                isInsuranceVisible: false
+            });
+        }
+    };
+
+    private getInsuranceItemImage = (): React.ReactNode => {
+        return (
+            <img 
+                alt="Shipping Insurance" 
+                data-test="cart-item-image" 
+                src="https://cdn11.bigcommerce.com/s-dgqj8t7y1p/products/114/images/382/11052983__04773.1754742857.220.290.png?c=1"
+            />
+        );
+    };
+
+    private updateInsuranceCache = (): void => {
+        const { items } = this.props;
+        const insuranceItem = items.digitalItems?.find(item => isInsuranceItem(item.name));
+        
+        if (insuranceItem) {
+            const cachedItem = mapFromDigital(insuranceItem);
+            this.setState({
+                cachedInsuranceItem: cachedItem,
+                isInsuranceVisible: true
+            });
+        } else {
+            // Insurance item not in cart, but keep cache for potential re-add
+            // Only update visibility if we're not in a transition state
+            if (!this.state.isInsuranceTransitioning) {
+                this.setState({ isInsuranceVisible: false });
+            }
+        }
+    };
+
     render(): ReactNode {
         const { displayLineItemsCount = true, items } = this.props;
-        const { collapsedLimit, isExpanded } = this.state;
+        const { collapsedLimit, isExpanded, cachedInsuranceItem, isInsuranceVisible, isInsuranceTransitioning } = this.state;
+
+        // Build the list of items to display
+        let displayItems = [
+            ...items.physicalItems
+                .slice()
+                .sort((item) => item.variantId)
+                .map(mapFromPhysical),
+            ...items.giftCertificates.slice().map(mapFromGiftCertificate),
+            ...items.digitalItems
+                .slice()
+                .sort((item) => item.variantId)
+                .filter(item => !isInsuranceItem(item.name)) // Filter out insurance items from cart
+                .map(mapFromDigital),
+            ...(items.customItems || []).map(mapFromCustom),
+        ];
+
+        // Add cached insurance item if it should be visible
+        console.log('Rendering insurance state:', { isInsuranceVisible, hasCachedItem: !!cachedInsuranceItem, cachedItem: cachedInsuranceItem });
+        if (isInsuranceVisible && cachedInsuranceItem) {
+            displayItems.push({
+                ...cachedInsuranceItem,
+                // Add remove handler for cached insurance item
+                onRemove: () => this.handleCachedInsuranceRemove(),
+            });
+        }
 
         return (
             <>
@@ -53,25 +209,18 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                 </h3>}
 
                 <ul aria-live="polite" className="productList">
-                    {[
-                        ...items.physicalItems
-                            .slice()
-                            .sort((item) => item.variantId)
-                            .map(mapFromPhysical),
-                        ...items.giftCertificates.slice().map(mapFromGiftCertificate),
-                        ...items.digitalItems
-                            .slice()
-                            .sort((item) => item.variantId)
-                            .map(mapFromDigital),
-                        ...(items.customItems || []).map(mapFromCustom),
-                    ]
+                    {displayItems
                         .slice(0, isExpanded ? undefined : collapsedLimit)
                         .map((summaryItemProps) => (
-                            <li className="productList-item is-visible" key={summaryItemProps.id}>
+                            <li 
+                                className={`productList-item is-visible ${isInsuranceTransitioning && isInsuranceItem(summaryItemProps.name) ? 'insurance-transitioning' : ''}`} 
+                                key={summaryItemProps.id}
+                                style={isInsuranceTransitioning && isInsuranceItem(summaryItemProps.name) ? { opacity: 0.7, transition: 'opacity 0.3s ease' } : {}}
+                            >
                                 <OrderSummaryItem
                                     {...summaryItemProps}
                                     {...(isInsuranceItem(summaryItemProps.name) && {
-                                        onRemove: () => removeInsuranceItem(summaryItemProps.id),
+                                        onRemove: () => this.handleInsuranceRemove(summaryItemProps.id),
                                     })}
                                 />
                             </li>
@@ -127,6 +276,56 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
             items.giftCertificates.length
         );
     }
+
+    private handleInsuranceRemove = async (lineItemId: string | number): Promise<void> => {
+        // Immediately hide the insurance item
+        this.setState({ 
+            isInsuranceVisible: false,
+            isInsuranceTransitioning: true
+        });
+        
+        // Emit event to update checkout toggle
+        window.dispatchEvent(new CustomEvent('insurance-removed'));
+        
+        try {
+            // Remove from cart in background
+            await removeInsuranceItem(lineItemId);
+        } catch (e) {
+            console.warn('Failed to remove insurance item:', e);
+            // Rollback on error
+            this.setState({ 
+                isInsuranceVisible: true,
+                isInsuranceTransitioning: false
+            });
+            // Emit rollback event
+            window.dispatchEvent(new CustomEvent('insurance-toggle-changed', {
+                detail: { 
+                    isSelected: true, 
+                    cachedItem: this.state.cachedInsuranceItem,
+                    operation: 'rollback'
+                }
+            }));
+        } finally {
+            this.setState({ isInsuranceTransitioning: false });
+        }
+    };
+
+    private handleCachedInsuranceRemove = async (): Promise<void> => {
+        // For cached insurance items, we need to find the actual line item ID
+        const { items } = this.props;
+        const insuranceItem = items.digitalItems?.find(item => isInsuranceItem(item.name));
+        
+        if (insuranceItem) {
+            await this.handleInsuranceRemove(insuranceItem.id);
+        } else {
+            // If no actual item found, just hide the cached item
+            this.setState({ 
+                isInsuranceVisible: false,
+                isInsuranceTransitioning: false
+            });
+            window.dispatchEvent(new CustomEvent('insurance-removed'));
+        }
+    };
 
     private handleToggle: () => void = () => {
         const { isExpanded } = this.state;

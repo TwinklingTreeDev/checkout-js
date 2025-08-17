@@ -91,6 +91,10 @@ export interface CheckoutStepState {
     removingRedeemable?: string; // Track which redeemable is being removed
     // Shipping protection/insurance upsell state
     isShippingProtectionSelected: boolean;
+    // Insurance caching for instant UI updates
+    cachedInsuranceItem: any | null | undefined;
+    isInsuranceTransitioning: boolean;
+    lastInsuranceOperation: 'add' | 'remove' | null;
 }
 
 
@@ -104,6 +108,10 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         removingRedeemable: undefined,
         // Preselect the checkbox on page load
         isShippingProtectionSelected: true,
+        // Insurance caching state
+        cachedInsuranceItem: null as any,
+        isInsuranceTransitioning: false,
+        lastInsuranceOperation: null,
     };
 
     private containerRef = createRef<HTMLLIElement>();
@@ -118,6 +126,12 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
             this.focusStep();
         }
         // Do NOT sync from cart on mount to keep default checked UI; we'll sync when cart updates
+        
+        // Set up event listeners for insurance coordination
+        this.setupInsuranceEventListeners();
+        
+        // Initialize insurance cache if available
+        this.initializeInsuranceCache();
     }
 
     componentDidUpdate(prevProps: Readonly<CheckoutStepProps>): void {
@@ -129,6 +143,8 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
 
         if (this.props.cart !== prevProps.cart) {
             this.syncInsuranceSelectionFromCart();
+            // Update cache when cart changes
+            this.updateInsuranceCacheFromCart();
         }
     }
 
@@ -142,6 +158,9 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
 
             this.timeoutRef = undefined;
         }
+        
+        // Clean up event listeners
+        this.cleanupInsuranceEventListeners();
     }
 
     render(): ReactNode {
@@ -301,7 +320,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                     </div>
                                     <div className="shipping-protection-text">
                                         <div className="shipping-protection-title">Extra Priority when packing & 100% insurance</div>
-                                        <div className="shipping-protection-subtitle">from damage, theft or loss for just <span className="shipping-protection-price">$10.74</span></div>
+                                        <div className="shipping-protection-subtitle">from damage, theft, or loss for just <span className="shipping-protection-price">$10.74</span></div>
                                         <div className="shipping-protection-description">Enjoy peace of mind with our Delivery Guarantee, covering any damage, theft, or loss that may occur during transit.</div>
                                     </div>
                                 </div>
@@ -639,19 +658,186 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
             );
             if (present !== undefined) {
                 this.setState({ isShippingProtectionSelected: !!present });
+                
+                // Update cache if insurance item is present
+                if (present) {
+                    const insuranceItem = cart.lineItems?.digitalItems?.find(
+                        (item) => String(item.productId) === productId,
+                    );
+                    if (insuranceItem && !this.state.cachedInsuranceItem) {
+                        const cachedItem = {
+                            id: insuranceItem.id,
+                            quantity: insuranceItem.quantity,
+                            amount: insuranceItem.extendedListPrice,
+                            amountAfterDiscount: insuranceItem.extendedSalePrice,
+                            name: insuranceItem.name,
+                            image: this.getInsuranceItemImage(),
+                            productOptions: [
+                                {
+                                    testId: 'cart-item-product-option',
+                                    content: 'Delivery Guarantee',
+                                }
+                            ],
+                        };
+                        this.setState({ cachedInsuranceItem: cachedItem });
+                    }
+                }
             }
         } catch (e) {
             console.warn('Failed to sync insurance selection from cart:', e);
         }
     }
 
+    private setupInsuranceEventListeners = (): void => {
+        // Listen for insurance removal from cart item
+        window.addEventListener('insurance-removed', this.handleInsuranceRemovedFromCart);
+    };
+
+    private cleanupInsuranceEventListeners = (): void => {
+        window.removeEventListener('insurance-removed', this.handleInsuranceRemovedFromCart);
+    };
+
+    private handleInsuranceRemovedFromCart = (): void => {
+        // When insurance is removed from cart, update toggle state
+        this.setState({ 
+            isShippingProtectionSelected: false,
+            isInsuranceTransitioning: false,
+            lastInsuranceOperation: null
+        });
+        
+        // Clear cache if insurance was removed
+        this.setState({ cachedInsuranceItem: null });
+    };
+
+    private initializeInsuranceCache = (): void => {
+        const { cart } = this.props;
+        const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+        
+        if (!cart || !productId) return;
+        
+        // Find insurance item in cart and cache it
+        const insuranceItem = cart.lineItems?.digitalItems?.find(
+            (item) => String(item.productId) === productId
+        );
+        
+        if (insuranceItem) {
+            // Create cached item data similar to OrderSummaryItem format
+            const cachedItem = {
+                id: insuranceItem.id,
+                quantity: insuranceItem.quantity,
+                amount: insuranceItem.extendedListPrice,
+                amountAfterDiscount: insuranceItem.extendedSalePrice,
+                name: insuranceItem.name,
+                image: this.getInsuranceItemImage(),
+                productOptions: [
+                    {
+                        testId: 'cart-item-product-option',
+                        content: 'Delivery Guarantee',
+                    }
+                ],
+            };
+            
+            this.setState({ cachedInsuranceItem: cachedItem });
+        }
+    };
+
+    private getInsuranceItemImage = (): React.ReactNode => {
+        return (
+            <img 
+                alt="Shipping Insurance" 
+                data-test="cart-item-image" 
+                src="https://cdn11.bigcommerce.com/s-dgqj8t7y1p/products/114/images/382/11052983__04773.1754742857.220.290.png?c=1"
+            />
+        );
+    };
+
+    private updateInsuranceCacheFromCart = (): void => {
+        const { cart } = this.props;
+        const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+        
+        if (!cart || !productId) return;
+        
+        const insuranceItem = cart.lineItems?.digitalItems?.find(
+            (item) => String(item.productId) === productId
+        );
+        
+        if (insuranceItem && !this.state.cachedInsuranceItem) {
+            const cachedItem = {
+                id: insuranceItem.id,
+                quantity: insuranceItem.quantity,
+                amount: insuranceItem.extendedListPrice,
+                amountAfterDiscount: insuranceItem.extendedSalePrice,
+                name: insuranceItem.name,
+                image: this.getInsuranceItemImage(),
+                productOptions: [
+                    {
+                        testId: 'cart-item-product-option',
+                        content: 'Delivery Guarantee',
+                    }
+                ],
+            };
+            this.setState({ cachedInsuranceItem: cachedItem });
+        }
+    };
+
     private handleShippingProtectionToggle = async (shouldSelect: boolean): Promise<void> => {
         const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
         if (!productId) return;
+        
         // Validate against current cart first to avoid duplicates or no-op removals
         const exists = Boolean(this.props.cart?.lineItems?.digitalItems?.some(i => String(i.productId) === productId));
+        
         // Update UI immediately for responsiveness
-        this.setState({ isShippingProtectionSelected: shouldSelect });
+        this.setState({ 
+            isShippingProtectionSelected: shouldSelect,
+            isInsuranceTransitioning: true,
+            lastInsuranceOperation: shouldSelect ? 'add' : 'remove'
+        });
+        
+        // Create cached item if adding and none exists
+        let cachedItem = this.state.cachedInsuranceItem;
+        if (shouldSelect && !cachedItem) {
+            cachedItem = {
+                id: 'insurance-cached',
+                quantity: 1,
+                amount: 10.74, // $10.74 in cents
+                amountAfterDiscount: 10.74,
+                name: 'Shipping Insurance against damage, lost and theft!',
+                image: this.getInsuranceItemImage(),
+                productOptions: [
+                    {
+                        testId: 'cart-item-product-option',
+                        content: '',
+                    }
+                ],
+            } as any;
+            // Update state with the new cached item
+            this.setState({ cachedInsuranceItem: cachedItem });
+        }
+        
+        // Emit event for cart item to update immediately
+        console.log('Emitting insurance toggle event:', { shouldSelect, hasCachedItem: !!cachedItem });
+        window.dispatchEvent(new CustomEvent('insurance-toggle-changed', {
+            detail: { 
+                isSelected: shouldSelect, 
+                cachedItem: cachedItem,
+                operation: shouldSelect ? 'add' : 'remove'
+            }
+        }));
+        
+        // Clear transition state after a short delay for smooth UX
+        setTimeout(() => {
+            this.setState({ isInsuranceTransitioning: false, lastInsuranceOperation: null });
+        }, 1000);
+        
+        // Perform API operations in background (non-blocking)
+        this.performBackgroundInsuranceOperation(shouldSelect, exists);
+    };
+
+    private performBackgroundInsuranceOperation = async (shouldSelect: boolean, exists: boolean): Promise<void> => {
+        const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
+        if (!productId) return;
+        
         try {
             if (shouldSelect && this.props.cart?.id) {
                 if (exists) {
@@ -691,11 +877,25 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                     return;
                 }
             }
+            
+            // Soft refresh to re-sync UI with cart after successful operation
+            window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
         } catch (e) {
             console.warn('Failed to update insurance item:', e);
-        } finally {
-            // Soft refresh to re-sync UI with cart
-            window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
+            // Rollback UI state on error
+            this.setState({ 
+                isShippingProtectionSelected: !shouldSelect,
+                isInsuranceTransitioning: false,
+                lastInsuranceOperation: null
+            });
+            // Emit rollback event
+            window.dispatchEvent(new CustomEvent('insurance-toggle-changed', {
+                detail: { 
+                    isSelected: !shouldSelect, 
+                    cachedItem: this.state.cachedInsuranceItem,
+                    operation: 'rollback'
+                }
+            }));
         }
     };
 }
