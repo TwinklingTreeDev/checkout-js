@@ -252,7 +252,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                         {(type != 'billing') && this.renderContent()}
                     </div>
                     {(type == 'billing') && consignments && consignments.length > 0 && (
-                        <div className="shipping-method-custom-container">
+                        <div className="shipping-method-custom-container hidden">
                             <div className="checkout-view-header shipping-method-custom">
                                 <div className="stepHeader is-readonly">
                                     <div className="stepHeader-figure stepHeader-column">
@@ -305,6 +305,28 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                 }).filter(Boolean);
                             })()}
                         </div>
+                    )}
+
+                    {/* Shipping Method */}
+                    {(type == 'billing') && (
+                        <div className="shipping-method-custom-container">
+                        <div className="checkout-view-header shipping-method-custom">
+                            <div className="stepHeader is-readonly">
+                                <div className="stepHeader-figure stepHeader-column">
+                                    <div className="stepHeader-title optimizedCheckout-headingPrimary">Shipping Method</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="shipping-method-options">
+                            <div className="icon">
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" stroke-width="7"/>
+                            </svg>
+                            </div>
+                            <div className='shipping-method-title'>Tracked & Insured</div>
+                            <span className='shipping-method-price'>Free</span>
+                        </div>
+                    </div>
                     )}
 
                     {/* Shipping Protection / Insurance Upsell */}
