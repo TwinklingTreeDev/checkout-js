@@ -121,4 +121,23 @@ describe('HostedCreditCardFieldset', () => {
         
         expect(screen.getByTestId('additional-fields')).toBeInTheDocument();
     });
+
+    it('renders fields in correct vertical layout order', () => {
+        render(
+            <HostedCreditCardFieldset 
+                {...defaultProps} 
+                cardNameId="ccName" 
+                cardCodeId="ccCvv" 
+            />
+        );
+        
+        const container = screen.getByTestId('hosted-credit-card-number').closest('.form-ccFields');
+        const fields = container?.children;
+        
+        // Check that fields are in the correct order: number, name, additional fields, row (expiry + cvv)
+        expect(fields?.[0]).toHaveAttribute('data-testid', 'hosted-credit-card-number');
+        expect(fields?.[1]).toHaveAttribute('data-testid', 'hosted-credit-card-name');
+        // Additional fields would be at index 2 if present
+        expect(fields?.[fields.length - 1]).toHaveClass('form-ccFields-row');
+    });
 }); 

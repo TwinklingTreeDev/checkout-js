@@ -6,6 +6,29 @@
     margin: 0 -1 * spacing("half");
 }
 
+.form-ccFields-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -1 * spacing("half");
+    width: 100%;
+    margin: 0;
+    padding: 0 0.75rem;
+    order: 5;
+    @media screen and (max-width: 768px) {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        .form-field--ccExpiry{
+            width: 100%;
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
+        .form-ccFields-field--ccCvv{
+            max-width: 100% !important;
+            padding-bottom: 18px;
+        }
+    }
+}
+
 .form-ccFields > .form-field,
 .form-ccFields > .form-ccFields-field {
     display: block;
@@ -71,6 +94,17 @@
 .form-field--ccExpiry {
     flex-basis: 1%;
     min-width: remCalc(100px);
+}
+
+.form-field--ccExpiry{
+    padding: 0 16px 0 0;
+    max-width: 50% !important;
+}
+
+.form-ccFields-row > .form-field,
+.form-ccFields-row > .form-ccFields-field {
+    flex-basis: 50%;
+    max-width: 50%;
 }
 
 .form-ccFields-field--ccCvv {

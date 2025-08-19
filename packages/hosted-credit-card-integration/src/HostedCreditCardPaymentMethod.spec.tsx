@@ -125,19 +125,22 @@ describe('HostedCreditCardPaymentMethod', () => {
                         cardCode: {
                             accessibilityLabel: 'CVV',
                             containerId: 'authorizenet-ccCvv',
+                            placeholder: 'Security code',
                         },
                         cardExpiry: {
                             accessibilityLabel: 'Expiration',
                             containerId: 'authorizenet-ccExpiry',
-                            placeholder: 'MM / YY',
+                            placeholder: 'Expiry date (MM / YY)',
                         },
                         cardName: {
                             accessibilityLabel: 'Name on Card',
                             containerId: 'authorizenet-ccName',
+                            placeholder: 'Name on card',
                         },
                         cardNumber: {
                             accessibilityLabel: 'Credit Card Number',
                             containerId: 'authorizenet-ccNumber',
+                            placeholder: 'Card number',
                         },
                     },
                     styles: {

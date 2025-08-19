@@ -74,23 +74,25 @@ export class HostedFieldPaymentMethodComponent extends Component<HostedFieldPaym
                         <div id={cardNumberId} />
                     </FormFieldContainer>
 
-                    <FormFieldContainer additionalClassName="form-field--ccExpiry">
-                        <Label>
-                            <TranslatedString id="payment.credit_card_expiration_label" />
-                        </Label>
-
-                        <div id={cardExpiryId} />
-                    </FormFieldContainer>
-
-                    {!!cardCodeId && (
-                        <FormFieldContainer additionalClassName="form-field--ccCvv">
+                    <div className="form-ccFields-row">
+                        <FormFieldContainer additionalClassName="form-field--ccExpiry">
                             <Label>
-                                <TranslatedString id="payment.credit_card_cvv_label" />
+                                <TranslatedString id="payment.credit_card_expiration_label" />
                             </Label>
 
-                            <div id={cardCodeId} />
+                            <div id={cardExpiryId} />
                         </FormFieldContainer>
-                    )}
+
+                        {!!cardCodeId && (
+                            <FormFieldContainer additionalClassName="form-field--ccCvv">
+                                <Label>
+                                    <TranslatedString id="payment.credit_card_cvv_label" />
+                                </Label>
+
+                                <div id={cardCodeId} />
+                            </FormFieldContainer>
+                        )}
+                    </div>
 
                     {!!postalCodeId && (
                         <FormFieldContainer additionalClassName="form-field--postCode">

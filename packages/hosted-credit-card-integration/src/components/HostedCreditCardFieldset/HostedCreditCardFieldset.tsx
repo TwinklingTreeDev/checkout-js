@@ -47,12 +47,6 @@ const HostedCreditCardFieldset: FunctionComponent<HostedCreditCardFieldsetProps>
                 name="hostedForm.errors.cardNumber"
             />
 
-            <HostedCreditCardExpiryField
-                appearFocused={focusedFieldType === 'cardExpiry'}
-                id={cardExpiryId}
-                name="hostedForm.errors.cardExpiry"
-            />
-
             {Boolean(cardNameId) && (
                 <HostedCreditCardNameField
                     appearFocused={focusedFieldType === 'cardName'}
@@ -61,15 +55,23 @@ const HostedCreditCardFieldset: FunctionComponent<HostedCreditCardFieldsetProps>
                 />
             )}
 
-            {Boolean(cardCodeId) && (
-                <HostedCreditCardCodeField
-                    appearFocused={focusedFieldType === 'cardCode'}
-                    id={cardCodeId}
-                    name="hostedForm.errors.cardCode"
-                />
-            )}
-
             {additionalFields}
+
+            <div className="form-ccFields-row">
+                <HostedCreditCardExpiryField
+                    appearFocused={focusedFieldType === 'cardExpiry'}
+                    id={cardExpiryId}
+                    name="hostedForm.errors.cardExpiry"
+                />
+
+                {Boolean(cardCodeId) && (
+                    <HostedCreditCardCodeField
+                        appearFocused={focusedFieldType === 'cardCode'}
+                        id={cardCodeId}
+                        name="hostedForm.errors.cardCode"
+                    />
+                )}
+            </div>
         </div>
     </Fieldset>
 );

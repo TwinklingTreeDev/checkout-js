@@ -76,24 +76,6 @@ export default class HostedFieldPaymentMethod extends Component<HostedFieldPayme
                         <div id={cardNumberId} />
                     </FormFieldContainer>
 
-                    <FormFieldContainer additionalClassName="form-field--ccExpiry">
-                        <Label>
-                            <TranslatedString id="payment.credit_card_expiration_label" />
-                        </Label>
-
-                        <div id={cardExpiryId} />
-                    </FormFieldContainer>
-
-                    {!!cardCodeId && (
-                        <FormFieldContainer additionalClassName="form-field--ccCvv">
-                            <Label>
-                                <TranslatedString id="payment.credit_card_cvv_label" />
-                            </Label>
-
-                            <div id={cardCodeId} />
-                        </FormFieldContainer>
-                    )}
-
                     {!!postalCodeId && (
                         <FormFieldContainer additionalClassName="form-field--postCode">
                             <Label>
@@ -103,6 +85,26 @@ export default class HostedFieldPaymentMethod extends Component<HostedFieldPayme
                             <div id={postalCodeId} />
                         </FormFieldContainer>
                     )}
+
+                    <div className="form-ccFields-row">
+                        <FormFieldContainer additionalClassName="form-field--ccExpiry">
+                            <Label>
+                                <TranslatedString id="payment.credit_card_expiration_label" />
+                            </Label>
+
+                            <div id={cardExpiryId} />
+                        </FormFieldContainer>
+
+                        {!!cardCodeId && (
+                            <FormFieldContainer additionalClassName="form-field--ccCvv">
+                                <Label>
+                                    <TranslatedString id="payment.credit_card_cvv_label" />
+                                </Label>
+
+                                <div id={cardCodeId} />
+                            </FormFieldContainer>
+                        )}
+                    </div>
                 </div>
             </LoadingOverlay>
         );

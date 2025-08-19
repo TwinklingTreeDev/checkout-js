@@ -149,6 +149,9 @@ export default function withHostedPayPalCommerceCreditCardFieldset<
                                         'payment.credit_card_cvv_label',
                                     ),
                                     containerId: getHostedFieldId('ccCvv'),
+                                    placeholder: language.translate(
+                                        'payment.credit_card_cvv_placeholder_text',
+                                    ),
                                 }
                                 : undefined,
                             cardExpiry: {
@@ -165,12 +168,18 @@ export default function withHostedPayPalCommerceCreditCardFieldset<
                                     'payment.credit_card_name_label',
                                 ),
                                 containerId: getHostedFieldId('ccName'),
+                                placeholder: language.translate(
+                                    'payment.credit_card_name_placeholder_text',
+                                ),
                             },
                             cardNumber: {
                                 accessibilityLabel: language.translate(
                                     'payment.credit_card_number_label',
                                 ),
                                 containerId: getHostedFieldId('ccNumber'),
+                                placeholder: language.translate(
+                                    'payment.credit_card_number_placeholder_text',
+                                ),
                             },
                         },
                     styles: styleContainerId
