@@ -28,6 +28,7 @@ import { EmptyCartMessage } from '../cart';
 import { withCheckout } from '../checkout';
 import { CustomError, ErrorModal, isCustomError } from '../common/error';
 import { retry } from '../common/utility';
+import { InsuranceCacheProvider } from '../order/InsuranceCacheContext';
 import {
     CheckoutButtonContainer,
     CheckoutSuggestion,
@@ -48,7 +49,7 @@ import { LazyContainer, LoadingNotification, LoadingOverlay } from '../ui/loadin
 import { MobileView } from '../ui/responsive';
 import { CheckoutFormProvider } from './CheckoutFormContext';
 
-import CheckoutStep from './CheckoutStep';
+import CheckoutStepWrapper from './CheckoutStepWrapper';
 import CheckoutStepStatus from './CheckoutStepStatus';
 import CheckoutStepType from './CheckoutStepType';
 import CheckoutSupport from './CheckoutSupport';
@@ -410,23 +411,25 @@ class Checkout extends Component<
         const { checkoutService, checkoutState } = this.props;
         
         return (
-            <CheckoutFormProvider
-                props={{
-                    updateCheckout: checkoutService.updateCheckout,
-                    updateShippingAddress: checkoutService.updateShippingAddress,
-                    updateBillingAddress: checkoutService.updateBillingAddress,
-                    getShippingAddress: () => checkoutState.data.getShippingAddress(),
-                    getBillingAddress: () => checkoutState.data.getBillingAddress(),
-                    onUnhandledError: this.handleUnhandledError,
-                }}
-            >
-                <div className={classNames({ 'is-embedded': isEmbedded(), 'remove-checkout-step-numbers': isHidingStepNumbers })} data-test="checkout-page-container" id="checkout-page-container">
-                        <div className="layout optimizedCheckout-contentPrimary">
-                            {this.renderContent()}
-                        </div>
-                        {errorModal}
-                </div>
-            </CheckoutFormProvider>
+            <InsuranceCacheProvider>
+                <CheckoutFormProvider
+                    props={{
+                        updateCheckout: checkoutService.updateCheckout,
+                        updateShippingAddress: checkoutService.updateShippingAddress,
+                        updateBillingAddress: checkoutService.updateBillingAddress,
+                        getShippingAddress: () => checkoutState.data.getShippingAddress(),
+                        getBillingAddress: () => checkoutState.data.getBillingAddress(),
+                        onUnhandledError: this.handleUnhandledError,
+                    }}
+                >
+                    <div className={classNames({ 'is-embedded': isEmbedded(), 'remove-checkout-step-numbers': isHidingStepNumbers })} data-test="checkout-page-container" id="checkout-page-container">
+                            <div className="layout optimizedCheckout-contentPrimary">
+                                {this.renderContent()}
+                            </div>
+                            {errorModal}
+                    </div>
+                </CheckoutFormProvider>
+            </InsuranceCacheProvider>
         );
     }
 
@@ -512,7 +515,7 @@ class Checkout extends Component<
         } = this.state;
 
         return (
-            <CheckoutStep
+            <CheckoutStepWrapper
                 {...step}
                 heading={<TranslatedString id="customer.customer_heading" />}
                 key={step.type}
@@ -544,7 +547,7 @@ class Checkout extends Component<
                     step={step}
                     viewType={customerViewType}
                 />
-            </CheckoutStep>
+            </CheckoutStepWrapper>
         );
     }
 
@@ -558,7 +561,7 @@ class Checkout extends Component<
         }
 
         return (
-            <CheckoutStep
+            <CheckoutStepWrapper
                 {...step}
                 heading={<TranslatedString id="shipping.shipping_heading" />}
                 key={step.type}
@@ -589,7 +592,7 @@ class Checkout extends Component<
                         step={step}
                     />
                 </LazyContainer>
-            </CheckoutStep>
+            </CheckoutStepWrapper>
         );
     }
 
@@ -629,7 +632,7 @@ class Checkout extends Component<
         ];
 
         return (
-            <CheckoutStep
+            <CheckoutStepWrapper
                 {...step}
                 heading={<TranslatedString id="billing.billing_heading" />}
                 key={step.type}
@@ -671,7 +674,7 @@ class Checkout extends Component<
                         onUnhandledError={this.handleUnhandledError}
                     />
                 </LazyContainer>
-            </CheckoutStep>
+            </CheckoutStepWrapper>
         );
     }
 
@@ -679,7 +682,7 @@ class Checkout extends Component<
         const { consignments, cart, errorLogger } = this.props;
 
         return (
-            <CheckoutStep
+            <CheckoutStepWrapper
                 {...step}
                 heading={<TranslatedString id="payment.payment_heading" />}
                 key={step.type}
@@ -774,7 +777,7 @@ class Checkout extends Component<
                 </div>
                 
                 <div className="all-rights-reserved">TwinklingTree, all rights reserved.</div>
-            </CheckoutStep>
+            </CheckoutStepWrapper>
         );
     }
 

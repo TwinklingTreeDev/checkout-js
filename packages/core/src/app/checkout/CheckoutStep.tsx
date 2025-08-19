@@ -7,6 +7,7 @@ import { Cart, Consignment, ShippingOption } from '@bigcommerce/checkout-sdk';
 import { ShopperCurrency } from '../currency';
 
 import { isMobileView, MobileView } from '../ui/responsive';
+import { calculateInsuranceTotals } from '../order/calculateInsuranceTotals';
 
 import CheckoutStepHeader from './CheckoutStepHeader';
 import CheckoutStepType from './CheckoutStepType';
@@ -46,6 +47,12 @@ export interface CheckoutStepProps {
     // Cart context to manage shipping protection
     cart?: Cart;
     reloadCheckout?: () => Promise<any>;
+    // Insurance cache context methods
+    setCachedInsuranceAmount?: (amount: number) => void;
+    setIsInsuranceTransitioning?: (transitioning: boolean) => void;
+    setLastOperation?: (operation: 'add' | 'remove' | null) => void;
+    setCachedTotalWithInsurance?: (total: number) => void;
+    setCachedTotalWithoutInsurance?: (total: number) => void;
 }
 
 // Simple shipping option component that doesn't require Formik
@@ -320,7 +327,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                     </div>
                                     <div className="shipping-protection-text">
                                         <div className="shipping-protection-title">Extra Priority when packing & 100% insurance</div>
-                                        <div className="shipping-protection-subtitle">from damage, theft, or loss for just <span className="shipping-protection-price">$10.74</span></div>
+                                        <div className="shipping-protection-subtitle">from damage, theft, or loss for just <span className="shipping-protection-price">${this.getInsuranceAmount()}</span></div>
                                         <div className="shipping-protection-description">Enjoy peace of mind with our Delivery Guarantee, covering any damage, theft, or loss that may occur during transit.</div>
                                     </div>
                                 </div>
@@ -751,8 +758,18 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         );
     };
 
+    private getInsuranceAmount = (): number => {
+      const price = process.env.INSURANCE_PRODUCT_PRICE;
+      if (!price) {
+        // Fallback to $10.74 if not set, as a number (not in cents)
+        return 10.74;
+      }
+      const parsed = Number(price);
+      return isNaN(parsed) ? 10.74 : parsed;
+    };
+
     private updateInsuranceCacheFromCart = (): void => {
-        const { cart } = this.props;
+      const { cart } = this.props;
         const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
         
         if (!cart || !productId) return;
@@ -794,14 +811,62 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
             lastInsuranceOperation: shouldSelect ? 'add' : 'remove'
         });
         
-        // Create cached item if adding and none exists
+        // Get the insurance amount dynamically
+        const insuranceAmount = this.getInsuranceAmount();
+        
+        console.log('Insurance toggle:', { shouldSelect, insuranceAmount, exists });
+        
+        // Update insurance cache context for total calculation
+        const { 
+            setCachedInsuranceAmount, 
+            setIsInsuranceTransitioning, 
+            setLastOperation,
+            setCachedTotalWithInsurance,
+            setCachedTotalWithoutInsurance
+        } = this.props;
+        
+        if (setCachedInsuranceAmount && setIsInsuranceTransitioning && setLastOperation) {
+            setIsInsuranceTransitioning(true);
+            setLastOperation(shouldSelect ? 'add' : 'remove');
+            
+            if (shouldSelect) {
+                setCachedInsuranceAmount(insuranceAmount);
+                console.log('Setting cached insurance amount to:', insuranceAmount);
+            } else {
+                setCachedInsuranceAmount(0);
+                console.log('Setting cached insurance amount to 0 (removing)');
+            }
+            
+            // Update cached totals for both states (advanced caching)
+            if (setCachedTotalWithInsurance && setCachedTotalWithoutInsurance && this.props.cart) {
+                try {
+                    const { totalWithInsurance, totalWithoutInsurance } = calculateInsuranceTotals({
+                        checkout: this.props.cart as any, // Type assertion for now
+                        insuranceAmount: insuranceAmount,
+                    });
+                    
+                    setCachedTotalWithInsurance(totalWithInsurance);
+                    setCachedTotalWithoutInsurance(totalWithoutInsurance);
+                    
+                    console.log('Updated insurance totals cache:', { 
+                        totalWithInsurance, 
+                        totalWithoutInsurance,
+                        operation: shouldSelect ? 'add' : 'remove'
+                    });
+                } catch (error) {
+                    console.error('Error updating insurance totals cache:', error);
+                }
+            }
+        }
+        
+        // Create or get cached item
         let cachedItem = this.state.cachedInsuranceItem;
-        if (shouldSelect && !cachedItem) {
+        if (!cachedItem) {
             cachedItem = {
                 id: 'insurance-cached',
                 quantity: 1,
-                amount: 10.74, // $10.74 in cents
-                amountAfterDiscount: 10.74,
+                amount: insuranceAmount,
+                amountAfterDiscount: insuranceAmount,
                 name: 'Shipping Insurance against damage, lost and theft!',
                 image: this.getInsuranceItemImage(),
                 productOptions: [
@@ -813,10 +878,18 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
             } as any;
             // Update state with the new cached item
             this.setState({ cachedInsuranceItem: cachedItem });
+        } else if (shouldSelect) {
+            // Update existing cached item with current amount
+            cachedItem = {
+                ...cachedItem,
+                amount: insuranceAmount,
+                amountAfterDiscount: insuranceAmount,
+            };
+            this.setState({ cachedInsuranceItem: cachedItem });
         }
         
         // Emit event for cart item to update immediately
-        console.log('Emitting insurance toggle event:', { shouldSelect, hasCachedItem: !!cachedItem });
+        console.log('Emitting insurance toggle event:', { shouldSelect, hasCachedItem: !!cachedItem, cachedItem });
         window.dispatchEvent(new CustomEvent('insurance-toggle-changed', {
             detail: { 
                 isSelected: shouldSelect, 
@@ -824,11 +897,18 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 operation: shouldSelect ? 'add' : 'remove'
             }
         }));
+        console.log('Insurance toggle event dispatched');
         
-        // Clear transition state after a short delay for smooth UX
+        // Clear transition state after a longer delay to avoid stale API responses
         setTimeout(() => {
             this.setState({ isInsuranceTransitioning: false, lastInsuranceOperation: null });
-        }, 1000);
+            // Clear insurance cache context transition state
+            if (setIsInsuranceTransitioning && setLastOperation) {
+                setIsInsuranceTransitioning(false);
+                setLastOperation(null);
+            }
+            console.log('Insurance transition completed');
+        }, 3000); // Increased from 1000ms to 3000ms
         
         // Perform API operations in background (non-blocking)
         this.performBackgroundInsuranceOperation(shouldSelect, exists);

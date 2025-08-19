@@ -63,6 +63,11 @@ const PaymentMethodList: FunctionComponent<
                     false,
                 );
 
+                // Prevent Google Pay methods from rendering
+                if (method.id.startsWith('googlepay')) {
+                    return;
+                }
+
                 if (showOnlyOnMobileDevices && !isMobile()) {
                     return;
                 }

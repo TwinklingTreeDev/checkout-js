@@ -132,6 +132,7 @@ function appConfig(options, argv) {
                     // Expose selected environment variables to the app bundle
                     new DefinePlugin({
                         'process.env.INSURANCE_PRODUCT_ID': JSON.stringify(process.env.INSURANCE_PRODUCT_ID || ''),
+                        'process.env.INSURANCE_PRODUCT_PRICE': JSON.stringify(process.env.INSURANCE_PRODUCT_PRICE || ''),
                     }),
                     new BuildHookPlugin({
                         onSuccess() {

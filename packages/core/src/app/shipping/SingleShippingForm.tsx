@@ -355,23 +355,14 @@ export default withLanguage(
             shippingAddress,
             isBillingSameAsShipping,
             customerMessage,
-        }) => {
-            // Force empty country values to disable automatic country detection
-            const addressWithEmptyCountry = shippingAddress ? {
-                ...shippingAddress,
-                countryCode: '',
-                country: '',
-            } : undefined;
-            
-            return {
-                billingSameAsShipping: isBillingSameAsShipping,
-                orderComment: customerMessage,
-                shippingAddress: mapAddressToFormValues(
-                    getFields(''), // Use empty string to get default fields
-                    addressWithEmptyCountry,
-                ),
-            };
-        },
+        }) => ({
+            billingSameAsShipping: isBillingSameAsShipping,
+            orderComment: customerMessage,
+            shippingAddress: mapAddressToFormValues(
+                getFields(shippingAddress && shippingAddress.countryCode),
+                shippingAddress,
+            ),
+        }),
         isInitialValid: ({ shippingAddress, getFields, language }) =>
             !!shippingAddress &&
             getAddressFormFieldsValidationSchema({

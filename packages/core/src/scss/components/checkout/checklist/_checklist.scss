@@ -96,7 +96,7 @@
     @include u-hidden("visually");
 
     &:focus ~ .form-label {
-        box-shadow: $checklist-focus-boxShadow;
+        box-shadow: none;
     }
 
     &:checked ~ .form-label::before {

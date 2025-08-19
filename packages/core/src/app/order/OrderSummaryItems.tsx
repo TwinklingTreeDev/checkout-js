@@ -98,10 +98,10 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
             
             console.log('Updated insurance state:', { isSelected, hasCachedItem: !!cachedItem });
             
-            // Clear transition state after a short delay
+            // Clear transition state after a longer delay to match the context
             setTimeout(() => {
                 this.setState({ isInsuranceTransitioning: false });
-            }, 1000);
+            }, 3000); // Match the 3-second delay from CheckoutStep
         }
     };
 
@@ -117,11 +117,12 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
             });
         } else {
             // Create a default cached item if insurance is not in cart but might be added
+            const insuranceAmount = this.getInsuranceAmount();
             const defaultCachedItem = {
                 id: 'insurance-cached',
                 quantity: 1,
-                amount: 1074, // $10.74 in cents
-                amountAfterDiscount: 1074,
+                amount: insuranceAmount,
+                amountAfterDiscount: insuranceAmount,
                 name: 'Delivery Guarantee',
                 image: this.getInsuranceItemImage(),
                 productOptions: [
@@ -146,6 +147,21 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                 src="https://cdn11.bigcommerce.com/s-dgqj8t7y1p/products/114/images/382/11052983__04773.1754742857.220.290.png?c=1"
             />
         );
+    };
+
+    private getInsuranceAmount = (): number => {
+        const { items } = this.props;
+        const insuranceItem = items.digitalItems?.find(item => isInsuranceItem(item.name));
+        
+        if (insuranceItem) {
+            // Use the actual amount from the insurance item
+            return insuranceItem.extendedSalePrice || insuranceItem.extendedListPrice || 0;
+        }
+        
+        // If no insurance item in cart, return a default value
+        // In a real implementation, you might want to fetch this from the product API
+        // The amount should be in the same format as other cart items (not cents)
+        return 10.74; // $10.74 as fallback (not in cents)
     };
 
     private updateInsuranceCache = (): void => {
@@ -187,13 +203,21 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
         ];
 
         // Add cached insurance item if it should be visible
-        console.log('Rendering insurance state:', { isInsuranceVisible, hasCachedItem: !!cachedInsuranceItem, cachedItem: cachedInsuranceItem });
+        console.log('Rendering insurance state:', { 
+            isInsuranceVisible, 
+            hasCachedItem: !!cachedInsuranceItem, 
+            cachedItem: cachedInsuranceItem,
+            isInsuranceTransitioning 
+        });
         if (isInsuranceVisible && cachedInsuranceItem) {
             displayItems.push({
                 ...cachedInsuranceItem,
                 // Add remove handler for cached insurance item
                 onRemove: () => this.handleCachedInsuranceRemove(),
             });
+            console.log('Added cached insurance item to display');
+        } else {
+            console.log('Not showing cached insurance item:', { isInsuranceVisible, hasCachedItem: !!cachedInsuranceItem });
         }
 
         return (
