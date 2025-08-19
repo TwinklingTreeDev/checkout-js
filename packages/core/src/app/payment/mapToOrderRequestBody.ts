@@ -20,8 +20,19 @@ export default function mapToOrderRequestBody(
 
     const { paymentProviderRadio, ...rest } = values;
     const { methodId, gatewayId } = parseUniquePaymentMethodId(paymentProviderRadio);
+    
+    // Fix: Ensure PayPal has correct gateway
+    let fixedGatewayId = gatewayId;
+    if (methodId === 'paypalcommerce' && (!gatewayId || gatewayId === 'null')) {
+        fixedGatewayId = 'paypalcommerce';
+        console.log('[mapToOrderRequestBody] Fixed PayPal gateway:', { 
+            original: gatewayId, 
+            fixed: fixedGatewayId 
+        });
+    }
+    
     const payload: OrderRequestBody = {
-        payment: { gatewayId, methodId },
+        payment: { gatewayId: fixedGatewayId, methodId },
     };
     const paymentData = omitBy(
         {

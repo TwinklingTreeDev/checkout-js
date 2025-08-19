@@ -22,10 +22,30 @@ export interface PaymentMethodListProps {
 
 function getPaymentMethodFromListValue(methods: PaymentMethod[], value: string): PaymentMethod {
     const { gatewayId: gateway, methodId: id } = parseUniquePaymentMethodId(value);
-    const method = gateway ? find(methods, { gateway, id }) : find(methods, { id });
+    let method = gateway ? find(methods, { gateway, id }) : find(methods, { id });
 
     if (!method) {
         throw new Error(`Unable to find payment method with id: ${id}`);
+    }
+
+    // Fix: Ensure method has proper gateway value
+    if (method && !method.gateway && gateway) {
+        method = { ...method, gateway };
+        console.log('[PaymentMethodList] Fixed method gateway:', { 
+            methodId: method.id, 
+            originalGateway: method.gateway, 
+            fixedGateway: gateway 
+        });
+    }
+    
+    // Additional fix for PayPal methods
+    if (method && method.id === 'paypalcommerce' && (!method.gateway || method.gateway === 'null')) {
+        method = { ...method, gateway: 'paypalcommerce' };
+        console.log('[PaymentMethodList] Fixed PayPal method gateway:', { 
+            methodId: method.id, 
+            originalGateway: method.gateway, 
+            fixedGateway: 'paypalcommerce' 
+        });
     }
 
     return method;
@@ -42,6 +62,14 @@ const PaymentMethodList: FunctionComponent<
     onUnhandledError,
     onBillingSameAsShippingChange,
 }) => {
+    // Debug: Log available methods and their gateway values
+    React.useEffect(() => {
+        console.log('[PaymentMethodList] Available methods:', methods.map(m => ({
+            id: m.id,
+            gateway: m.gateway,
+            uniqueId: getUniquePaymentMethodId(m.id, m.gateway)
+        })));
+    }, [methods]);
     const handleSelect = useCallback(
         (value: string) => {
             onSelect(getPaymentMethodFromListValue(methods, value));

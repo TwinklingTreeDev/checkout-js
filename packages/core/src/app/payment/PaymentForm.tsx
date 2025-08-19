@@ -209,12 +209,32 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
     resetForm,
     values,
 }) => {
+    // Debug: Monitor form value changes
+    React.useEffect(() => {
+        console.log('[PaymentForm] Form values changed:', {
+            paymentProviderRadio: values.paymentProviderRadio,
+            allValues: values
+        });
+    }, [values.paymentProviderRadio]);
     const { setSubmitted } = useContext(FormContext);
 
     const commonValues = useMemo(() => ({ terms: values.terms }), [values.terms]);
 
     const handlePaymentMethodSelect = useCallback(
         (method: PaymentMethod) => {
+            console.log('[PaymentForm] Payment method selected:', {
+                method: { id: method.id, gateway: method.gateway },
+                paymentProviderRadio: getUniquePaymentMethodId(method.id, method.gateway)
+            });
+            
+            const newPaymentProviderRadio = getUniquePaymentMethodId(method.id, method.gateway);
+            
+            console.log('[PaymentForm] Resetting form with new payment method:', {
+                method: { id: method.id, gateway: method.gateway },
+                paymentProviderRadio: newPaymentProviderRadio,
+                currentValues: values
+            });
+            
             resetForm({
                 ...commonValues,
                 ccCustomerCode: '',
@@ -226,7 +246,7 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
                 ccName: '',
                 ccNumber: '',
                 instrumentId: '',
-                paymentProviderRadio: getUniquePaymentMethodId(method.id, method.gateway),
+                paymentProviderRadio: newPaymentProviderRadio,
                 shouldCreateAccount: true,
                 shouldSaveInstrument: false,
                 accountNumber: '',

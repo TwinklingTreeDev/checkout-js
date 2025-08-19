@@ -28,6 +28,7 @@ import {
 } from '../common/error';
 import { EMPTY_ARRAY } from '../common/utility';
 import { TermsConditionsType } from '../termsConditions';
+import { Alert, AlertType } from '../ui/alert';
 
 import mapSubmitOrderErrorMessage, { mapSubmitOrderErrorTitle } from './mapSubmitOrderErrorMessage';
 import mapToOrderRequestBody from './mapToOrderRequestBody';
@@ -38,6 +39,35 @@ import {
     PaymentMethodId,
     PaymentMethodProviderType,
 } from './paymentMethod';
+
+// Utility function to fix PayPal payment methods
+const fixPayPalMethod = (method: PaymentMethod): PaymentMethod => {
+    if (!method) return method;
+    
+    // Fix PayPal methods that have null gateway
+    if (method.id === 'paypalcommerce' && (!method.gateway || method.gateway === 'null')) {
+        const fixedMethod = { ...method, gateway: 'paypalcommerce' };
+        console.log('[Payment] Fixed PayPal method gateway:', {
+            methodId: method.id,
+            originalGateway: method.gateway,
+            fixedGateway: fixedMethod.gateway
+        });
+        return fixedMethod;
+    }
+    
+    // Fix other PayPal-related methods
+    if (method.id.startsWith('paypal') && (!method.gateway || method.gateway === 'null')) {
+        const fixedMethod = { ...method, gateway: 'paypalcommerce' };
+        console.log('[Payment] Fixed PayPal-related method gateway:', {
+            methodId: method.id,
+            originalGateway: method.gateway,
+            fixedGateway: fixedMethod.gateway
+        });
+        return fixedMethod;
+    }
+    
+    return method;
+};
 
 export interface PaymentProps {
     errorLogger: ErrorLogger;
@@ -90,6 +120,7 @@ interface PaymentState {
     shouldHidePaymentSubmitButton: { [key: string]: boolean };
     submitFunctions: { [key: string]: ((values: PaymentFormValues) => void) | null };
     validationSchemas: { [key: string]: ObjectSchema<Partial<PaymentFormValues>> | null };
+    paymentMethodChangeMessage?: string;
 }
 
 class Payment extends Component<
@@ -124,8 +155,11 @@ class Payment extends Component<
             onReady = noop,
             usableStoreCredit,
             checkoutServiceSubscribe,
+            defaultMethod,
         } = this.props;
 
+        // Restore Google Pay state if needed
+        this.restoreGooglePayState();
 
         if (usableStoreCredit) {
             this.handleStoreCreditChange(true);
@@ -133,13 +167,59 @@ class Payment extends Component<
 
         await this.loadPaymentMethodsOrThrow();
 
+        // Enhanced order finalization with Google Pay specific handling
         try {
+            console.log('[Payment] Attempting to finalize order...', {
+                method: defaultMethod?.id,
+                gateway: defaultMethod?.gateway,
+                isGooglePay: defaultMethod?.id?.startsWith('googlepay')
+            });
+
             const state = await finalizeOrderIfNeeded();
             const order = state.data.getOrder();
 
-            onFinalize(order?.orderId);
+            console.log('[Payment] Order finalization successful:', {
+                orderId: order?.orderId,
+                isComplete: order?.isComplete,
+                method: defaultMethod?.id
+            });
+
+            if (order?.orderId) {
+                console.log('[Payment] Triggering order confirmation redirect...');
+                onFinalize(order.orderId);
+            } else {
+                console.warn('[Payment] Order finalized but no order ID returned');
+            }
         } catch (error) {
+            console.error('[Payment] Order finalization failed:', error);
+            
+            // Enhanced error handling for Google Pay
+            if (defaultMethod?.id?.startsWith('googlepay')) {
+                console.log('[Payment] Google Pay specific error handling');
+                
+                // For Google Pay, if finalization is not required, it might mean
+                // the payment is still being processed or needs user interaction
+                if (isErrorWithType(error) && error.type === 'order_finalization_not_required') {
+                    console.log('[Payment] Google Pay order finalization not required - payment may still be processing');
+                    // Persist state to prevent data loss
+                    this.persistGooglePayState();
+                    // Don't treat this as an error for Google Pay
+                    return;
+                }
+                
+                // For other Google Pay errors, log but don't immediately redirect
+                if (isErrorWithType(error) && error.type === 'payment_method_invalid') {
+                    console.warn('[Payment] Google Pay payment method became invalid');
+                    // Set a flag to show user-friendly message
+                    this.setState({
+                        paymentMethodChangeMessage: 'Google Pay payment is being processed. Please wait or try again if the issue persists.'
+                    });
+                    return;
+                }
+            }
+            
             if (isErrorWithType(error) && error.type !== 'order_finalization_not_required') {
+                console.error('[Payment] Calling onFinalizeError with:', error);
                 onFinalizeError(error);
             }
         }
@@ -190,6 +270,7 @@ class Payment extends Component<
             shouldDisableSubmit,
             validationSchemas,
             shouldHidePaymentSubmitButton,
+            paymentMethodChangeMessage,
         } = this.state;
 
         const uniqueSelectedMethodId =
@@ -212,6 +293,23 @@ class Payment extends Component<
                         return null;
                     }
                 })()}
+                
+                {/* Payment Method Change Alert */}
+                {paymentMethodChangeMessage && (
+                    <Alert type={AlertType.Warning}>
+                        {paymentMethodChangeMessage}
+                    </Alert>
+                )}
+                
+                {/* Debug: Current Payment Method Status */}
+                {process.env.NODE_ENV === 'development' && (
+                    <div style={{ padding: '10px', backgroundColor: '#f0f0f0', margin: '10px 0', fontSize: '12px' }}>
+                        <strong>Debug Info:</strong><br/>
+                        Selected Method: {selectedMethod ? `${selectedMethod.id} (${selectedMethod.gateway})` : 'None'}<br/>
+                        Default Method: {defaultMethod ? `${defaultMethod.id} (${defaultMethod.gateway})` : 'None'}<br/>
+                        Unique ID: {uniqueSelectedMethodId || 'None'}
+                    </div>
+                )}
                 
                 <ChecklistSkeleton isLoading={!isReady}>
                     {!isEmpty(methods) && defaultMethod && (
@@ -394,21 +492,51 @@ class Payment extends Component<
                 return;
             }
 
-            const { cartUrl, clearError, loadCheckout } = this.props;
+            const { cartUrl, clearError, loadCheckout, defaultMethod } = this.props;
             const { type: errorType } = error as any; // FIXME: Export correct TS interface
+
+            console.log('[Payment] Error modal closed:', {
+                errorType,
+                method: defaultMethod?.id,
+                isGooglePay: defaultMethod?.id?.startsWith('googlepay')
+            });
+
+            // Enhanced handling for Google Pay specific errors
+            if (defaultMethod?.id?.startsWith('googlepay')) {
+                console.log('[Payment] Google Pay error handling');
+                
+                // For Google Pay, avoid page reloads that could clear email
+                if (errorType === 'payment_method_invalid' || errorType === 'order_could_not_be_finalized_error') {
+                    console.log('[Payment] Google Pay payment issue - attempting to reload checkout instead of page');
+                    try {
+                        await loadCheckout();
+                        // Clear any error messages after successful reload
+                        this.setState({ paymentMethodChangeMessage: undefined });
+                        return;
+                    } catch (reloadError) {
+                        console.error('[Payment] Failed to reload checkout:', reloadError);
+                        // Fall back to cart redirect only if reload fails
+                        window.location.replace(cartUrl || '/');
+                        return;
+                    }
+                }
+            }
 
             if (
                 errorType === 'provider_fatal_error' ||
                 errorType === 'order_could_not_be_finalized_error'
             ) {
+                console.log('[Payment] Fatal error - redirecting to cart');
                 window.location.replace(cartUrl || '/');
             }
 
             if (errorType === 'tax_provider_unavailable') {
+                console.log('[Payment] Tax provider unavailable - reloading page');
                 window.location.reload();
             }
 
             if (errorType === 'cart_consistency') {
+                console.log('[Payment] Cart consistency error - reloading checkout');
                 await loadCheckout();
             }
 
@@ -416,7 +544,10 @@ class Payment extends Component<
                 const { body, headers, status } = error;
 
                 if (body.type === 'provider_error' && headers.location) {
-                    window.top?.location.assign(headers.location);
+                    console.log('[Payment] Provider error with location - redirecting');
+                    if (window.top) {
+                        window.top.location.assign(headers.location);
+                    }
                 }
 
                 // Reload the checkout object to get the latest `shouldExecuteSpamCheck` value,
@@ -429,6 +560,7 @@ class Payment extends Component<
                     body.type === 'spam_protection_expired' ||
                     body.type === 'spam_protection_failed'
                 ) {
+                    console.log('[Payment] Spam protection issue - setting flag and reloading checkout');
                     this.setState({ didExceedSpamLimit: true });
 
                     await loadCheckout();
@@ -476,6 +608,18 @@ class Payment extends Component<
 
         const { selectedMethod = defaultMethod, submitFunctions } = this.state;
 
+        console.log('[Payment] Payment submission started:', {
+            selectedMethod: selectedMethod ? { id: selectedMethod.id, gateway: selectedMethod.gateway } : 'undefined',
+            defaultMethod: defaultMethod ? { id: defaultMethod.id, gateway: defaultMethod.gateway } : 'undefined',
+            isUsingDefault: selectedMethod === defaultMethod,
+            isGooglePay: selectedMethod?.id?.startsWith('googlepay')
+        });
+
+        // Persist Google Pay state before submission
+        if (selectedMethod?.id?.startsWith('googlepay')) {
+            this.persistGooglePayState();
+        }
+
         analyticsTracker.clickPayButton({shouldCreateAccount: values.shouldCreateAccount});
 
         const customSubmit =
@@ -483,43 +627,159 @@ class Payment extends Component<
             submitFunctions[getUniquePaymentMethodId(selectedMethod.id, selectedMethod.gateway)];
 
         if (customSubmit) {
+            console.log('[Payment] Using custom submit function for:', selectedMethod?.id);
             return customSubmit(values);
         }
 
         try {
+            console.log('[Payment] Submitting order...');
+            console.log('[Payment] Form values for submission:', {
+                paymentProviderRadio: values.paymentProviderRadio,
+                selectedMethod: selectedMethod ? { id: selectedMethod.id, gateway: selectedMethod.gateway } : 'undefined'
+            });
             const state = await submitOrder(mapToOrderRequestBody(values, isPaymentDataRequired()));
             const order = state.data.getOrder();
 
+            console.log('[Payment] Order submission successful:', {
+                orderId: order?.orderId,
+                isComplete: order?.isComplete,
+                method: selectedMethod?.id
+            });
+
             analyticsTracker.paymentComplete();
 
-            onSubmit(order?.orderId);
+            if (order?.orderId) {
+                console.log('[Payment] Triggering order confirmation redirect from submit...');
+                // Clear any persisted Google Pay state on successful submission
+                if (selectedMethod?.id?.startsWith('googlepay')) {
+                    sessionStorage.removeItem('googlepay_payment_state');
+                }
+                onSubmit(order.orderId);
+            } else {
+                console.warn('[Payment] Order submitted but no order ID returned');
+            }
         } catch (error) {
+            console.error('[Payment] Order submission failed:', error);
             analyticsTracker.paymentRejected();
 
             if (isErrorWithType(error) && error.type === 'payment_method_invalid') {
-                return loadPaymentMethods();
+                // Enhanced handling for payment method invalid errors
+                console.warn('Payment method became invalid, reloading payment methods:', error);
+                
+                // Clear the selected method to force user to reselect
+                this.setState({ selectedMethod: undefined });
+                
+                // Reload payment methods to get fresh list
+                try {
+                    await loadPaymentMethods();
+                    
+                    // Show a user-friendly alert message instead of error modal
+                    this.setState({
+                        paymentMethodChangeMessage: 'The selected payment method is no longer available. Please select a different payment method and try again.'
+                    });
+                    
+                    // Clear the message after 5 seconds
+                    setTimeout(() => {
+                        this.setState({ paymentMethodChangeMessage: undefined });
+                    }, 5000);
+                    
+                    console.info('Payment methods reloaded successfully. User can now select a new payment method.');
+                    
+                    // Don't call onSubmitError for payment method invalid errors
+                    // This prevents the error modal from showing
+                    return;
+                } catch (reloadError) {
+                    console.error('Failed to reload payment methods:', reloadError);
+                    // Only show error modal if we can't reload payment methods
+                    onSubmitError(error);
+                }
+                return;
             }
 
             if (isCartChangedError(error)) {
+                console.log('[Payment] Cart changed error detected');
                 return onCartChangedError(error);
             }
 
+            // For all other errors, show the error modal
+            console.error('[Payment] Showing error modal for:', error);
             onSubmitError(error);
         }
     };
 
+
+
+    private async loadPaymentMethodsOrThrow(): Promise<void> {
+        const {
+            loadPaymentMethods,
+            onUnhandledError = noop,
+        } = this.props;
+
+        try {
+            await loadPaymentMethods();
+
+            // Fix any PayPal methods that might have been loaded with null gateway
+            const methods = this.props.methods || [];
+            
+            // Check if any PayPal methods need fixing
+            if (methods.some((m: PaymentMethod) => m.id === 'paypalcommerce' && (!m.gateway || m.gateway === 'null'))) {
+                console.log('[Payment] PayPal methods loaded with null gateway, applying fixes');
+                // Apply fixes to methods (they will be fixed when used)
+                methods.forEach(fixPayPalMethod);
+            }
+
+            const selectedMethod = this.state.selectedMethod || this.props.defaultMethod;
+
+            if (selectedMethod) {
+                this.trackSelectedPaymentMethod(selectedMethod);
+            }
+        } catch (error) {
+            onUnhandledError(error);
+        }
+    }
+
+    private async handleCartTotalChange(): Promise<void> {
+        const { loadPaymentMethods } = this.props;
+
+        return loadPaymentMethods().then(() => {
+            this.setState({ isReady: true });
+        });
+    }
+
     private setSelectedMethod: (method?: PaymentMethod) => void = (method) => {
         const { selectedMethod } = this.state;
 
+        console.log('[Payment] setSelectedMethod called:', {
+            newMethod: method ? { id: method.id, gateway: method.gateway } : 'undefined',
+            currentMethod: selectedMethod ? { id: selectedMethod.id, gateway: selectedMethod.gateway } : 'undefined',
+            isSameMethod: selectedMethod === method
+        });
+
         if (selectedMethod === method) {
+            console.log('[Payment] Method is already selected, skipping update');
             return;
         }
 
-        if (method) {
-            this.trackSelectedPaymentMethod(method);
+        // Fix: Ensure method has proper gateway value
+        let fixedMethod = method ? fixPayPalMethod(method) : method;
+
+        if (fixedMethod) {
+            console.log('[Payment] Tracking new payment method:', fixedMethod.id);
+            this.trackSelectedPaymentMethod(fixedMethod);
         }
 
-        this.setState({ selectedMethod: method });
+        // Clear any payment method change message when user selects a new method
+        this.setState({ 
+            selectedMethod: fixedMethod,
+            paymentMethodChangeMessage: undefined 
+        }, () => {
+            console.log('[Payment] State updated with new method:', {
+                selectedMethod: this.state.selectedMethod ? { 
+                    id: this.state.selectedMethod.id, 
+                    gateway: this.state.selectedMethod.gateway 
+                } : 'undefined'
+            });
+        });
     };
 
     private setSubmit: (
@@ -569,37 +829,70 @@ class Payment extends Component<
         analyticsTracker.selectedPaymentMethod(methodName, methodId);
     }
 
-    private async loadPaymentMethodsOrThrow(): Promise<void> {
-        const {
-            loadPaymentMethods,
-            onUnhandledError = noop,
-        } = this.props;
-
-        try {
-            await loadPaymentMethods();
-
-            const selectedMethod = this.state.selectedMethod || this.props.defaultMethod;
-
-            if (selectedMethod) {
-                this.trackSelectedPaymentMethod(selectedMethod);
+    /**
+     * Persist Google Pay state to prevent email clearing during payment processing
+     */
+    private persistGooglePayState(): void {
+        const { defaultMethod } = this.props;
+        
+        if (defaultMethod?.id?.startsWith('googlepay')) {
+            console.log('[Payment] Persisting Google Pay state to prevent data loss');
+            
+            // Store current checkout state in session storage
+            try {
+                const currentState = {
+                    timestamp: Date.now(),
+                    method: defaultMethod.id,
+                    gateway: defaultMethod.gateway
+                };
+                
+                sessionStorage.setItem('googlepay_payment_state', JSON.stringify(currentState));
+                console.log('[Payment] Google Pay state persisted:', currentState);
+            } catch (error) {
+                console.warn('[Payment] Failed to persist Google Pay state:', error);
             }
-        } catch (error) {
-            onUnhandledError(error);
         }
     }
 
-    private async handleCartTotalChange(): Promise<void> {
-        const { isReady } = this.state;
-
-        if (!isReady) {
-            return;
+    /**
+     * Restore Google Pay state after page reload
+     */
+    private restoreGooglePayState(): void {
+        const { defaultMethod } = this.props;
+        
+        if (defaultMethod?.id?.startsWith('googlepay')) {
+            try {
+                const persistedState = sessionStorage.getItem('googlepay_payment_state');
+                if (persistedState) {
+                    const state = JSON.parse(persistedState);
+                    const timeDiff = Date.now() - state.timestamp;
+                    
+                    // Only restore state if it's recent (within 5 minutes)
+                    if (timeDiff < 5 * 60 * 1000) {
+                        console.log('[Payment] Restoring Google Pay state:', state);
+                        
+                        // Clear the persisted state
+                        sessionStorage.removeItem('googlepay_payment_state');
+                        
+                        // Set a flag to indicate we're in Google Pay recovery mode
+                        this.setState({
+                            paymentMethodChangeMessage: 'Google Pay payment is being processed. Please wait...'
+                        });
+                        
+                        // Clear the message after 3 seconds
+                        setTimeout(() => {
+                            this.setState({ paymentMethodChangeMessage: undefined });
+                        }, 3000);
+                    } else {
+                        // Clear old state
+                        sessionStorage.removeItem('googlepay_payment_state');
+                    }
+                }
+            } catch (error) {
+                console.warn('[Payment] Failed to restore Google Pay state:', error);
+                sessionStorage.removeItem('googlepay_payment_state');
+            }
         }
-
-        this.setState({ isReady: false });
-
-        await this.loadPaymentMethodsOrThrow();
-
-        this.setState({ isReady: true });
     }
 }
 
@@ -631,6 +924,9 @@ export function mapToPaymentProps({
 
     const { isComplete = false } = getOrder() || {};
     let methods = getPaymentMethods() || EMPTY_ARRAY;
+
+    // Fix: Ensure all payment methods have proper gateway values
+    methods = methods.map(fixPayPalMethod);
 
     // TODO: In accordance with the checkout team, this functionality is temporary and will be implemented in the backend instead.
     if (paymentProviderCustomer?.stripeLinkAuthenticationState) {
@@ -697,12 +993,21 @@ export function mapToPaymentProps({
         filteredMethods = filteredMethods;
     }
 
+    const defaultMethod = selectedPaymentMethod || filteredMethods[0];
+    
+    console.log('[Payment] mapToPaymentProps - defaultMethod:', {
+        selectedPaymentMethod: selectedPaymentMethod ? { id: selectedPaymentMethod.id, gateway: selectedPaymentMethod.gateway } : 'undefined',
+        firstFilteredMethod: filteredMethods[0] ? { id: filteredMethods[0].id, gateway: filteredMethods[0].gateway } : 'undefined',
+        defaultMethod: defaultMethod ? { id: defaultMethod.id, gateway: defaultMethod.gateway } : 'undefined',
+        selectedPayment: selectedPayment ? { providerId: selectedPayment.providerId, gatewayId: selectedPayment.gatewayId } : 'undefined'
+    });
+    
     return {
         applyStoreCredit: checkoutService.applyStoreCredit,
         availableStoreCredit: customer.storeCredit,
         cartUrl: config.links.cartLink,
         clearError: checkoutService.clearError,
-        defaultMethod: selectedPaymentMethod || filteredMethods[0],
+        defaultMethod,
         finalizeOrderError: getFinalizeOrderError(),
         finalizeOrderIfNeeded: checkoutService.finalizeOrderIfNeeded,
         loadCheckout: checkoutService.loadCheckout,

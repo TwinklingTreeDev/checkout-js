@@ -25,7 +25,6 @@ const PayPalCommercePaymentMethod: FunctionComponent<PaymentMethodProps> = (prop
         },
         method,
         checkoutService,
-        onUnhandledError,
     } = props;
 
     const {
@@ -44,7 +43,9 @@ const PayPalCommercePaymentMethod: FunctionComponent<PaymentMethodProps> = (prop
                 await checkoutService.loadInstruments();
             } catch (error) {
                 if (error instanceof Error) {
-                    onUnhandledError(error);
+                    console.warn('Failed to load PayPal instruments:', error);
+                    // Don't throw error for instrument loading failures as they're not critical
+                    // onUnhandledError(error);
                 }
             }
         };

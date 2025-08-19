@@ -782,4 +782,37 @@ describe('Payment', () => {
 
         expect(defaultProps.onUnhandledError).toHaveBeenCalledWith(expect.any(Error));
     });
+
+    it('persists Google Pay state when order finalization is not required', async () => {
+        const googlePayMethod = {
+            ...paymentMethods[0],
+            id: 'googlepaybraintree',
+            gateway: 'braintree'
+        };
+
+        jest.spyOn(checkoutState.data, 'getPaymentMethods').mockReturnValue([googlePayMethod]);
+        jest.spyOn(checkoutState.data, 'getCheckout').mockReturnValue({
+            ...getCheckout(),
+            payments: [{
+                ...getCheckoutPayment(),
+                providerId: googlePayMethod.id,
+            }],
+        });
+
+        jest.spyOn(checkoutService, 'finalizeOrderIfNeeded').mockRejectedValue({
+            type: 'order_finalization_not_required',
+        });
+
+        const container = mount(<PaymentTest {...defaultProps} />);
+
+        await new Promise((resolve) => process.nextTick(resolve));
+
+        // Verify that Google Pay state was persisted
+        const persistedState = sessionStorage.getItem('googlepay_payment_state');
+        expect(persistedState).toBeTruthy();
+        
+        const state = JSON.parse(persistedState!);
+        expect(state.method).toBe('googlepaybraintree');
+        expect(state.gateway).toBe('braintree');
+    });
 });

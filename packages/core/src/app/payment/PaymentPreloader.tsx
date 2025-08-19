@@ -54,7 +54,11 @@ const PaymentPreloader: React.FC<PaymentPreloaderProps> = ({
                     const isNotPreloadable = config.nonPreloadableMethodIds.includes(methodId);
                     const alreadyPreloaded = preloadedMethods.current.has(methodId);
                     
-                    return isPreloadable && !isNotPreloadable && !alreadyPreloaded;
+                    // Additional safety check: never preload PayPal methods
+                    const isPayPalMethod = methodId.toLowerCase().includes('paypal') || 
+                                         methodId.toLowerCase().includes('paypalcommerce');
+                    
+                    return isPreloadable && !isNotPreloadable && !alreadyPreloaded && !isPayPalMethod;
                 });
 
                 if (preloadableMethods.length === 0) {

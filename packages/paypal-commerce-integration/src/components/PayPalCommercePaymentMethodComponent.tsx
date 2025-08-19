@@ -10,6 +10,8 @@ import React, { FunctionComponent, useCallback, useEffect, useRef } from 'react'
 
 import { PaymentMethodProps } from '@bigcommerce/checkout/payment-integration-api';
 
+import { handlePayPalError } from '../utils/paypalErrorHandler';
+
 type PayPalCommerceProvidersPaymentInitializeOptions =
     PayPalCommerceAlternativeMethodsPaymentOptions &
         PayPalCommerceCreditPaymentInitializeOptions &
@@ -89,32 +91,47 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
     }, [shouldSaveInstrument, shouldConfirmInstrument]);
 
     const initializePayment = async () => {
+        console.log('Initializing PayPal payment method:', {
+            methodId: method.id,
+            gateway: method.gateway,
+            providerOptionsKey,
+            hasProviderData: !!providerOptionsData
+        });
+
         try {
             await checkoutService.initializePayment({
                 gatewayId: method.gateway,
                 methodId: method.id,
-                    [providerOptionsKey]: {
+                [providerOptionsKey]: {
                     container: '#checkout-payment-continue',
                     shouldRenderPayPalButtonOnInitialization: false,
                     // Do not render PayPal button or hide native submit button
                     onRenderButton: () => {},
                     onInit: (onRenderButton: () => void) => {
+                        console.log('PayPal initialization callback received');
                         renderButtonRef.current = onRenderButton;
                     },
                     submitForm: () => {
+                        console.log('PayPal form submission triggered');
                         paymentForm.setSubmitted(true);
                         paymentForm.submitForm();
                     },
                     onError: (error: Error) => {
                         paymentForm.disableSubmit(method, true);
 
-                        if (error.message === 'INSTRUMENT_DECLINED') {
-                            onUnhandledError(
-                                new Error(language.translate('payment.errors.instrument_declined')),
-                            );
-                        } else {
-                            onUnhandledError(error);
-                        }
+                        // Use the new PayPal error handler
+                        const errorInfo = handlePayPalError(error, language);
+                        
+                        console.warn('PayPal error occurred:', {
+                            error: error.message,
+                            technicalMessage: errorInfo.technicalMessage,
+                            isRecoverable: errorInfo.isRecoverable,
+                            methodId: method.id,
+                            gateway: method.gateway
+                        });
+
+                        // Show user-friendly error message
+                        onUnhandledError(new Error(errorInfo.userMessage));
                     },
                     onValidate: async (resolve: () => void, reject: () => void): Promise<void> => {
                         const keysValidation = await validateForm();
@@ -129,6 +146,7 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                         return resolve();
                     },
                     onInitButton: async (actions: ButtonActions) => {
+                        console.log('PayPal button actions received');
                         buttonActionsRef.current = actions;
                         await validateButton();
                     },
@@ -136,9 +154,26 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                     ...(providerOptionsData || {}),
                 },
             });
+            
+            console.log('PayPal payment method initialized successfully');
         } catch (error) {
+            // Enhanced error handling for initialization failures
             if (error instanceof Error) {
-                onUnhandledError(error);
+                const errorInfo = handlePayPalError(error, language);
+                
+                console.error('PayPal payment method initialization failed:', {
+                    error: error.message,
+                    technicalMessage: errorInfo.technicalMessage,
+                    isRecoverable: errorInfo.isRecoverable,
+                    methodId: method.id,
+                    gateway: method.gateway,
+                    stack: error.stack
+                });
+                
+                onUnhandledError(new Error(errorInfo.userMessage));
+            } else {
+                console.error('PayPal initialization failed with non-Error object:', error);
+                onUnhandledError(new Error('PayPal initialization failed'));
             }
         }
     };
