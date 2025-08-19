@@ -52,7 +52,7 @@ window.__PAYMENT_PRELOADER_CONFIG__ = {
     enabled: true,
     preloadDelay: 3000,
     methodPreloadDelay: 150,
-    preloadableMethodIds: ['braintree', 'stripev3'],
+    preloadableMethodIds: ['paypalcommerce', 'braintree'],
     nonPreloadableMethodIds: ['bolt', 'applepay']
 };
 
@@ -60,20 +60,6 @@ window.__PAYMENT_PRELOADER_CONFIG__ = {
 window.__PAYMENT_PRELOADER_ENABLED__ = 'true';
 window.__PAYMENT_PRELOADER_DELAY__ = '2000';
 window.__PAYMENT_PRELOADER_METHOD_DELAY__ = '100';
-```
-
-### Emergency Disable
-
-For emergency situations, you can globally disable the PaymentPreloader:
-
-```javascript
-import { disablePaymentPreloader, enablePaymentPreloader } from './PaymentPreloaderConfig';
-
-// Disable globally
-disablePaymentPreloader();
-
-// Re-enable when needed
-enablePaymentPreloader();
 ```
 
 ### Programmatic Configuration
@@ -99,6 +85,8 @@ import { PaymentPreloader } from './PaymentPreloader';
 
 The following payment methods are considered safe to preload:
 
+- PayPal Commerce
+- PayPal Commerce Credit Cards
 - Braintree
 - Stripe V3
 - Stripe UPE
@@ -114,19 +102,12 @@ The following payment methods are considered safe to preload:
 - Laybuy
 - Humm
 
-**Note:** PayPal methods are excluded from preloading to avoid conflicts with their normal initialization process.
-
 ## Non-Preloadable Payment Methods
 
 The following payment methods are excluded from preloading:
 
 - Bolt (requires user interaction)
 - Apple Pay (requires device capabilities check)
-- PayPal methods (can cause conflicts with normal initialization):
-  - PayPal Commerce, PayPal Commerce Credit Cards
-  - PayPal Commerce Credit, PayPal Commerce Alternative Method
-  - PayPal Commerce Venmo, PayPal Express
-  - PayPal Payments Pro
 - Google Pay methods (require device capabilities check):
   - AdyenV2GooglePay, AdyenV3GooglePay
   - AuthorizeNetGooglePay, BNZGooglePay

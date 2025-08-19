@@ -19,9 +19,8 @@ export interface PaymentPreloaderConfig {
 
 export const DEFAULT_PAYMENT_PRELOADER_CONFIG: PaymentPreloaderConfig = {
     preloadableMethodIds: [
-        // Removed PayPal methods to avoid conflicts with normal PayPal initialization
-        // PaymentMethodId.PaypalCommerce,
-        // PaymentMethodId.PaypalCommerceCreditCards,
+        PaymentMethodId.PaypalCommerce,
+        PaymentMethodId.PaypalCommerceCreditCards,
         PaymentMethodId.Braintree,
         PaymentMethodId.StripeV3,
         PaymentMethodId.StripeUPE,
@@ -43,14 +42,6 @@ export const DEFAULT_PAYMENT_PRELOADER_CONFIG: PaymentPreloaderConfig = {
         PaymentMethodId.ApplePay, // Requires device capabilities check
         PaymentMethodId.ChasePay, // Requires user authentication
         PaymentMethodId.Masterpass, // Requires user authentication
-        // PayPal methods - exclude from preloading to avoid conflicts
-        PaymentMethodId.PaypalCommerce,
-        PaymentMethodId.PaypalCommerceCreditCards,
-        PaymentMethodId.PaypalCommerceCredit,
-        PaymentMethodId.PaypalCommerceAlternativeMethod,
-        PaymentMethodId.PaypalCommerceVenmo,
-        PaymentMethodId.PaypalExpress,
-        PaymentMethodId.PaypalPaymentsPro,
         // Google Pay methods require device capabilities check
         PaymentMethodId.AdyenV2GooglePay,
         PaymentMethodId.AdyenV3GooglePay,
@@ -70,19 +61,6 @@ export const DEFAULT_PAYMENT_PRELOADER_CONFIG: PaymentPreloaderConfig = {
     preloadDelay: 2000, // 2 seconds
     methodPreloadDelay: 100, // 100ms between methods
     enabled: true,
-};
-
-// Global disable flag for emergency situations
-let globalDisableFlag = true; // Disabled for now
-
-export const disablePaymentPreloader = (): void => {
-    globalDisableFlag = true;
-    console.warn('[PaymentPreloader] Disabled globally');
-};
-
-export const enablePaymentPreloader = (): void => {
-    globalDisableFlag = false;
-    console.warn('[PaymentPreloader] Enabled globally');
 };
 
 // Browser-safe environment variable access
@@ -120,12 +98,6 @@ const getBrowserConfig = (): Partial<PaymentPreloaderConfig> => {
 // Environment-based configuration
 export const getPaymentPreloaderConfig = (): PaymentPreloaderConfig => {
     const config = { ...DEFAULT_PAYMENT_PRELOADER_CONFIG };
-    
-    // Check global disable flag first
-    if (globalDisableFlag) {
-        config.enabled = false;
-        return config;
-    }
     
     // Allow environment variables to override settings (browser-safe)
     const preloaderEnabled = getEnvVar('PAYMENT_PRELOADER_ENABLED');
