@@ -14,6 +14,8 @@ interface PaymentSubmitButtonTextProps {
     methodType?: string;
     methodName?: string;
     initialisationStrategyType?: string;
+    brandName?: string;
+    isComplete?: boolean;
     isPaymentDataRequired?: boolean;
 }
 
@@ -27,6 +29,8 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
         methodGateway,
         initialisationStrategyType,
         isPaymentDataRequired,
+        brandName,
+        isComplete,
     }) => {
         if (!isPaymentDataRequired) {
             return <TranslatedString id="payment.place_order_action" />;
@@ -70,32 +74,41 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
             methodId === PaymentMethodId.BraintreeVenmo
         ) {
             // Always show "Complete Order" for PayPal Venmo instead of PayPal-specific text
-            return <TranslatedString id="payment.place_order_action" />;
+            return <TranslatedString id="payment.paypal_venmo_continue_action" />;
         }
 
         if (methodType === PaymentMethodType.Paypal) {
             // Always show "Complete Order" for PayPal instead of "Continue with PayPal"
-            return <TranslatedString id="payment.place_order_action" />;
+            //return <TranslatedString id="payment.place_order_action" />;
+            const continueActionId = methodId === PaymentMethodId.PaypalCommerce
+                ? 'payment.place_order_action'
+                : 'payment.paypal_continue_action';
+
+            return <TranslatedString
+                data={{ isComplete }}
+                id={isComplete ? 'payment.paypal_complete_action' : continueActionId}
+            />;
         }
 
         if (methodType === PaymentMethodType.PaypalCredit) {
             // Always show "Complete Order" for PayPal Credit instead of PayPal-specific text
-            return <TranslatedString id="payment.place_order_action" />;
-        }
+            const continueTranslationId = brandName
+            ? 'payment.continue_with_brand'
+            : 'payment.paypal_pay_later_continue_action'
+            const completeTranslationId = brandName
+                ? 'payment.complete_with_brand'
+                : 'payment.paypal_pay_later_complete_action'
 
-        if (methodId === PaymentMethodId.PayPalCommerceAcceleratedCheckout) {
-            // Always show "Complete Order" for PayPal Commerce Accelerated Checkout
-            return <TranslatedString id="payment.place_order_action" />;
-        }
-
-        if (methodId === PaymentMethodId.PaypalCommerceCreditCards) {
-            // Always show "Complete Order" for PayPal Commerce Credit Cards
-            return <TranslatedString id="payment.place_order_action" />;
-        }
-
-        if (methodId === PaymentMethodId.PaypalCommerce) {
-            // Always show "Complete Order" for PayPal Commerce
-            return <TranslatedString id="payment.place_order_action" />;
+            return (
+                <TranslatedString
+                    data={{ brandName, isComplete, continueTranslationId, completeTranslationId }}
+                    id={
+                        isComplete
+                            ? completeTranslationId
+                            : continueTranslationId
+                    }
+                />
+            );
         }
 
         if (methodId === PaymentMethodId.PaypalExpress) {
@@ -131,6 +144,8 @@ export interface PaymentSubmitButtonProps {
     isDisabled?: boolean;
     initialisationStrategyType?: string;
     isPaymentDataRequired?: boolean;
+    brandName?: string;
+    isComplete?: boolean;
 }
 
 interface WithCheckoutPaymentSubmitButtonProps {
@@ -150,6 +165,8 @@ const PaymentSubmitButton: FunctionComponent<
     methodName,
     methodType,
     initialisationStrategyType,
+    brandName,
+    isComplete,
 }) => (
         <Button
             className={
@@ -179,7 +196,9 @@ const PaymentSubmitButton: FunctionComponent<
             </svg>
 
             <PaymentSubmitButtonText
+                brandName={brandName}
                 initialisationStrategyType={initialisationStrategyType}
+                isComplete={isComplete}
                 isPaymentDataRequired={isPaymentDataRequired}
                 methodGateway={methodGateway}
                 methodId={methodId}

@@ -71,14 +71,17 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
     };
 
     const togglePaypalButton = useCallback(() => {
-        // Always show the native submit button; avoid rendering PayPal-branded button
-        paymentForm.hidePaymentSubmitButton(method, false);
-        hasPayPalButton.current = false;
-    }, [currentInstrument]);
+        // Only show native button if we have a vaulted instrument that doesn't need confirmation
+        if (currentInstrument && !shouldConfirmInstrument) {
+            paymentForm.hidePaymentSubmitButton(method, false);
+            hasPayPalButton.current = false;
+        }
+        // For all other cases, let the PayPal iframe button handle the rendering
+    }, [currentInstrument, shouldConfirmInstrument, paymentForm, method]);
 
     useEffect(() => {
         togglePaypalButton();
-    }, [togglePaypalButton, renderButtonRef.current]);
+    }, [togglePaypalButton]);
 
     useEffect(() => {
         void validateButton();
@@ -104,9 +107,11 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                 methodId: method.id,
                 [providerOptionsKey]: {
                     container: '#checkout-payment-continue',
-                    shouldRenderPayPalButtonOnInitialization: false,
-                    // Do not render PayPal button or hide native submit button
-                    onRenderButton: () => {},
+                    shouldRenderPayPalButtonOnInitialization: true,
+                    onRenderButton: () => {
+                        paymentForm.hidePaymentSubmitButton(method, true);
+                        hasPayPalButton.current = true;
+                    },
                     onInit: (onRenderButton: () => void) => {
                         console.log('PayPal initialization callback received');
                         renderButtonRef.current = onRenderButton;

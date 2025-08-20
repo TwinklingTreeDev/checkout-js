@@ -96,6 +96,17 @@ const PaymentForm: FunctionComponent<
         }
     }, [selectedMethod]);
 
+    const brandName = useMemo(() => {
+        if (!selectedMethod) {
+            return;
+        }
+
+        return (
+            selectedMethod.initializationData?.payPalCreditProductBrandName?.credit ||
+            selectedMethod.initializationData?.payPalCreditProductBrandName
+        );
+    }, [selectedMethod]);
+
     if (shouldExecuteSpamCheck) {
         return (
             <SpamProtectionField
@@ -164,9 +175,11 @@ const PaymentForm: FunctionComponent<
                     <PaymentMethodSubmitButtonContainer />
                 ) : (
                     <PaymentSubmitButton
+                        brandName={brandName}
                         initialisationStrategyType={
                             selectedMethod && selectedMethod.initializationStrategy?.type
                         }
+                        isComplete={!!selectedMethod?.initializationData?.isComplete}
                         isDisabled={shouldDisableSubmit}
                         methodGateway={selectedMethod && selectedMethod.gateway}
                         methodId={selectedMethodId}
