@@ -86,6 +86,7 @@ const BillingForm = ({
         debounce(
             async (address: Address, orderComment?: string) => {
                 try {
+                    console.log('BillingForm: Debounced update triggered for address:', address.address1);
                     const promises: Array<Promise<CheckoutSelectors>> = [];
                     
                     if (address && billingAddress && !isEqualAddress(address, billingAddress)) {
@@ -100,6 +101,7 @@ const BillingForm = ({
                         await Promise.all(promises);
                     }
                 } catch (error) {
+                    console.error('BillingForm: Error updating billing data:', error);
                     if (error instanceof Error) {
                         onUnhandledError(error);
                     }
@@ -133,14 +135,13 @@ const BillingForm = ({
             const updatedAddress = mapAddressFromFormValues(addressFormValues);
             
             if (updatedAddress && billingAddress && !isEqualAddress(updatedAddress, billingAddress)) {
+                console.log('BillingForm: Triggering billing update for:', updatedAddress.address1);
                 setIsUpdatingBillingData(true);
                 debouncedUpdateBillingData(updatedAddress, values.orderComment);
             }
         },
         [setFieldValue, values, billingAddress, debouncedUpdateBillingData],
     );
-
-
 
     // Cleanup debounced function on unmount
     useEffect(() => {
@@ -245,6 +246,10 @@ const BillingForm = ({
 export default withLanguage(
     withFormik<BillingFormProps & WithLanguageProps, BillingFormValues>({
         handleSubmit: (values, { props: { onSubmit } }) => {
+            // Check if we're just validating forms, not actually submitting
+            if ((window as any).__isValidatingForms) {
+                return; // Don't actually submit, just let validation run
+            }
             onSubmit(values);
         },
         mapPropsToValues: ({ getFields, customerMessage, billingAddress }) => {
