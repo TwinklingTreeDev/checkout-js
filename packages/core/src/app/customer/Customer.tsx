@@ -246,7 +246,8 @@ class Customer extends Component<CustomerProps & WithCheckoutCustomerProps & Ana
                 onShowLogin={this.handleShowLogin}
                 privacyPolicyUrl={privacyPolicyUrl}
                 requiresMarketingConsent={requiresMarketingConsent}
-
+                continueAsGuest={this.props.continueAsGuest}
+                hasBillingId={this.props.hasBillingId}
                 onUnhandledError={this.props.onUnhandledError}
             />
         );

@@ -128,7 +128,7 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                 productOptions: [
                     {
                         testId: 'cart-item-product-option',
-                        content: 'Delivery Guarantee',
+                        content: '',
                     }
                 ],
             };
@@ -239,7 +239,7 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                             <li 
                                 className={`productList-item is-visible ${isInsuranceTransitioning && isInsuranceItem(summaryItemProps.name) ? 'insurance-transitioning' : ''}`} 
                                 key={summaryItemProps.id}
-                                style={isInsuranceTransitioning && isInsuranceItem(summaryItemProps.name) ? { opacity: 0.7, transition: 'opacity 0.3s ease' } : {}}
+                                style={isInsuranceTransitioning && isInsuranceItem(summaryItemProps.name) ? { opacity: 1, transition: 'opacity 0.3s ease' } : {}}
                             >
                                 <OrderSummaryItem
                                     {...summaryItemProps}

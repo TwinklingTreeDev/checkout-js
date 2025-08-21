@@ -8,9 +8,10 @@ import { FormField, TextInput } from '../ui/form';
 export interface EmailFieldProps {
     isFloatingLabelEnabled?: boolean;
     onChange?(value: string): void;
+    onBlur?(value: string): void;
 }
 
-const EmailField: FunctionComponent<EmailFieldProps> = ({ onChange, isFloatingLabelEnabled }) => {
+const EmailField: FunctionComponent<EmailFieldProps> = ({ onChange, onBlur, isFloatingLabelEnabled }) => {
     const renderInput = useCallback(
         (props: FieldProps) => (
             <TextInput
@@ -19,9 +20,17 @@ const EmailField: FunctionComponent<EmailFieldProps> = ({ onChange, isFloatingLa
                 id={props.field.name}
                 isFloatingLabelEnabled={isFloatingLabelEnabled}
                 type="email"
+                onBlur={(e) => {
+                    // Call Formik's onBlur
+                    props.field.onBlur(e);
+                    // Call our custom onBlur handler
+                    if (onBlur) {
+                        onBlur(e.target.value);
+                    }
+                }}
             />
         ),
-        [isFloatingLabelEnabled],
+        [isFloatingLabelEnabled, onBlur],
     );
 
     const labelContent = useMemo(() => <TranslatedString id="customer.email_label" />, []);
