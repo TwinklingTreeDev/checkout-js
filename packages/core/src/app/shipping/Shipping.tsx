@@ -124,7 +124,7 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
         }
     }
 
-    private syncPrefilledData = async (): Promise<void> => {
+    private async syncPrefilledData(): Promise<void> {
         const {
             updateShippingAddress,
             updateBillingAddress,
@@ -137,6 +137,21 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
         try {
             const promises: Array<Promise<any>> = [];
 
+            // Email validation regex
+            const EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+            
+            // Helper function to check if email is valid
+            const isEmailValid = (email: string): boolean => {
+                return Boolean(email && email.trim() !== '' && EMAIL_REGEXP.test(email));
+            };
+
+            // Get valid email from customer or address
+            const getValidEmail = (addressEmail?: string): string | undefined => {
+                const customerEmail = customer.email;
+                const email = customerEmail || addressEmail;
+                return email && isEmailValid(email) ? email : undefined;
+            };
+
             // Sync prefilled shipping address if it has data
             if (shippingAddress && updateShippingAddress) {
                 const hasShippingData = shippingAddress.firstName || 
@@ -146,12 +161,17 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                                        shippingAddress.postalCode;
                 
                 if (hasShippingData) {
-                    console.log('Shipping: Syncing prefilled shipping address to consignment on mount');
-                    const shippingAddressWithEmail = {
-                        ...shippingAddress,
-                        email: customer.email || (shippingAddress as any).email,
-                    };
-                    promises.push(updateShippingAddress(shippingAddressWithEmail));
+                    const validEmail = getValidEmail((shippingAddress as any).email);
+                    if (validEmail) {
+                        console.log('Shipping: Syncing prefilled shipping address to consignment on mount');
+                        const shippingAddressWithEmail = {
+                            ...shippingAddress,
+                            email: validEmail,
+                        };
+                        promises.push(updateShippingAddress(shippingAddressWithEmail));
+                    } else {
+                        console.log('Shipping: Skipping shipping address sync - no valid email available');
+                    }
                 }
             }
 
@@ -164,12 +184,17 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                                       billingAddress.postalCode;
                 
                 if (hasBillingData) {
-                    console.log('Shipping: Syncing prefilled billing address to consignment on mount');
-                    const billingAddressWithEmail = {
-                        ...billingAddress,
-                        email: customer.email || (billingAddress as any).email,
-                    };
-                    promises.push(updateBillingAddress(billingAddressWithEmail));
+                    const validEmail = getValidEmail((billingAddress as any).email);
+                    if (validEmail) {
+                        console.log('Shipping: Syncing prefilled billing address to consignment on mount');
+                        const billingAddressWithEmail = {
+                            ...billingAddress,
+                            email: validEmail,
+                        };
+                        promises.push(updateBillingAddress(billingAddressWithEmail));
+                    } else {
+                        console.log('Shipping: Skipping billing address sync - no valid email available');
+                    }
                 }
             }
 

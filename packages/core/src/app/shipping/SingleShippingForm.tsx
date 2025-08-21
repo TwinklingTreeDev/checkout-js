@@ -115,6 +115,7 @@ class SingleShippingForm extends PureComponent<
         this.debouncedUpdateAddress = debounce(
             async (address: Address, includeShippingOptions: boolean) => {
                 try {
+                    console.log('SingleShippingForm: Debounced update triggered for address:', address.address1);
                     await updateAddress(address, {
                         params: {
                             include: {
@@ -126,6 +127,8 @@ class SingleShippingForm extends PureComponent<
                     if (includeShippingOptions) {
                         this.setState({ hasRequestedShippingOptions: true });
                     }
+                } catch (error) {
+                    console.error('SingleShippingForm: Error updating address:', error);
                 } finally {
                     this.setState({ isUpdatingShippingData: false });
                 }
@@ -147,6 +150,13 @@ class SingleShippingForm extends PureComponent<
         // Update the form value when the prop changes (e.g., when buttons are clicked)
         if (prevProps.isBillingSameAsShipping !== isBillingSameAsShipping) {
             setFieldValue('billingSameAsShipping', isBillingSameAsShipping);
+        }
+    }
+
+    componentWillUnmount(): void {
+        // Cancel any pending debounced calls
+        if (this.debouncedUpdateAddress && this.debouncedUpdateAddress.cancel) {
+            this.debouncedUpdateAddress.cancel();
         }
     }
 
@@ -256,7 +266,7 @@ class SingleShippingForm extends PureComponent<
         }
 
         // Enqueue the following code to run after Formik has run validation
-        await new Promise((resolve) => setTimeout(resolve));
+        await new Promise((resolve) => setTimeout(resolve, 0));
 
         const isShippingField = SHIPPING_ADDRESS_FIELDS.includes(name);
 
@@ -287,9 +297,11 @@ class SingleShippingForm extends PureComponent<
         }
 
         if (!updatedShippingAddress || isEqualAddress(updatedShippingAddress, shippingAddress)) {
+            console.log('SingleShippingForm: Skipping update - address unchanged or invalid');
             return;
         }
 
+        console.log('SingleShippingForm: Triggering debounced address update for:', updatedShippingAddress.address1);
         this.setState({ isUpdatingShippingData: true });
         this.debouncedUpdateAddress(updatedShippingAddress, includeShippingOptions);
     }
@@ -348,6 +360,10 @@ class SingleShippingForm extends PureComponent<
 export default withLanguage(
     withFormik<SingleShippingFormProps & WithLanguageProps, SingleShippingFormValues>({
         handleSubmit: (values, { props: { onSubmit } }) => {
+            // Check if we're just validating forms, not actually submitting
+            if ((window as any).__isValidatingForms) {
+                return; // Don't actually submit, just let validation run
+            }
             onSubmit(values);
         },
         mapPropsToValues: ({

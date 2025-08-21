@@ -76,6 +76,20 @@ export class CheckoutFormStateManager {
             return;
         }
 
+        // Email validation regex
+        const EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+        
+        // Helper function to check if email is valid
+        const isEmailValid = (email: string): boolean => {
+            return Boolean(email && email.trim() !== '' && EMAIL_REGEXP.test(email));
+        };
+
+        // Only proceed if email is valid
+        if (!isEmailValid(email)) {
+            console.log('CheckoutFormStateManager: Skipping email update - invalid email:', email);
+            return;
+        }
+
         this.isUpdating = true;
 
         try {

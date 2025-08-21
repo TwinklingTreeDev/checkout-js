@@ -28,6 +28,7 @@ import {
 } from '../common/error';
 import { EMPTY_ARRAY } from '../common/utility';
 import { TermsConditionsType } from '../termsConditions';
+import { Alert, AlertType } from '../ui/alert';
 
 import mapSubmitOrderErrorMessage, { mapSubmitOrderErrorTitle } from './mapSubmitOrderErrorMessage';
 import mapToOrderRequestBody from './mapToOrderRequestBody';
@@ -90,6 +91,7 @@ interface PaymentState {
     shouldHidePaymentSubmitButton: { [key: string]: boolean };
     submitFunctions: { [key: string]: ((values: PaymentFormValues) => void) | null };
     validationSchemas: { [key: string]: ObjectSchema<Partial<PaymentFormValues>> | null };
+    paymentMethodChangeMessage?: string;
 }
 
 class Payment extends Component<
@@ -126,6 +128,8 @@ class Payment extends Component<
             checkoutServiceSubscribe,
         } = this.props;
 
+        // Restore Google Pay state if needed
+        this.restoreGooglePayState();
 
         if (usableStoreCredit) {
             this.handleStoreCreditChange(true);
@@ -187,9 +191,9 @@ class Payment extends Component<
             didExceedSpamLimit,
             isReady,
             selectedMethod = defaultMethod,
-            shouldDisableSubmit,
             validationSchemas,
             shouldHidePaymentSubmitButton,
+            paymentMethodChangeMessage,
         } = this.state;
 
         const uniqueSelectedMethodId =
@@ -213,6 +217,13 @@ class Payment extends Component<
                     }
                 })()}
                 
+                {/* Payment Method Change Alert */}
+                {paymentMethodChangeMessage && (
+                    <Alert type={AlertType.Warning}>
+                        {paymentMethodChangeMessage}
+                    </Alert>
+                )}
+                
                 <ChecklistSkeleton isLoading={!isReady}>
                     {!isEmpty(methods) && defaultMethod && (
                         <PaymentForm
@@ -229,11 +240,7 @@ class Payment extends Component<
                             onUnhandledError={this.handleError}
                             onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                             selectedMethod={selectedMethod}
-                            shouldDisableSubmit={
-                                (uniqueSelectedMethodId &&
-                                    shouldDisableSubmit[uniqueSelectedMethodId]) ||
-                                undefined
-                            }
+
                             shouldHidePaymentSubmitButton={
                                 (uniqueSelectedMethodId &&
                                     rest.isPaymentDataRequired() &&
@@ -394,8 +401,26 @@ class Payment extends Component<
                 return;
             }
 
-            const { cartUrl, clearError, loadCheckout } = this.props;
+            const { cartUrl, clearError, loadCheckout, defaultMethod } = this.props;
             const { type: errorType } = error as any; // FIXME: Export correct TS interface
+
+            // Enhanced handling for Google Pay specific errors
+            if (defaultMethod?.id?.startsWith('googlepay')) {
+                // For Google Pay, avoid page reloads that could clear email
+                if (errorType === 'payment_method_invalid' || errorType === 'order_could_not_be_finalized_error') {
+                    try {
+                        await loadCheckout();
+                        // Clear any error messages after successful reload
+                        this.setState({ paymentMethodChangeMessage: undefined });
+                        return;
+                    } catch (reloadError) {
+                        console.error('[Payment] Failed to reload checkout:', reloadError);
+                        // Fall back to cart redirect only if reload fails
+                        window.location.replace(cartUrl || '/');
+                        return;
+                    }
+                }
+            }
 
             if (
                 errorType === 'provider_fatal_error' ||
@@ -416,7 +441,9 @@ class Payment extends Component<
                 const { body, headers, status } = error;
 
                 if (body.type === 'provider_error' && headers.location) {
-                    window.top?.location.assign(headers.location);
+                    if (window.top) {
+                        window.top.location.assign(headers.location);
+                    }
                 }
 
                 // Reload the checkout object to get the latest `shouldExecuteSpamCheck` value,
@@ -476,6 +503,11 @@ class Payment extends Component<
 
         const { selectedMethod = defaultMethod, submitFunctions } = this.state;
 
+        // Persist Google Pay state before submission
+        if (selectedMethod?.id?.startsWith('googlepay')) {
+            this.persistGooglePayState();
+        }
+
         analyticsTracker.clickPayButton({shouldCreateAccount: values.shouldCreateAccount});
 
         const customSubmit =
@@ -486,11 +518,64 @@ class Payment extends Component<
             return customSubmit(values);
         }
 
+        // Trigger validation for all forms by clicking their submit buttons
+        try {
+            // Set a flag to indicate we're just validating, not actually submitting
+            (window as any).__isValidatingForms = true;
+
+            // Trigger customer/email form validation
+            const customerSubmitButton = document.querySelector('[data-test="customer-continue-as-guest-button"]') as HTMLButtonElement;
+            if (customerSubmitButton && !customerSubmitButton.disabled) {
+                customerSubmitButton.click();
+            }
+
+            // Trigger shipping form validation
+            const shippingSubmitButton = document.querySelector('#checkout-shipping-continue') as HTMLButtonElement;
+            if (shippingSubmitButton && !shippingSubmitButton.disabled) {
+                shippingSubmitButton.click();
+            }
+
+            // Wait a bit for validation to complete and errors to show
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Clear the validation flag
+            (window as any).__isValidatingForms = false;
+
+            // Check if there are any validation errors
+            const errorElements = document.querySelectorAll('.form-field--error');
+            if (errorElements.length > 0) {
+                // Scroll to the first error
+                const firstError = errorElements[0] as HTMLElement;
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Focus on the first error input
+                    const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
+                    if (errorInput) {
+                        errorInput.focus();
+                    }
+                }
+                
+                console.warn('Form validation failed - please complete all required fields');
+                return; // Don't proceed with order submission
+            }
+        } catch (validationError) {
+            console.error('Error during form validation:', validationError);
+            // Clear the validation flag in case of error
+            (window as any).__isValidatingForms = false;
+            // Continue with submission if validation fails
+        }
+
         try {
             const state = await submitOrder(mapToOrderRequestBody(values, isPaymentDataRequired()));
             const order = state.data.getOrder();
 
             analyticsTracker.paymentComplete();
+
+            // Clear any persisted Google Pay state on successful submission
+            if (selectedMethod?.id?.startsWith('googlepay')) {
+                sessionStorage.removeItem('googlepay_payment_state');
+            }
 
             onSubmit(order?.orderId);
         } catch (error) {
@@ -507,13 +592,22 @@ class Payment extends Component<
                 try {
                     await loadPaymentMethods();
                     
-                    // Show a more user-friendly error message
-                    const enhancedError = new Error(
-                        'The selected payment method is no longer available. Please select a different payment method and try again.'
-                    );
-                    onSubmitError(enhancedError);
+                    // Show a user-friendly alert message instead of error modal
+                    this.setState({
+                        paymentMethodChangeMessage: 'The selected payment method is no longer available. Please select a different payment method and try again.'
+                    });
+                    
+                    // Clear the message after 5 seconds
+                    setTimeout(() => {
+                        this.setState({ paymentMethodChangeMessage: undefined });
+                    }, 5000);
+                    
+                    // Don't call onSubmitError for payment method invalid errors
+                    // This prevents the error modal from showing
+                    return;
                 } catch (reloadError) {
                     console.error('Failed to reload payment methods:', reloadError);
+                    // Only show error modal if we can't reload payment methods
                     onSubmitError(error);
                 }
                 return;
@@ -523,6 +617,7 @@ class Payment extends Component<
                 return onCartChangedError(error);
             }
 
+            // For all other errors, show the error modal
             onSubmitError(error);
         }
     };
@@ -538,7 +633,11 @@ class Payment extends Component<
             this.trackSelectedPaymentMethod(method);
         }
 
-        this.setState({ selectedMethod: method });
+        // Clear any payment method change message when user selects a new method
+        this.setState({ 
+            selectedMethod: method,
+            paymentMethodChangeMessage: undefined 
+        });
     };
 
     private setSubmit: (
@@ -619,6 +718,66 @@ class Payment extends Component<
         await this.loadPaymentMethodsOrThrow();
 
         this.setState({ isReady: true });
+    }
+
+    /**
+     * Persist Google Pay state to prevent email clearing during payment processing
+     */
+    private persistGooglePayState(): void {
+        const { defaultMethod } = this.props;
+        
+        if (defaultMethod?.id?.startsWith('googlepay')) {
+            try {
+                const currentState = {
+                    timestamp: Date.now(),
+                    method: defaultMethod.id,
+                    gateway: defaultMethod.gateway
+                };
+                
+                sessionStorage.setItem('googlepay_payment_state', JSON.stringify(currentState));
+            } catch (error) {
+                console.warn('[Payment] Failed to persist Google Pay state:', error);
+            }
+        }
+    }
+
+    /**
+     * Restore Google Pay state after page reload
+     */
+    private restoreGooglePayState(): void {
+        const { defaultMethod } = this.props;
+        
+        if (defaultMethod?.id?.startsWith('googlepay')) {
+            try {
+                const persistedState = sessionStorage.getItem('googlepay_payment_state');
+                if (persistedState) {
+                    const state = JSON.parse(persistedState);
+                    const timeDiff = Date.now() - state.timestamp;
+                    
+                    // Only restore state if it's recent (within 5 minutes)
+                    if (timeDiff < 5 * 60 * 1000) {
+                        // Clear the persisted state
+                        sessionStorage.removeItem('googlepay_payment_state');
+                        
+                        // Set a flag to indicate we're in Google Pay recovery mode
+                        this.setState({
+                            paymentMethodChangeMessage: 'Google Pay payment is being processed. Please wait...'
+                        });
+                        
+                        // Clear the message after 3 seconds
+                        setTimeout(() => {
+                            this.setState({ paymentMethodChangeMessage: undefined });
+                        }, 3000);
+                    } else {
+                        // Clear old state
+                        sessionStorage.removeItem('googlepay_payment_state');
+                    }
+                }
+            } catch (error) {
+                console.warn('[Payment] Failed to restore Google Pay state:', error);
+                sessionStorage.removeItem('googlepay_payment_state');
+            }
+        }
     }
 }
 

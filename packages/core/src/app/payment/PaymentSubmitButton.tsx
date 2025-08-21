@@ -141,7 +141,6 @@ export interface PaymentSubmitButtonProps {
     methodId?: string;
     methodName?: string;
     methodType?: string;
-    isDisabled?: boolean;
     initialisationStrategyType?: string;
     isPaymentDataRequired?: boolean;
     brandName?: string;
@@ -156,7 +155,6 @@ interface WithCheckoutPaymentSubmitButtonProps {
 const PaymentSubmitButton: FunctionComponent<
     PaymentSubmitButtonProps & WithCheckoutPaymentSubmitButtonProps
 > = ({
-    isDisabled,
     isInitializing,
     isSubmitting,
     isPaymentDataRequired,
@@ -175,7 +173,7 @@ const PaymentSubmitButton: FunctionComponent<
                     : undefined
             }
             data-test="payment-submit-button"
-            disabled={isInitializing || isSubmitting || isDisabled}
+            disabled={isInitializing || isSubmitting}
             id="checkout-payment-continue"
             isFullWidth
             isLoading={isSubmitting}

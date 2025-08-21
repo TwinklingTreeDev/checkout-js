@@ -12,6 +12,8 @@ import { calculateInsuranceTotals } from '../order/calculateInsuranceTotals';
 import CheckoutStepHeader from './CheckoutStepHeader';
 import CheckoutStepType from './CheckoutStepType';
 
+import './CheckoutStep.scss';
+
 export interface CheckoutStepProps {
     heading?: ReactNode;
     isActive?: boolean;
@@ -318,10 +320,15 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                             </div>
                         </div>
                         <div className="shipping-method-options">
-                            <div className="icon">
-                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" strokeWidth="7"/>
-                            </svg>
+                            <div className="icon icon-desktop">
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3.5" y="3.5" width="15" height="15" rx="7.5" fill="white" stroke="#292929" strokeWidth="7"/>
+                                </svg>
+                            </div>
+                            <div className="icon icon-mobile">
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="4" y="4" width="14" height="14" rx="7" fill="white" stroke="#292929" stroke-width="8"/>
+                                </svg>
                             </div>
                             <div className='shipping-method-title'>Tracked & Insured</div>
                             <span className='shipping-method-price'>Free</span>
@@ -398,8 +405,8 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                     />
                                     <button
                                         type="button"
-                                        className="form-prefixPostfix-button--postfix"
-                                        disabled={this.state.isApplyingDiscount}
+                                        className={`form-prefixPostfix-button--postfix ${this.state.discountCode.trim() ? 'enabled' : 'disabled'}`}
+                                        disabled={this.state.isApplyingDiscount || !this.state.discountCode.trim()}
                                         onClick={this.handleApplyDiscount}
                                     >
                                         {this.state.isApplyingDiscount ? (
@@ -704,7 +711,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                             productOptions: [
                                 {
                                     testId: 'cart-item-product-option',
-                                    content: 'Delivery Guarantee',
+                                    content: '',
                                 }
                             ],
                         };
@@ -761,7 +768,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 productOptions: [
                     {
                         testId: 'cart-item-product-option',
-                        content: 'Delivery Guarantee',
+                        content: '',
                     }
                 ],
             };
@@ -811,7 +818,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 productOptions: [
                     {
                         testId: 'cart-item-product-option',
-                        content: 'Delivery Guarantee',
+                        content: '',
                     }
                 ],
             };

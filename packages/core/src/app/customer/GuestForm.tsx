@@ -38,7 +38,8 @@ export interface GuestFormProps {
     onChangeEmail(email: string): void;
     onContinueAsGuest(data: GuestFormValues): void;
     onShowLogin(): void;
-
+    continueAsGuest(credentials: any): Promise<any>; // Add the actual subscription API
+    hasBillingId: boolean; // Add this for subscription logic
     onUnhandledError?(error: Error): void;
 }
 
@@ -49,6 +50,9 @@ export interface GuestFormValues {
 
 // Auto-save delay constant (same as other sections)
 export const GUEST_AUTOSAVE_DELAY = 1700;
+
+// Email validation regex for checking if email is complete
+const EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
 
 const GuestForm: FunctionComponent<
     GuestFormProps & WithLanguageProps & FormikProps<GuestFormValues>
@@ -64,9 +68,12 @@ const GuestForm: FunctionComponent<
     isExpressPrivacyPolicy,
     isFloatingLabelEnabled,
     guestAutosaveDelay = GUEST_AUTOSAVE_DELAY,
+    continueAsGuest,
+    hasBillingId,
     onUnhandledError,
     values,
     setFieldValue,
+    setFieldTouched,
 }) => {
     const [isUpdatingGuestData, setIsUpdatingGuestData] = useState(false);
 
@@ -81,6 +88,25 @@ const GuestForm: FunctionComponent<
                 try {
                     // Use centralized form state manager
                     await updateEmail(values.email, values.shouldSubscribe);
+                    
+                    // Trigger subscription API if user wants to subscribe (same flow as button)
+                    if (canSubscribe) {
+                        console.log('GuestForm: Triggering subscription API for prefilled data:', values.email);
+                        try {
+                            // Use the actual continueAsGuest API for subscription (same as button)
+                            await continueAsGuest({
+                                email: values.email,
+                                acceptsMarketingNewsletter: values.shouldSubscribe,
+                                acceptsAbandonedCartEmails: values.shouldSubscribe,
+                            });
+                            
+                            console.log('GuestForm: Subscription API called successfully for prefilled data');
+                        } catch (subscriptionError) {
+                            console.error('GuestForm: Error calling subscription API for prefilled data:', subscriptionError);
+                            // Don't fail the main email update for subscription errors
+                        }
+                    }
+                    
                     console.log('GuestForm: Prefilled data synced successfully');
                 } catch (error) {
                     console.error('GuestForm: Error syncing prefilled data:', error);
@@ -95,20 +121,50 @@ const GuestForm: FunctionComponent<
         const timeoutId = setTimeout(syncPrefilledData, 100);
         
         return () => clearTimeout(timeoutId);
-    }, [updateEmail, values.email, values.shouldSubscribe]); // Include dependencies
+    }, [updateEmail, values.email, values.shouldSubscribe, continueAsGuest, canSubscribe]); // Include dependencies
+
+    // Helper function to check if email is valid
+    const isEmailValid = useCallback((email: string): boolean => {
+        return email.trim() !== '' && EMAIL_REGEXP.test(email);
+    }, []);
 
     // Create debounced update function using centralized form state manager
     const debouncedUpdateGuestData = useCallback(
         debounce(
             async (email: string, shouldSubscribe: boolean) => {
+                // Only update if email is valid
+                if (!isEmailValid(email)) {
+                    console.log('GuestForm: Skipping update for invalid email:', email);
+                    return;
+                }
+
                 try {
                     console.log('GuestForm: Starting centralized email sync for:', email, 'shouldSubscribe:', shouldSubscribe);
                     setIsUpdatingGuestData(true);
                     
-                    // Use centralized form state manager
+                    // Use centralized form state manager (consignment API)
                     await updateEmail(email, shouldSubscribe);
                     
+                    // Trigger subscription API if user wants to subscribe (same flow as button)
+                    if (canSubscribe) {
+                        console.log('GuestForm: Triggering subscription API for:', email);
+                        try {
+                            // Use the actual continueAsGuest API for subscription (same as button)
+                            await continueAsGuest({
+                                email,
+                                acceptsMarketingNewsletter: shouldSubscribe,
+                                acceptsAbandonedCartEmails: shouldSubscribe,
+                            });
+                            
+                            console.log('GuestForm: Subscription API called successfully');
+                        } catch (subscriptionError) {
+                            console.error('GuestForm: Error calling subscription API:', subscriptionError);
+                            // Don't fail the main email update for subscription errors
+                        }
+                    }
+                    
                 } catch (error) {
+                    console.error('GuestForm: Error updating email:', error);
                     if (error instanceof Error && onUnhandledError) {
                         onUnhandledError(error);
                     }
@@ -118,7 +174,7 @@ const GuestForm: FunctionComponent<
             },
             guestAutosaveDelay,
         ),
-        [updateEmail, onUnhandledError, guestAutosaveDelay],
+        [updateEmail, onUnhandledError, guestAutosaveDelay, isEmailValid, continueAsGuest, canSubscribe, hasBillingId],
     );
 
     // Handle field changes for auto-save
@@ -135,13 +191,13 @@ const GuestForm: FunctionComponent<
                 console.log('GuestForm: handleFieldChange called for email:', value, 'current values.email:', values.email);
                 onChangeEmail(value);
                 
-                // Always trigger auto-save when email changes
-                if (value.trim()) {
-                    console.log('GuestForm: Email changed, triggering auto-save:', value);
+                // Only trigger auto-save when email is valid and not empty
+                if (value.trim() && isEmailValid(value)) {
+                    console.log('GuestForm: Email changed and valid, triggering auto-save:', value);
                     setIsUpdatingGuestData(true);
                     debouncedUpdateGuestData(value, values.shouldSubscribe);
                 } else {
-                    console.log('GuestForm: Email change condition not met - value.trim():', value.trim());
+                    console.log('GuestForm: Email change condition not met - value.trim():', value.trim(), 'isValid:', isEmailValid(value));
                 }
             }
 
@@ -149,13 +205,61 @@ const GuestForm: FunctionComponent<
             if (fieldName === 'shouldSubscribe' && typeof value === 'boolean') {
                 console.log('GuestForm: handleFieldChange called for shouldSubscribe:', value, 'current values.shouldSubscribe:', values.shouldSubscribe);
                 
-                // Always trigger auto-save when marketing consent changes
-                console.log('GuestForm: Marketing consent changed, triggering auto-save:', value);
-                setIsUpdatingGuestData(true);
-                debouncedUpdateGuestData(values.email, value);
+                // Only trigger auto-save when we have a valid email
+                if (values.email && isEmailValid(values.email)) {
+                    console.log('GuestForm: Marketing consent changed, triggering auto-save:', value);
+                    setIsUpdatingGuestData(true);
+                    debouncedUpdateGuestData(values.email, value);
+                }
             }
         },
-        [setFieldValue, values, onChangeEmail, debouncedUpdateGuestData],
+        [setFieldValue, values, onChangeEmail, debouncedUpdateGuestData, isEmailValid],
+    );
+
+    // Handle email field blur - validate and update when user finishes typing
+    const handleEmailBlur = useCallback(
+        async (email: string) => {
+            console.log('GuestForm: Email blur event for:', email);
+            
+            // Mark field as touched for validation
+            setFieldTouched('email', true);
+            
+            // If email is valid, update immediately
+            if (email.trim() && isEmailValid(email)) {
+                console.log('GuestForm: Email blur - updating with valid email:', email);
+                setIsUpdatingGuestData(true);
+                try {
+                    // Use centralized form state manager (consignment API)
+                    await updateEmail(email, values.shouldSubscribe);
+                    
+                    // Trigger subscription API if user wants to subscribe (same flow as button)
+                    if (canSubscribe) {
+                        console.log('GuestForm: Triggering subscription API on blur for:', email);
+                        try {
+                            // Use the actual continueAsGuest API for subscription (same as button)
+                            await continueAsGuest({
+                                email,
+                                acceptsMarketingNewsletter: values.shouldSubscribe,
+                                acceptsAbandonedCartEmails: values.shouldSubscribe,
+                            });
+                            
+                            console.log('GuestForm: Subscription API called successfully on blur');
+                        } catch (subscriptionError) {
+                            console.error('GuestForm: Error calling subscription API on blur:', subscriptionError);
+                            // Don't fail the main email update for subscription errors
+                        }
+                    }
+                } catch (error) {
+                    console.error('GuestForm: Error updating email on blur:', error);
+                    if (error instanceof Error && onUnhandledError) {
+                        onUnhandledError(error);
+                    }
+                } finally {
+                    setIsUpdatingGuestData(false);
+                }
+            }
+        },
+        [setFieldTouched, isEmailValid, updateEmail, values.shouldSubscribe, onUnhandledError, continueAsGuest, canSubscribe, hasBillingId],
     );
 
     // Cleanup debounced function on unmount
@@ -190,6 +294,7 @@ const GuestForm: FunctionComponent<
                         <EmailField 
                             isFloatingLabelEnabled={isFloatingLabelEnabled} 
                             onChange={(email) => handleFieldChange('email', email)}
+                            onBlur={(email) => handleEmailBlur(email)}
                         />
 
                         {(canSubscribe || requiresMarketingConsent) && (
@@ -259,6 +364,10 @@ export default withLanguage(
             privacyPolicy: false,
         }),
         handleSubmit: (values, { props: { onContinueAsGuest } }) => {
+            // Check if we're just validating forms, not actually submitting
+            if ((window as any).__isValidatingForms) {
+                return; // Don't actually submit, just let validation run
+            }
             onContinueAsGuest(values);
         },
         validationSchema: ({ language, privacyPolicyUrl, isExpressPrivacyPolicy }: GuestFormProps & WithLanguageProps) => {

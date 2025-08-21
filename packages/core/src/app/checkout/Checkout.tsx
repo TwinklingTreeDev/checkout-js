@@ -91,7 +91,7 @@ const Payment = lazy(() =>
         () =>
             import(
                 /* webpackChunkName: "payment" */
-                '../payment/Payment'
+                '../payment/PaymentWithValidation'
             ),
     ),
 );
@@ -715,7 +715,7 @@ class Checkout extends Component<
                         <div className="jsx-e2877bf7fac87b3a">
                             <div><h2>What Happy Customers are Saying</h2></div>
                             <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews-summary"><span
-                                    className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://store-dgqj8t7y1p.mybigcommerce.com/content/checkout-assets/trustpilot.png"
+                                    className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://store-5k26roxhw.mybigcommerce.com/content/checkout-assets/trustpilot.png"
                                         className="jsx-e2877bf7fac87b3a trustpilotImg"/></span>
                                 <p className="jsx-e2877bf7fac87b3a inStoreReviews">And more than 3,000 in store reviews</p>
                             </div>

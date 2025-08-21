@@ -36,7 +36,6 @@ export interface PaymentFormProps {
     methods: PaymentMethod[];
     selectedMethod?: PaymentMethod;
     shouldShowStoreCredit?: boolean;
-    shouldDisableSubmit?: boolean;
     shouldHidePaymentSubmitButton?: boolean;
     shouldExecuteSpamCheck?: boolean;
     termsConditionsText?: string;
@@ -70,7 +69,6 @@ const PaymentForm: FunctionComponent<
     onBillingSameAsShippingChange,
     resetForm,
     selectedMethod,
-    shouldDisableSubmit,
     shouldHidePaymentSubmitButton,
     shouldExecuteSpamCheck,
     termsConditionsText = '',
@@ -106,6 +104,8 @@ const PaymentForm: FunctionComponent<
             selectedMethod.initializationData?.payPalCreditProductBrandName
         );
     }, [selectedMethod]);
+
+
 
     if (shouldExecuteSpamCheck) {
         return (
@@ -180,7 +180,6 @@ const PaymentForm: FunctionComponent<
                             selectedMethod && selectedMethod.initializationStrategy?.type
                         }
                         isComplete={!!selectedMethod?.initializationData?.isComplete}
-                        isDisabled={shouldDisableSubmit}
                         methodGateway={selectedMethod && selectedMethod.gateway}
                         methodId={selectedMethodId}
                         methodName={
