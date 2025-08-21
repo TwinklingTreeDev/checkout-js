@@ -17,6 +17,8 @@ import { Toggle } from '../ui/toggle';
 
 import AppliedRedeemables, { AppliedRedeemablesProps } from './AppliedRedeemables';
 
+import './Redeemable.scss';
+
 export interface RedeemableFormValues {
     redeemableCode: string;
 }
@@ -171,8 +173,8 @@ const RedeemableForm: FunctionComponent<
                             </Label>
 
                             <Button
-                                className="form-prefixPostfix-button--postfix"
-                                disabled={isSubmittingOrder()}
+                                className={`form-prefixPostfix-button--postfix ${field.value?.trim() ? 'enabled' : 'disabled'}`}
+                                disabled={isSubmittingOrder() || !field.value?.trim()}
                                 id="applyRedeemableButton"
                                 isLoading={isApplyingRedeemable}
                                 onClick={handleSubmit(setSubmitted)}
@@ -189,7 +191,7 @@ const RedeemableForm: FunctionComponent<
                         <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews">
                             <div className="jsx-e2877bf7fac87b3a">
                                 <div className="jsx-e2877bf7fac87b3a twinkling-tree-reviews-summary"><span
-                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://store-dgqj8t7y1p.mybigcommerce.com/content/checkout-assets/trustpilot.png"
+                                        className="jsx-e2877bf7fac87b3a reviewTrustpilotBox"><img alt="trustpilot-review" src="https://store-5k26roxhw.mybigcommerce.com/content/checkout-assets/trustpilot.png"
                                             className="jsx-e2877bf7fac87b3a trustpilotImg"/></span>
                                     <p className="jsx-e2877bf7fac87b3a inStoreReviews">And more than 3,000 in store reviews</p>
                                 </div>

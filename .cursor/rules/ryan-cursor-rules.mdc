@@ -1,0 +1,56 @@
+---
+alwaysApply: true
+---
+1. Code Style & Formatting
+
+Use Prettier defaults: 2 spaces, semicolons, single quotes, and trailing commas.
+
+Keep line length under 100 characters where possible.
+
+Organize imports in this order: external libraries → internal modules → styles.
+
+Remove unused imports and variables.
+
+2. React & JSX
+
+Always use functional components with hooks — never class components.
+
+Type all props using TypeScript interfaces.
+
+Prefer explicit typing and avoid any.
+
+Use controlled components for form inputs.
+
+Break down large JSX into smaller reusable components.
+
+3. State Management
+
+Use @bigcommerce/checkout-sdk for accessing and updating checkout state.
+
+Use React hooks like useState, useEffect, useMemo, and useCallback.
+
+Avoid deep prop drilling — use context providers when necessary.
+
+4. Error Handling
+
+Always handle async code with try/catch or .catch().
+
+Show errors through UI components such as ErrorModal or ErrorBoundary.
+
+Do not use console.error for production errors, only for debugging.
+
+5. Commits & PRs
+
+Follow Conventional Commits (feat:, fix:, chore:).
+
+Keep pull requests small, focused, and well-documented.
+
+Write clear commit messages that explain the “why,” not just the “what.”
+
+8. General Practices
+
+Prefer composition over inheritance.
+
+Write self-documenting code; only use comments for complex logic.
+
+Always consider accessibility (use aria-labels, roles, and ensure keyboard navigation).

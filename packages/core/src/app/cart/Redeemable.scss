@@ -1,0 +1,49 @@
+// =============================================================================
+// REDEEMABLE - DISCOUNT FORM STYLES
+// =============================================================================
+
+.redeemable-entry {
+    .form-prefixPostfix {
+        .form-prefixPostfix-button--postfix {
+            transition: all 0.2s ease-in-out;
+            
+            &.disabled {
+                background-color: #cccccc !important;
+                border-color: #cccccc !important;
+                color: #fff !important;
+                cursor: not-allowed !important;
+                
+                &:hover {
+                    background-color: #cccccc !important;
+                    border-color: #cccccc !important;
+                    color: #fff !important;
+                }
+                
+                svg path {
+                    stroke: #fff !important;
+                }
+            }
+            
+            &.enabled {
+                background-color: #000 !important;
+                border-color: #000 !important;
+                color: #fff !important;
+                cursor: pointer !important;
+                
+                &:hover {
+                    background-color: #333 !important;
+                    border-color: #333 !important;
+                }
+                
+                &:active {
+                    background-color: #000 !important;
+                    border-color: #000 !important;
+                }
+                
+                svg path {
+                    stroke: #fff !important;
+                }
+            }
+        }
+    }
+}
