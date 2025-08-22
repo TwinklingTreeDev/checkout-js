@@ -14,12 +14,14 @@ export interface HostedCreditCardCodeFieldProps {
     appearFocused: boolean;
     id?: string;
     name: string;
+    placeholder?: string;
 }
 
 const HostedCreditCardCodeField: FunctionComponent<HostedCreditCardCodeFieldProps> = ({
     appearFocused,
     id,
     name,
+    placeholder,
 }) => {
     const renderInput = useCallback(
         () => (
@@ -28,12 +30,13 @@ const HostedCreditCardCodeField: FunctionComponent<HostedCreditCardCodeFieldProp
                     additionalClassName="has-icon"
                     appearFocused={appearFocused}
                     id={id}
+                    placeholder={placeholder}
                 />
 
                 <IconLock />
             </>
         ),
-        [id, appearFocused],
+        [id, appearFocused, placeholder],
     );
 
     const labelContent = useMemo(

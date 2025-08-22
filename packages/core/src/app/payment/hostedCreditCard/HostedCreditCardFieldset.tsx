@@ -72,6 +72,7 @@ const HostedCreditCardFieldset: FunctionComponent<HostedCreditCardFieldsetProps>
                 appearFocused={focusedFieldType === 'cardNumber'}
                 id={cardNumberId}
                 name="hostedForm.errors.cardNumber"
+                placeholder="Card number"
             />
 
             {cardNameId && (
@@ -79,6 +80,7 @@ const HostedCreditCardFieldset: FunctionComponent<HostedCreditCardFieldsetProps>
                     appearFocused={focusedFieldType === 'cardName'}
                     id={cardNameId}
                     name="hostedForm.errors.cardName"
+                    placeholder="Name on card"
                 />
             )}
 
@@ -89,6 +91,7 @@ const HostedCreditCardFieldset: FunctionComponent<HostedCreditCardFieldsetProps>
                     appearFocused={focusedFieldType === 'cardExpiry'}
                     id={cardExpiryId}
                     name="hostedForm.errors.cardExpiry"
+                    placeholder="Expiry date (MM / YY)"
                 />
 
                 {cardCodeId && (
@@ -96,6 +99,7 @@ const HostedCreditCardFieldset: FunctionComponent<HostedCreditCardFieldsetProps>
                         appearFocused={focusedFieldType === 'cardCode'}
                         id={cardCodeId}
                         name="hostedForm.errors.cardCode"
+                        placeholder="Security code"
                     />
                 )}
             </div>

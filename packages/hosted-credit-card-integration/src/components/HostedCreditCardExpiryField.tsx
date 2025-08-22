@@ -7,16 +7,18 @@ export interface HostedCreditCardExpiryFieldProps {
     appearFocused: boolean;
     id: string;
     name: string;
+    placeholder?: string;
 }
 
 const HostedCreditCardExpiryField: FunctionComponent<HostedCreditCardExpiryFieldProps> = ({
     appearFocused,
     id,
     name,
+    placeholder,
 }) => {
     const renderInput = useCallback(
-        () => <TextInputIframeContainer appearFocused={appearFocused} id={id} />,
-        [id, appearFocused],
+        () => <TextInputIframeContainer appearFocused={appearFocused} id={id} placeholder={placeholder} />,
+        [id, appearFocused, placeholder],
     );
 
     return (

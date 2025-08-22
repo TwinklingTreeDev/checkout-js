@@ -5,12 +5,14 @@ export interface TextInputIframeContainerProps extends HTMLAttributes<HTMLDivEle
     additionalClassName?: string;
     appearFocused?: boolean;
     testId?: string;
+    placeholder?: string;
 }
 
 const TextInputIframeContainer: FunctionComponent<TextInputIframeContainerProps> = ({
     additionalClassName,
     appearFocused,
     testId,
+    placeholder,
     ...props
 }) => (
     <div
@@ -23,6 +25,7 @@ const TextInputIframeContainer: FunctionComponent<TextInputIframeContainerProps>
             additionalClassName,
         )}
         data-test={testId}
+        data-placeholder={placeholder}
     />
 );
 

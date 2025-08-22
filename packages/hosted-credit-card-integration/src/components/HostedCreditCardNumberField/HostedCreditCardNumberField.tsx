@@ -7,12 +7,14 @@ export interface HostedCreditCardNumberFieldProps {
     appearFocused: boolean;
     id: string;
     name: string;
+    placeholder?: string;
 }
 
 const HostedCreditCardNumberField: FunctionComponent<HostedCreditCardNumberFieldProps> = ({
     appearFocused,
     id,
     name,
+    placeholder,
 }) => {
     const renderInput = useCallback(
         () => (
@@ -21,12 +23,13 @@ const HostedCreditCardNumberField: FunctionComponent<HostedCreditCardNumberField
                     additionalClassName="has-icon"
                     appearFocused={appearFocused}
                     id={id}
+                    placeholder={placeholder}
                 />
 
                 <IconLock />
             </>
         ),
-        [id, appearFocused],
+        [id, appearFocused, placeholder],
     );
 
     return (

@@ -211,19 +211,38 @@ export default function withHostedCreditCardFieldset<
                           },
                     styles: styleContainerId
                         ? {
-                              default: await getCreditCardInputStyles(styleContainerId, styleProps),
-                              error: await getCreditCardInputStyles(
-                                  styleContainerId,
-                                  styleProps,
-                                  CreditCardInputStylesType.Error,
-                              ),
-                              focus: await getCreditCardInputStyles(
-                                  styleContainerId,
-                                  styleProps,
-                                  CreditCardInputStylesType.Focus,
-                              ),
+                              default: {
+                                  ...(await getCreditCardInputStyles(styleContainerId, styleProps)),
+                                  fontSize: '15px',
+                              },
+                              error: {
+                                  ...(await getCreditCardInputStyles(
+                                      styleContainerId,
+                                      styleProps,
+                                      CreditCardInputStylesType.Error,
+                                  )),
+                                  fontSize: '15px',
+                              },
+                              focus: {
+                                  ...(await getCreditCardInputStyles(
+                                      styleContainerId,
+                                      styleProps,
+                                      CreditCardInputStylesType.Focus,
+                                  )),
+                                  fontSize: '15px',
+                              },
                           }
-                        : {},
+                        : {
+                              default: {
+                                  fontSize: '15px',
+                              },
+                              error: {
+                                  fontSize: '15px',
+                              },
+                              focus: {
+                                  fontSize: '15px',
+                              },
+                          },
                     onBlur: ({ fieldType }) => {
                         if (focusedFieldType === fieldType) {
                             setFocusedFieldType(undefined);

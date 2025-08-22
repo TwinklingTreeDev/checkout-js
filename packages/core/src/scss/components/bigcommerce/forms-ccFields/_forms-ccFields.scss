@@ -107,6 +107,100 @@
     max-width: 50%;
 }
 
+// Font size for credit card input fields
+.form-field--ccNumber,
+.form-field--ccName,
+.form-field--ccExpiry,
+.form-ccFields-field--ccCvv {
+    .form-input,
+    .optimizedCheckout-form-input {
+        font-size: 15px;
+        
+        @media (max-width: 768px) {
+            font-size: 14px;
+        }
+    }
+}
+
+// Ensure hosted form iframes also respect font sizing
+.form-ccFields {
+    iframe {
+        font-size: 15px !important;
+        
+        @media (max-width: 768px) {
+            font-size: 14px !important;
+        }
+    }
+}
+
+// Preload placeholders for hosted credit card fields
+.form-field--ccNumber,
+.form-field--ccName,
+.form-field--ccExpiry,
+.form-ccFields-field--ccCvv {
+    position: relative;
+    
+    .form-input,
+    .optimizedCheckout-form-input {
+        position: relative;
+        
+        &::before {
+            content: attr(placeholder);
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 15px;
+            pointer-events: none;
+            z-index: 2;
+            transition: opacity 0.2s ease;
+            opacity: 1;
+            display: block;
+            
+            @media (max-width: 768px) {
+                font-size: 14px;
+            }
+        }
+        
+        &.form-input--loaded::before {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important;
+        }
+        
+        // Ensure placeholder stays hidden when focused
+        &.form-input--loaded.form-input--focus::before,
+        &.form-input--loaded.optimizedCheckout-form-input--focus::before {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important;
+        }
+        
+        // Ensure placeholder stays hidden when iframe is present
+        &.form-input--loaded iframe + ::before {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important;
+        }
+    }
+}
+
+// Ensure lock icons are visible
+.form-field--ccNumber,
+.form-field--ccName,
+.form-ccFields-field--ccCvv {
+    .form-field-body {
+        position: relative;
+    }
+    
+    .icon {
+        position: absolute;
+        z-index: 3;
+        pointer-events: none;
+    }
+}
+
 .form-ccFields-field--ccCvv {
     order: 4;
 }
