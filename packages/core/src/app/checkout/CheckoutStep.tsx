@@ -327,7 +327,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                             </div>
                             <div className="icon icon-mobile">
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="4" y="4" width="14" height="14" rx="7" fill="white" stroke="#292929" stroke-width="8"/>
+                                    <rect x="4" y="4" width="14" height="14" rx="7" fill="white" stroke="#292929" strokeWidth="8"/>
                                 </svg>
                             </div>
                             <div className='shipping-method-title'>Tracked & Insured</div>

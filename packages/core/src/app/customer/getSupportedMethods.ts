@@ -1,4 +1,4 @@
-import { isApplePayWindow, isAppleDevice } from "../common/utility";
+import { isApplePayWindow, isSafari } from "../common/utility";
 
 const APPLE_PAY = 'applepay';
 
@@ -34,8 +34,8 @@ export const getSupportedMethodIds = (methodIds: string[]): string[] => {
             return false;
         }
 
-        // Hide Google Pay on Apple devices
-        if (methodId.startsWith('googlepay') && isAppleDevice()) {
+        // Hide Google Pay on Safari browsers
+        if (methodId.startsWith('googlepay') && isSafari()) {
             return false;
         }
 

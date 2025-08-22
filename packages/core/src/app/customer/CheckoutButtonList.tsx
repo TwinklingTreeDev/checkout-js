@@ -3,7 +3,7 @@ import React, { FunctionComponent, memo } from 'react';
 
 import { TranslatedString } from '@bigcommerce/checkout/locale';
 
-import { isApplePayWindow, isAppleDevice } from '../common/utility';
+import { isApplePayWindow, isSafari } from '../common/utility';
 
 import CheckoutButton from './CheckoutButton';
 import { AmazonPayV2Button, ApplePayButton, PayPalCommerceButton } from './customWalletButton';
@@ -54,8 +54,8 @@ export const filterUnsupportedMethodIds = (methodIds:string[]): string[] => {
             return false;
         }
 
-        // Hide Google Pay on Apple devices
-        if (methodId.startsWith('googlepay') && isAppleDevice()) {
+        // Hide Google Pay on Safari browsers
+        if (methodId.startsWith('googlepay') && isSafari()) {
             return false;
         }
 

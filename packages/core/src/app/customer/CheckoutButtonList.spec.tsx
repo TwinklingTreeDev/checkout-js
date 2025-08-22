@@ -9,13 +9,13 @@ import { getStoreConfig } from '../config/config.mock';
 import CheckoutButton from './CheckoutButton';
 import CheckoutButtonList from './CheckoutButtonList';
 
-// Mock the isAppleDevice function
+// Mock the isSafari function
 jest.mock('../common/utility', () => ({
     ...jest.requireActual('../common/utility'),
-    isAppleDevice: jest.fn(),
+    isSafari: jest.fn(),
 }));
 
-import { isAppleDevice } from '../common/utility';
+import { isSafari } from '../common/utility';
 
 describe('CheckoutButtonList', () => {
     let localeContext: LocaleContextType;
@@ -133,8 +133,8 @@ describe('CheckoutButtonList', () => {
         expect(onError).toHaveBeenCalledWith(expect.any(Error));
     });
 
-    it('filters out Google Pay methods on Apple devices', () => {
-        (isAppleDevice as jest.Mock).mockReturnValue(true);
+    it('filters out Google Pay methods on Safari browsers', () => {
+        (isSafari as jest.Mock).mockReturnValue(true);
         
         const component = mount(
             <LocaleContext.Provider value={localeContext}>
@@ -151,8 +151,8 @@ describe('CheckoutButtonList', () => {
         expect(component.find(CheckoutButton).at(1).props().methodId).toBe('paypalcommerce');
     });
 
-    it('shows Google Pay methods on non-Apple devices', () => {
-        (isAppleDevice as jest.Mock).mockReturnValue(false);
+    it('shows Google Pay methods on non-Safari browsers', () => {
+        (isSafari as jest.Mock).mockReturnValue(false);
         
         const component = mount(
             <LocaleContext.Provider value={localeContext}>

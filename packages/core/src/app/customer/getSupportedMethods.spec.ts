@@ -1,12 +1,12 @@
 import { getSupportedMethodIds } from './getSupportedMethods';
 
-// Mock the isAppleDevice function
+// Mock the isSafari function
 jest.mock('../common/utility', () => ({
     ...jest.requireActual('../common/utility'),
-    isAppleDevice: jest.fn(),
+    isSafari: jest.fn(),
 }));
 
-import { isAppleDevice } from '../common/utility';
+import { isSafari } from '../common/utility';
 
 describe('getSupportedMethods', () => {
     beforeEach(() => {
@@ -29,8 +29,8 @@ describe('getSupportedMethods', () => {
         expect(filteredMethods).toEqual(['amazonpay']);
     });
 
-    it('filters out Google Pay methods on Apple devices', () => {
-        (isAppleDevice as jest.Mock).mockReturnValue(true);
+    it('filters out Google Pay methods on Safari browsers', () => {
+        (isSafari as jest.Mock).mockReturnValue(true);
         
         const methods = ['amazonpay', 'googlepayadyenv2', 'googlepaystripe', 'paypalcommerce'];
 
@@ -39,8 +39,8 @@ describe('getSupportedMethods', () => {
         expect(filteredMethods).toEqual(['amazonpay', 'paypalcommerce']);
     });
 
-    it('shows Google Pay methods on non-Apple devices', () => {
-        (isAppleDevice as jest.Mock).mockReturnValue(false);
+    it('shows Google Pay methods on non-Safari browsers', () => {
+        (isSafari as jest.Mock).mockReturnValue(false);
         
         const methods = ['amazonpay', 'googlepayadyenv2', 'googlepaystripe', 'paypalcommerce'];
 
