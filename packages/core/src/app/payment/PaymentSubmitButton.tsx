@@ -1,4 +1,4 @@
-import React, { FunctionComponent, memo } from 'react';
+import React, { FunctionComponent, memo, useEffect, useState } from 'react';
 
 import { TranslatedString } from '@bigcommerce/checkout/locale';
 
@@ -165,7 +165,92 @@ const PaymentSubmitButton: FunctionComponent<
     initialisationStrategyType,
     brandName,
     isComplete,
-}) => (
+}) => {
+    const [hasFormErrors, setHasFormErrors] = useState(false);
+
+    // Check if this is a PayPal payment method
+    const isPayPalMethod = methodType === PaymentMethodType.Paypal || 
+                          methodType === PaymentMethodType.PaypalCredit ||
+                          methodId === PaymentMethodId.PaypalCommerce ||
+                          methodId === PaymentMethodId.PaypalExpress;
+
+    // Simple function to check if there are any validation errors using existing system
+    const hasValidationErrors = (): boolean => {
+        const errorElements = document.querySelectorAll('.form-field--error');
+        return errorElements.length > 0;
+    };
+
+    // Monitor form validation errors for PayPal methods
+    useEffect(() => {
+        if (!isPayPalMethod) {
+            return;
+        }
+
+        const checkValidation = () => {
+            setHasFormErrors(hasValidationErrors());
+        };
+
+        // Initial check
+        checkValidation();
+
+        // Set up observer to watch for form changes
+        const observer = new MutationObserver(checkValidation);
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        // Listen for input events
+        const handleInputChange = () => {
+            setTimeout(checkValidation, 100);
+        };
+
+        document.addEventListener('input', handleInputChange);
+        document.addEventListener('change', handleInputChange);
+        document.addEventListener('blur', handleInputChange);
+
+        return () => {
+            observer.disconnect();
+            document.removeEventListener('input', handleInputChange);
+            document.removeEventListener('change', handleInputChange);
+            document.removeEventListener('blur', handleInputChange);
+        };
+    }, [isPayPalMethod]);
+
+    // Enhanced click handler for PayPal methods
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        if (isPayPalMethod && hasFormErrors) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            console.warn('Payment button clicked but forms have validation errors');
+            
+            // Scroll to the first error using existing system
+            const errorElements = document.querySelectorAll('.form-field--error');
+            if (errorElements.length > 0) {
+                const firstError = errorElements[0] as HTMLElement;
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Focus on the first error input
+                    const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
+                    if (errorInput) {
+                        errorInput.focus();
+                    }
+                }
+            }
+            
+            return false;
+        }
+    };
+
+    // Determine if button should be disabled
+    const shouldDisableButton = isInitializing || isSubmitting || (isPayPalMethod && hasFormErrors);
+
+    return (
         <Button
             className={
                 providersWithCustomClasses.includes(methodId as PaymentMethodId)
@@ -173,13 +258,14 @@ const PaymentSubmitButton: FunctionComponent<
                     : undefined
             }
             data-test="payment-submit-button"
-            disabled={isInitializing || isSubmitting}
+            disabled={shouldDisableButton}
             id="checkout-payment-continue"
             isFullWidth
             isLoading={isSubmitting}
             size={ButtonSize.Large}
             type="submit"
             variant={ButtonVariant.Action}
+            onClick={handleClick}
         >
 
             <svg xmlns="http://www.w3.org/2000/svg" width="21" height="24" viewBox="0 0 21 24" fill="none">
@@ -205,6 +291,7 @@ const PaymentSubmitButton: FunctionComponent<
             />
         </Button>
     );
+};
 
 export default withCheckout(({ checkoutState }) => {
     const {

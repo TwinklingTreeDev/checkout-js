@@ -1,0 +1,53 @@
+// PayPal Commerce Payment Method Component Styles
+
+.paypal-iframe-disabled {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+.paypal-iframe-enabled {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+    -moz-user-select: auto !important;
+    -ms-user-select: auto !important;
+}
+
+// Hide PayPal iframe when validation errors exist
+#checkout-payment-continue {
+    &.has-validation-errors {
+        iframe {
+            pointer-events: none !important;
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+        }
+        
+        // Make the entire container unclickable
+        pointer-events: none !important;
+        cursor: not-allowed !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+    }
+}
+
+// Additional styles to prevent PayPal iframe interactions
+#checkout-payment-continue[style*="display: none"] {
+    iframe {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
