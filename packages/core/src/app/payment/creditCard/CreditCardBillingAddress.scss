@@ -13,6 +13,9 @@
     margin-top: 2px;
     transform: scale(1.385);
     cursor: pointer;
+    @media screen and (max-width: 968px) {
+        transform: scale(1.692);
+    }
 }
 
 .billing-checkbox-label {
