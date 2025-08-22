@@ -242,11 +242,14 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
             });
         }
 
-        // Suppress React controlled/uncontrolled input warning
+        // Suppress React controlled/uncontrolled input warning and PayPal button rendering errors
         const originalError = console.error;
         console.error = (...args) => {
             if (args[0] && typeof args[0] === 'string' && args[0].includes('uncontrolled input to be controlled')) {
                 return; // Suppress this specific warning
+            }
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('Do not render the PayPal button into a button element')) {
+                return; // Suppress PayPal button rendering error
             }
             originalError.apply(console, args);
         };

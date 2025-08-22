@@ -61,7 +61,6 @@ export class CheckoutFormStateManager {
             };
 
             this.isInitialized = true;
-            console.log('CheckoutFormStateManager: State initialized:', this.currentState);
         } catch (error) {
             console.error('CheckoutFormStateManager: Error initializing state:', error);
         }

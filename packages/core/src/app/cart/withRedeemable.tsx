@@ -32,12 +32,13 @@ export default function withRedeemable(
             cachedTotalWithInsurance,
             cachedTotalWithoutInsurance,
             setCachedTotalWithInsurance,
-            setCachedTotalWithoutInsurance
+            setCachedTotalWithoutInsurance,
+            isAdvancedCachingEnabled
         } = useInsuranceCache();
 
-        // Calculate and cache totals for both states if not already cached
+        // Calculate and cache totals for both states if advanced caching is enabled
         useEffect(() => {
-            if (cachedTotalWithInsurance === 0 && cachedTotalWithoutInsurance === 0) {
+            if (isAdvancedCachingEnabled && cachedTotalWithInsurance === 0 && cachedTotalWithoutInsurance === 0) {
                 const insuranceAmount = cachedInsuranceAmount || 10.74; // Use cached amount or default
                 try {
                     const { totalWithInsurance, totalWithoutInsurance } = calculateInsuranceTotals({
@@ -53,18 +54,19 @@ export default function withRedeemable(
                     console.error('Error initializing insurance totals cache:', error);
                 }
             }
-        }, [cachedTotalWithInsurance, cachedTotalWithoutInsurance, cachedInsuranceAmount, checkout, setCachedTotalWithInsurance, setCachedTotalWithoutInsurance]);
+        }, [isAdvancedCachingEnabled, cachedTotalWithInsurance, cachedTotalWithoutInsurance, cachedInsuranceAmount, checkout, setCachedTotalWithInsurance, setCachedTotalWithoutInsurance]);
 
-        // Use cached totals during transitions for instant switching
+        // Determine total based on feature flag
         let total = checkout.outstandingBalance; // Default to BigCommerce total
         
-        if (isInsuranceTransitioning && lastOperation) {
+        if (isAdvancedCachingEnabled && isInsuranceTransitioning && lastOperation) {
+            // Use advanced caching: pre-calculated totals for instant switching
             if (lastOperation === 'add') {
                 total = cachedTotalWithInsurance || (checkout.outstandingBalance + cachedInsuranceAmount);
-                console.log('Using cached total with insurance:', total);
+                console.log('Using advanced cached total with insurance:', total);
             } else if (lastOperation === 'remove') {
                 total = cachedTotalWithoutInsurance || (checkout.outstandingBalance - cachedInsuranceAmount);
-                console.log('Using cached total without insurance:', total);
+                console.log('Using advanced cached total without insurance:', total);
             }
         }
 

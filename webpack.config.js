@@ -133,6 +133,7 @@ function appConfig(options, argv) {
                     new DefinePlugin({
                         'process.env.INSURANCE_PRODUCT_ID': JSON.stringify(process.env.INSURANCE_PRODUCT_ID || ''),
                         'process.env.INSURANCE_PRODUCT_PRICE': JSON.stringify(process.env.INSURANCE_PRODUCT_PRICE || ''),
+                        'process.env.INSURANCE_ADVANCED_CACHING': JSON.stringify(process.env.INSURANCE_ADVANCED_CACHING || ''),
                     }),
                     new BuildHookPlugin({
                         onSuccess() {

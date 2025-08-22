@@ -180,11 +180,17 @@ class Checkout extends Component<
 
     private embeddedMessenger?: EmbeddedCheckoutMessenger;
     private unsubscribeFromConsignments?: () => void;
+    private originalConsoleError?: typeof console.error;
 
     componentWillUnmount(): void {
         if (this.unsubscribeFromConsignments) {
             this.unsubscribeFromConsignments();
             this.unsubscribeFromConsignments = undefined;
+        }
+
+        // Restore original console.error
+        if (this.originalConsoleError) {
+            console.error = this.originalConsoleError;
         }
 
         window.removeEventListener('beforeunload', this.handleBeforeExit);
@@ -193,6 +199,15 @@ class Checkout extends Component<
     }
 
     async componentDidMount(): Promise<void> {
+        // Suppress PayPal button rendering errors globally
+        this.originalConsoleError = console.error;
+        console.error = (...args) => {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('Do not render the PayPal button into a button element')) {
+                return; // Suppress PayPal button rendering error
+            }
+            this.originalConsoleError?.apply(console, args);
+        };
+
         const {
             analyticsTracker,
             checkoutId,
@@ -260,7 +275,6 @@ class Checkout extends Component<
 
             const consignments = data.getConsignments();
             const cart = data.getCart();
-            console.log('[Checkout] Loaded checkout', { checkoutId, cartId: cart?.id });
             try { (window as any).__bc_cart_id = cart?.id; } catch {}
 
             // Auto-add shipping insurance product if configured and not present yet

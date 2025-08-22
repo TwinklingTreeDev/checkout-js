@@ -5,6 +5,7 @@ import { TranslatedString } from '@bigcommerce/checkout/locale';
 
 import { IconChevronDown, IconChevronUp } from '../ui/icon';
 import { isSmallScreen } from '../ui/responsive';
+import { getInsuranceConfig } from './getInsuranceConfig';
 
 import getItemsCount from './getItemsCount';
 import mapFromCustom from './mapFromCustom';
@@ -158,10 +159,15 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
             return insuranceItem.extendedSalePrice || insuranceItem.extendedListPrice || 0;
         }
         
-        // If no insurance item in cart, return a default value
-        // In a real implementation, you might want to fetch this from the product API
-        // The amount should be in the same format as other cart items (not cents)
-        return 10.74; // $10.74 as fallback (not in cents)
+        // If no insurance item in cart, use environment variable or fallback
+        const { productPrice } = getInsuranceConfig();
+        if (productPrice) {
+            const parsed = Number(productPrice);
+            return isNaN(parsed) ? 10.74 : parsed;
+        }
+        
+        // Fallback to $10.74 if not set
+        return 10.74;
     };
 
     private updateInsuranceCache = (): void => {
@@ -202,13 +208,7 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
             ...(items.customItems || []).map(mapFromCustom),
         ];
 
-        // Add cached insurance item if it should be visible
-        console.log('Rendering insurance state:', { 
-            isInsuranceVisible, 
-            hasCachedItem: !!cachedInsuranceItem, 
-            cachedItem: cachedInsuranceItem,
-            isInsuranceTransitioning 
-        });
+        // Add cached insurance item if it should be visible (regardless of caching mode)
         if (isInsuranceVisible && cachedInsuranceItem) {
             displayItems.push({
                 ...cachedInsuranceItem,
@@ -216,8 +216,6 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                 onRemove: () => this.handleCachedInsuranceRemove(),
             });
             console.log('Added cached insurance item to display');
-        } else {
-            console.log('Not showing cached insurance item:', { isInsuranceVisible, hasCachedItem: !!cachedInsuranceItem });
         }
 
         return (
@@ -372,10 +370,22 @@ async function removeInsuranceItem(lineItemId: string | number): Promise<void> {
             console.warn('Cart id not available for delete line item');
             return;
         }
+        
+        // Dispatch cart-line-item-removing event to prevent payment reload
+        window.dispatchEvent(new CustomEvent('cart-line-item-removing', { 
+            detail: { lineItemId: lineItemId, removing: true } 
+        }));
+        
         await fetch(`/api/storefront/carts/${cartId}/items/${lineItemId}`, {
             method: 'DELETE',
             credentials: 'include',
         });
+        
+        // Reset the removing state
+        window.dispatchEvent(new CustomEvent('cart-line-item-removing', { 
+            detail: { lineItemId: lineItemId, removing: false } 
+        }));
+        
         // Best-effort soft refresh - emit event so checkout can reload state without full page reload
         window.dispatchEvent(new CustomEvent('soft-cart-refresh'));
     } catch (e) {

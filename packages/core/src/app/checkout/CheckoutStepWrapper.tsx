@@ -12,7 +12,8 @@ const CheckoutStepWrapper: ComponentType<CheckoutStepWrapperProps> = (props) => 
     setIsInsuranceTransitioning, 
     setLastOperation,
     setCachedTotalWithInsurance,
-    setCachedTotalWithoutInsurance
+    setCachedTotalWithoutInsurance,
+    isAdvancedCachingEnabled
   } = useInsuranceCache();
 
   // Pass the context methods to the CheckoutStep component
@@ -24,6 +25,7 @@ const CheckoutStepWrapper: ComponentType<CheckoutStepWrapperProps> = (props) => 
       setLastOperation={setLastOperation}
       setCachedTotalWithInsurance={setCachedTotalWithInsurance}
       setCachedTotalWithoutInsurance={setCachedTotalWithoutInsurance}
+      isAdvancedCachingEnabled={isAdvancedCachingEnabled}
     />
   );
 };

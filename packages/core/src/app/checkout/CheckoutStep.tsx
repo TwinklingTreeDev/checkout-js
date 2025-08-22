@@ -8,6 +8,7 @@ import { ShopperCurrency } from '../currency';
 
 import { isMobileView, MobileView } from '../ui/responsive';
 import { calculateInsuranceTotals } from '../order/calculateInsuranceTotals';
+import { getInsuranceConfig } from '../order/getInsuranceConfig';
 
 import CheckoutStepHeader from './CheckoutStepHeader';
 import CheckoutStepType from './CheckoutStepType';
@@ -55,6 +56,7 @@ export interface CheckoutStepProps {
     setLastOperation?: (operation: 'add' | 'remove' | null) => void;
     setCachedTotalWithInsurance?: (total: number) => void;
     setCachedTotalWithoutInsurance?: (total: number) => void;
+    isAdvancedCachingEnabled?: boolean;
 }
 
 // Simple shipping option component that doesn't require Formik
@@ -788,12 +790,12 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
     };
 
     private getInsuranceAmount = (): number => {
-      const price = process.env.INSURANCE_PRODUCT_PRICE;
-      if (!price) {
+      const { productPrice } = getInsuranceConfig();
+      if (!productPrice) {
         // Fallback to $10.74 if not set, as a number (not in cents)
         return 10.74;
       }
-      const parsed = Number(price);
+      const parsed = Number(productPrice);
       return isNaN(parsed) ? 10.74 : parsed;
     };
 
@@ -851,13 +853,12 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
             setIsInsuranceTransitioning, 
             setLastOperation,
             setCachedTotalWithInsurance,
-            setCachedTotalWithoutInsurance
+            setCachedTotalWithoutInsurance,
+            isAdvancedCachingEnabled
         } = this.props;
         
         if (setCachedInsuranceAmount && setIsInsuranceTransitioning && setLastOperation) {
-            setIsInsuranceTransitioning(true);
-            setLastOperation(shouldSelect ? 'add' : 'remove');
-            
+            // Set transition state and cached amount (for UI display) regardless of caching mode
             if (shouldSelect) {
                 setCachedInsuranceAmount(insuranceAmount);
                 console.log('Setting cached insurance amount to:', insuranceAmount);
@@ -866,8 +867,17 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 console.log('Setting cached insurance amount to 0 (removing)');
             }
             
-            // Update cached totals for both states (advanced caching)
-            if (setCachedTotalWithInsurance && setCachedTotalWithoutInsurance && this.props.cart) {
+            // Only set transition state if advanced caching is enabled
+            if (isAdvancedCachingEnabled) {
+                setIsInsuranceTransitioning(true);
+                setLastOperation(shouldSelect ? 'add' : 'remove');
+                console.log('Advanced caching enabled - setting transition state');
+            } else {
+                console.log('Advanced caching disabled - not setting transition state');
+            }
+            
+            // Update cached totals for both states (only if advanced caching is enabled)
+            if (isAdvancedCachingEnabled && setCachedTotalWithInsurance && setCachedTotalWithoutInsurance && this.props.cart) {
                 try {
                     const { totalWithInsurance, totalWithoutInsurance } = calculateInsuranceTotals({
                         checkout: this.props.cart as any, // Type assertion for now
@@ -877,7 +887,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                     setCachedTotalWithInsurance(totalWithInsurance);
                     setCachedTotalWithoutInsurance(totalWithoutInsurance);
                     
-                    console.log('Updated insurance totals cache:', { 
+                    console.log('Updated insurance totals cache (advanced):', { 
                         totalWithInsurance, 
                         totalWithoutInsurance,
                         operation: shouldSelect ? 'add' : 'remove'
@@ -885,6 +895,8 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 } catch (error) {
                     console.error('Error updating insurance totals cache:', error);
                 }
+            } else if (!isAdvancedCachingEnabled) {
+                console.log('Advanced caching disabled - letting BigCommerce handle totals');
             }
         }
         
@@ -919,6 +931,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         
         // Emit event for cart item to update immediately
         console.log('Emitting insurance toggle event:', { shouldSelect, hasCachedItem: !!cachedItem, cachedItem });
+        
         window.dispatchEvent(new CustomEvent('insurance-toggle-changed', {
             detail: { 
                 isSelected: shouldSelect, 
@@ -928,16 +941,18 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         }));
         console.log('Insurance toggle event dispatched');
         
-        // Clear transition state after a longer delay to avoid stale API responses
-        setTimeout(() => {
-            this.setState({ isInsuranceTransitioning: false, lastInsuranceOperation: null });
-            // Clear insurance cache context transition state
-            if (setIsInsuranceTransitioning && setLastOperation) {
-                setIsInsuranceTransitioning(false);
-                setLastOperation(null);
-            }
-            console.log('Insurance transition completed');
-        }, 3000); // Increased from 1000ms to 3000ms
+        // Clear transition state after a longer delay to avoid stale API responses (only if caching is enabled)
+        if (isAdvancedCachingEnabled) {
+            setTimeout(() => {
+                this.setState({ isInsuranceTransitioning: false, lastInsuranceOperation: null });
+                // Clear insurance cache context transition state
+                if (setIsInsuranceTransitioning && setLastOperation) {
+                    setIsInsuranceTransitioning(false);
+                    setLastOperation(null);
+                }
+                console.log('Insurance transition completed');
+            }, 3000); // Increased from 1000ms to 3000ms
+        }
         
         // Perform API operations in background (non-blocking)
         this.performBackgroundInsuranceOperation(shouldSelect, exists);

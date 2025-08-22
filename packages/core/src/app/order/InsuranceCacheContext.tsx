@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { getInsuranceConfig } from './getInsuranceConfig';
 
 interface InsuranceCacheContextType {
   cachedInsuranceAmount: number;
@@ -7,6 +8,8 @@ interface InsuranceCacheContextType {
   // Pre-calculated totals for both states
   cachedTotalWithInsurance: number;
   cachedTotalWithoutInsurance: number;
+  // Feature flag to control caching behavior
+  isAdvancedCachingEnabled: boolean;
   setCachedInsuranceAmount: (amount: number) => void;
   setIsInsuranceTransitioning: (transitioning: boolean) => void;
   setLastOperation: (operation: 'add' | 'remove' | null) => void;
@@ -28,6 +31,9 @@ export const InsuranceCacheProvider: React.FC<InsuranceCacheProviderProps> = ({ 
   const [cachedTotalWithInsurance, setCachedTotalWithInsurance] = useState<number>(0);
   const [cachedTotalWithoutInsurance, setCachedTotalWithoutInsurance] = useState<number>(0);
 
+  // Feature flag to control advanced caching behavior (browser-safe)
+  const { advancedCachingEnabled: isAdvancedCachingEnabled } = getInsuranceConfig();
+
   const clearInsuranceCache = () => {
     setCachedInsuranceAmount(0);
     setIsInsuranceTransitioning(false);
@@ -44,6 +50,7 @@ export const InsuranceCacheProvider: React.FC<InsuranceCacheProviderProps> = ({ 
         lastOperation,
         cachedTotalWithInsurance,
         cachedTotalWithoutInsurance,
+        isAdvancedCachingEnabled,
         setCachedInsuranceAmount,
         setIsInsuranceTransitioning,
         setLastOperation,

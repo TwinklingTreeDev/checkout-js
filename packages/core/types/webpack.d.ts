@@ -5,6 +5,7 @@ declare namespace NodeJS {
   interface ProcessEnv {
     INSURANCE_PRODUCT_ID?: string;
     INSURANCE_PRODUCT_PRICE?: string;
+    INSURANCE_ADVANCED_CACHING?: string;
     NODE_ENV?: 'development' | 'production' | 'test';
   }
 }

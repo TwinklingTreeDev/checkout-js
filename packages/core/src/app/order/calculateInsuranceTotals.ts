@@ -18,7 +18,7 @@ export const calculateInsuranceTotals = ({
   const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
   
   // Find existing insurance item in cart
-  const existingInsuranceItem = checkout.cart.lineItems?.digitalItems?.find(
+  const existingInsuranceItem = checkout.cart?.lineItems?.digitalItems?.find(
     (item) => String(item.productId) === productId
   );
   

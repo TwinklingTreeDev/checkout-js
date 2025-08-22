@@ -22,7 +22,7 @@ export const calculateCachedTotal = ({
   // During transition, we need to calculate the total manually
   // Start with the subtotal, but exclude any existing insurance items
   const productId = (process.env.INSURANCE_PRODUCT_ID || '').trim();
-  const existingInsuranceItem = checkout.cart.lineItems?.digitalItems?.find(
+  const existingInsuranceItem = checkout.cart?.lineItems?.digitalItems?.find(
     (item) => String(item.productId) === productId
   );
   

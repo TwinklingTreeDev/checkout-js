@@ -155,6 +155,8 @@ class Payment extends Component<
         );
 
         window.addEventListener('beforeunload', this.handleBeforeUnload);
+        window.addEventListener('insurance-toggle-changed', this.handleInsuranceEvent as EventListener);
+        window.addEventListener('cart-line-item-removing', this.handleCartLineItemRemoving as EventListener);
         this.setState({ isReady: true });
         onReady();
     }
@@ -172,6 +174,8 @@ class Payment extends Component<
         }
 
         window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        window.removeEventListener('insurance-toggle-changed', this.handleInsuranceEvent as EventListener);
+        window.removeEventListener('cart-line-item-removing', this.handleCartLineItemRemoving as EventListener);
     }
 
     render(): ReactNode {
@@ -713,12 +717,60 @@ class Payment extends Component<
             return;
         }
 
+        // Check if this is an insurance-only change that doesn't require payment method reload
+        if (this.isInsuranceOnlyChange()) {
+            console.log('[Payment] Skipping payment method reload for insurance-only change');
+            return;
+        }
+
         this.setState({ isReady: false });
 
         await this.loadPaymentMethodsOrThrow();
 
         this.setState({ isReady: true });
     }
+
+    /**
+     * Check if the cart change is insurance-only and doesn't require payment method reload
+     */
+    private isInsuranceOnlyChange(): boolean {
+        try {
+            // Check if insurance-related events were recently triggered
+            const now = Date.now();
+            const lastInsuranceToggle = (window as any).__last_insurance_toggle || 0;
+            const lastCartLineItemRemoving = (window as any).__last_cart_line_item_removing || 0;
+            
+            // If either event was triggered within the last 3 seconds, skip payment reload
+            const timeSinceInsuranceToggle = now - lastInsuranceToggle;
+            const timeSinceCartLineItemRemoving = now - lastCartLineItemRemoving;
+            
+            if (timeSinceInsuranceToggle < 3000 || timeSinceCartLineItemRemoving < 3000) {
+                console.log('[Payment] Detected recent insurance event, skipping payment method reload');
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.warn('[Payment] Error checking if change is insurance-only:', error);
+            return false; // Default to reloading payment methods if we can't determine
+        }
+    }
+
+    /**
+     * Handle insurance toggle events to track when insurance changes occur
+     */
+    private handleInsuranceEvent = (): void => {
+        (window as any).__last_insurance_toggle = Date.now();
+        console.log('[Payment] Insurance toggle event detected');
+    };
+
+    /**
+     * Handle cart line item removing events to track when insurance is being removed
+     */
+    private handleCartLineItemRemoving = (): void => {
+        (window as any).__last_cart_line_item_removing = Date.now();
+        console.log('[Payment] Cart line item removing event detected');
+    };
 
     /**
      * Persist Google Pay state to prevent email clearing during payment processing
