@@ -77,3 +77,72 @@
     height: 100%;
     z-index: 999;
 }
+
+// =============================================================================
+// PAYMENT STEP FORM-ACTIONS LOADING INDICATOR POSITIONING
+// =============================================================================
+
+// Target only the payment step form-actions for loading indicator repositioning
+.checkout-step--payment {
+    .form-actions {
+        position: relative;
+        
+        // Show loading overlay when extension loading indicator is active
+        &:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease-out, visibility 0.25s ease-out;
+            pointer-events: none;
+        }
+        
+        // Show loading spinner when extension loading indicator is active
+        &:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 39%;
+            width: 70px;
+            height: 70px;
+            border-radius: 70px;
+            border: 1px solid;
+            border-color: rgb(255, 255, 255) rgb(255, 255, 255) rgb(217, 217, 217) rgb(217, 217, 217);
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease-out, visibility 0.25s ease-out;
+            pointer-events: none;
+            animation: embedded-checkout-loading-indicator-rotation 500ms cubic-bezier(0.69, 0.31, 0.56, 0.83) 0s infinite normal none running;
+        }
+        
+        // Activate loading state when the checkout button has a visible second div (loading indicator)
+        &:has(#checkout-payment-continue > div:nth-child(2):not([style*="visibility: hidden"])) {
+            &:before,
+            &:after {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+        }
+    }
+}
+
+// Animation for the loading spinner
+@keyframes embedded-checkout-loading-indicator-rotation {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+

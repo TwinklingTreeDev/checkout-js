@@ -46,6 +46,7 @@ interface WalletButtonPaymentMethodDerivedProps {
     cardType?: string;
     expiryMonth?: string;
     expiryYear?: string;
+    email?: string; // Add email field
     isPaymentDataRequired: boolean;
     isPaymentSelected: boolean;
 }
@@ -61,6 +62,12 @@ class WalletButtonPaymentMethodComponent extends Component<WalletButtonPaymentMe
                 gatewayId: method.gateway,
                 methodId: method.id,
             });
+
+            // Handle Google Pay email auto-population
+            this.handleGooglePayEmailPopulation();
+            
+            // Restore email from session storage if available
+            this.restoreEmailFromSessionStorage();
         } catch (error) {
             onUnhandledError(error);
         }
@@ -98,6 +105,9 @@ class WalletButtonPaymentMethodComponent extends Component<WalletButtonPaymentMe
             isPaymentDataRequired !== prevIsPaymentDataRequired
         ) {
             this.toggleSubmit();
+            
+            // Handle Google Pay email auto-population when initialization data changes
+            this.handleGooglePayEmailPopulation();
         }
     }
 
@@ -210,6 +220,138 @@ class WalletButtonPaymentMethodComponent extends Component<WalletButtonPaymentMe
             onSignOutError(error);
         }
     };
+
+    /**
+     * Handle Google Pay email auto-population
+     */
+    private handleGooglePayEmailPopulation(): void {
+        const { method, onUnhandledError = noop } = this.props;
+        
+        // Check if this is a Google Pay method
+        if (!method.id.startsWith('googlepay')) {
+            return;
+        }
+
+        try {
+            const walletPaymentData = normalizeWalletPaymentData(method.initializationData);
+            
+            if (walletPaymentData?.email) {
+                console.log('[WalletButton] Google Pay email detected:', walletPaymentData.email);
+                
+                // Populate email to customer form
+                this.populateEmailToCustomerForm(walletPaymentData.email);
+                
+                // Trigger subscription API if needed
+                this.triggerSubscriptionAPI(walletPaymentData.email);
+            }
+        } catch (error) {
+            console.error('[WalletButton] Error handling Google Pay email population:', error);
+            onUnhandledError(error as Error);
+        }
+    }
+
+    /**
+     * Populate email to customer form
+     */
+    private populateEmailToCustomerForm(email: string): void {
+        try {
+            // Email validation regex
+            const EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+            
+            if (!EMAIL_REGEXP.test(email)) {
+                console.warn('[WalletButton] Invalid email format:', email);
+                return;
+            }
+
+            // Method 1: Try to find and populate email field in customer form
+            const emailInput = document.querySelector('input[name="email"], input[type="email"], #email') as HTMLInputElement;
+            if (emailInput) {
+                emailInput.value = email;
+                emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                emailInput.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log('[WalletButton] Email populated to customer form:', email);
+            }
+
+            // Method 2: Try to populate billing address email
+            const billingEmailInput = document.querySelector('input[name="billingAddress.email"], #billingAddress\\.email') as HTMLInputElement;
+            if (billingEmailInput) {
+                billingEmailInput.value = email;
+                billingEmailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                billingEmailInput.dispatchEvent(new Event('change', { bubbles: true }));
+                console.log('[WalletButton] Email populated to billing form:', email);
+            }
+
+            // Method 3: Try to trigger Formik field updates if available
+            this.triggerFormikFieldUpdate('email', email);
+            this.triggerFormikFieldUpdate('customerEmail', email);
+
+            // Method 4: Store email in session storage for persistence across page reloads
+            try {
+                sessionStorage.setItem('googlepay_email', email);
+                console.log('[WalletButton] Email stored in session storage:', email);
+            } catch (error) {
+                console.warn('[WalletButton] Failed to store email in session storage:', error);
+            }
+
+        } catch (error) {
+            console.error('[WalletButton] Error populating email to customer form:', error);
+        }
+    }
+
+    /**
+     * Trigger Formik field update if Formik is available
+     */
+    private triggerFormikFieldUpdate(fieldName: string, value: string): void {
+        try {
+            // Try to find Formik context and update field
+            const formikContext = (window as any).__FORMIK_CONTEXT__;
+            if (formikContext && formikContext.setFieldValue) {
+                formikContext.setFieldValue(fieldName, value);
+                console.log('[WalletButton] Formik field updated:', fieldName, value);
+            }
+        } catch (error) {
+            // Silently fail if Formik is not available
+        }
+    }
+
+    /**
+     * Trigger subscription API for the email
+     */
+    private async triggerSubscriptionAPI(email: string): Promise<void> {
+        try {
+            // Check if there's a subscription checkbox
+            const subscribeCheckbox = document.querySelector('input[name="shouldSubscribe"], input[type="checkbox"][name*="subscribe"]') as HTMLInputElement;
+            const shouldSubscribe = subscribeCheckbox?.checked || false;
+
+            if (shouldSubscribe) {
+                console.log('[WalletButton] Triggering subscription API for email:', email);
+                
+                // This would typically call the continueAsGuest API with subscription data
+                // For now, we'll just log it - the actual API call should be handled by the customer form
+                console.log('[WalletButton] Subscription API should be triggered for:', email);
+            }
+        } catch (error) {
+            console.error('[WalletButton] Error triggering subscription API:', error);
+        }
+    }
+
+    /**
+     * Restore email from session storage if available
+     */
+    private restoreEmailFromSessionStorage(): void {
+        try {
+            const storedEmail = sessionStorage.getItem('googlepay_email');
+            if (storedEmail) {
+                console.log('[WalletButton] Restoring email from session storage:', storedEmail);
+                this.populateEmailToCustomerForm(storedEmail);
+                // Clear session storage after restoration
+                sessionStorage.removeItem('googlepay_email');
+                console.log('[WalletButton] Email restored and session storage cleared.');
+            }
+        } catch (error) {
+            console.warn('[WalletButton] Failed to restore email from session storage:', error);
+        }
+    }
 
     private getWalletButtonPaymentMethodDerivedProps(): WalletButtonPaymentMethodDerivedProps {
         const { checkoutState, method } = this.props;

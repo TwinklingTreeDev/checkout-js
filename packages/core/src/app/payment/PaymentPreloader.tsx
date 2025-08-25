@@ -61,9 +61,6 @@ const PaymentPreloader: React.FC<PaymentPreloaderProps> = ({
                     return;
                 }
 
-                console.log('[PaymentPreloader] Preloading payment methods:', 
-                    preloadableMethods.map(m => m.id));
-
                 // Preload each method in parallel with configurable delay
                 const preloadPromises = preloadableMethods.map(async (method, index) => {
                     try {

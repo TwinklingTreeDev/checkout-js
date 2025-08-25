@@ -45,7 +45,6 @@ export class CheckoutFormStateManager {
      */
     async initializeState(): Promise<void> {
         if (this.isInitialized) {
-            console.log('CheckoutFormStateManager: Already initialized, skipping');
             return;
         }
 
@@ -85,14 +84,12 @@ export class CheckoutFormStateManager {
 
         // Only proceed if email is valid
         if (!isEmailValid(email)) {
-            console.log('CheckoutFormStateManager: Skipping email update - invalid email:', email);
             return;
         }
 
         this.isUpdating = true;
 
         try {
-            console.log('CheckoutFormStateManager: Updating email to:', email);
 
             // Update local state
             this.currentState.email = email;
@@ -124,8 +121,6 @@ export class CheckoutFormStateManager {
                 await this.props.updateBillingAddress(billingAddressWithEmail);
                 this.currentState.billingAddress = billingAddressWithEmail;
             }
-
-            console.log('CheckoutFormStateManager: Email update completed');
         } catch (error) {
             console.error('CheckoutFormStateManager: Error updating email:', error);
             if (error instanceof Error && this.props.onUnhandledError) {
@@ -149,7 +144,6 @@ export class CheckoutFormStateManager {
         this.isUpdating = true;
 
         try {
-            console.log('CheckoutFormStateManager: Updating shipping address');
 
             // Preserve email from current state
             const shippingAddressWithEmail = {
@@ -162,7 +156,6 @@ export class CheckoutFormStateManager {
             const hasChanged = JSON.stringify(currentShipping) !== JSON.stringify(shippingAddressWithEmail);
             
             if (!hasChanged) {
-                console.log('CheckoutFormStateManager: Shipping address unchanged, skipping update');
                 this.isUpdating = false;
                 this.processPendingUpdates();
                 return;
@@ -178,8 +171,6 @@ export class CheckoutFormStateManager {
             if (this.shouldSyncBillingToShipping()) {
                 await this.updateBillingAddress(shippingAddressWithEmail);
             }
-
-            console.log('CheckoutFormStateManager: Shipping address update completed');
         } catch (error) {
             if (error instanceof Error && this.props.onUnhandledError) {
                 this.props.onUnhandledError(error);
@@ -202,7 +193,6 @@ export class CheckoutFormStateManager {
         this.isUpdating = true;
 
         try {
-            console.log('CheckoutFormStateManager: Updating billing address');
 
             // Preserve email from current state
             const billingAddressWithEmail = {
@@ -215,7 +205,6 @@ export class CheckoutFormStateManager {
             const hasChanged = JSON.stringify(currentBilling) !== JSON.stringify(billingAddressWithEmail);
             
             if (!hasChanged) {
-                console.log('CheckoutFormStateManager: Billing address unchanged, skipping update');
                 this.isUpdating = false;
                 this.processPendingUpdates();
                 return;
@@ -227,7 +216,6 @@ export class CheckoutFormStateManager {
             // Update local state
             this.currentState.billingAddress = billingAddressWithEmail;
 
-            console.log('CheckoutFormStateManager: Billing address update completed');
         } catch (error) {
             if (error instanceof Error && this.props.onUnhandledError) {
                 this.props.onUnhandledError(error);

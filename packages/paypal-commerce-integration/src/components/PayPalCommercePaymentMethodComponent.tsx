@@ -52,6 +52,8 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
     const hasPayPalButton = useRef(false);
     const [hasValidationErrors, setHasValidationErrors] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isValidated, setIsValidated] = useState(false);
+    const [forceReinitialize, setForceReinitialize] = useState(0);
 
     const termsValue = paymentForm.getFieldValue('terms');
     const shouldSaveInstrument = paymentForm.getFieldValue('shouldSaveInstrument');
@@ -89,7 +91,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
             // Check if there are any validation errors
             return hasValidationErrorsCheck();
         } catch (error) {
-            console.error('Error during validation:', error);
             (window as any).__isValidatingForms = false;
             return false;
         }
@@ -110,7 +111,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
         const hasOtherFormErrors = hasValidationErrorsCheck();
 
         if (paymentValidationErrors.length > 0 || hasOtherFormErrors) {
-            console.log('PayPal button disabled due to validation errors');
             buttonActionsRef.current.disable();
             
             // Hide PayPal iframe when validation errors exist
@@ -124,7 +124,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                 }
             }
         } else {
-            console.log('PayPal button enabled - all forms valid');
             buttonActionsRef.current.enable();
             
             // Show PayPal iframe when no validation errors
@@ -218,7 +217,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                 event.stopPropagation();
                 event.stopImmediatePropagation();
                 
-                console.warn('PayPal iframe click prevented due to validation errors');
                 
                 // Scroll to the first error
                 const errorElements = document.querySelectorAll('.form-field--error');
@@ -260,19 +258,60 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
         };
     }, [hasValidationErrors]);
 
+    // Initial validation check when PayPal is selected
+    useEffect(() => {
+        const performInitialValidation = async () => {
+            
+            // Check for validation errors immediately
+            const hasErrors = hasValidationErrorsCheck();
+            
+            if (hasErrors) {
+                setHasValidationErrors(true);
+                setIsValidated(false);
+                
+                // Hide the PayPal container immediately
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'none';
+                }
+                
+                // Scroll to the first error
+                const errorElements = document.querySelectorAll('.form-field--error');
+                if (errorElements.length > 0) {
+                    const firstError = errorElements[0] as HTMLElement;
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Focus on the first error input
+                        const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
+                        if (errorInput) {
+                            errorInput.focus();
+                        }
+                    }
+                }
+            } else {
+                setHasValidationErrors(false);
+                setIsValidated(true);
+                
+                // Show the PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'block';
+                }
+            }
+        };
+
+        // Perform initial validation with a small delay to ensure forms are loaded
+        const timer = setTimeout(performInitialValidation, 100);
+        
+        return () => clearTimeout(timer);
+    }, []);
+
     const initializePayment = async () => {
         // Don't initialize if there are validation errors
         if (hasValidationErrors) {
-            console.log('Skipping PayPal initialization due to validation errors');
             return;
         }
-
-        console.log('Initializing PayPal payment method:', {
-            methodId: method.id,
-            gateway: method.gateway,
-            providerOptionsKey,
-            hasProviderData: !!providerOptionsData
-        });
 
         try {
             await checkoutService.initializePayment({
@@ -280,13 +319,23 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                 methodId: method.id,
                 [providerOptionsKey]: {
                     container: '#checkout-payment-continue',
-                    shouldRenderPayPalButtonOnInitialization: true,
+                    shouldRenderPayPalButtonOnInitialization: true, // Always render, we'll control visibility
                     onRenderButton: () => {
                         paymentForm.hidePaymentSubmitButton(method, true);
                         hasPayPalButton.current = true;
                         
-                        // Apply initial styling based on validation state
-                        if (hasValidationErrors) {
+                        // Apply styling based on current validation state
+                        if (!hasValidationErrors && isValidated) {
+                            const paypalContainer = document.querySelector('#checkout-payment-continue');
+                            if (paypalContainer) {
+                                paypalContainer.classList.remove('has-validation-errors');
+                                const paypalIframe = paypalContainer.querySelector('iframe');
+                                if (paypalIframe) {
+                                    paypalIframe.classList.remove('paypal-iframe-disabled');
+                                    paypalIframe.classList.add('paypal-iframe-enabled');
+                                }
+                            }
+                        } else {
                             const paypalContainer = document.querySelector('#checkout-payment-continue');
                             if (paypalContainer) {
                                 paypalContainer.classList.add('has-validation-errors');
@@ -299,11 +348,9 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                         }
                     },
                     onInit: (onRenderButton: () => void) => {
-                        console.log('PayPal initialization callback received');
                         renderButtonRef.current = onRenderButton;
                     },
                     submitForm: () => {
-                        console.log('PayPal form submission triggered');
                         paymentForm.setSubmitted(true);
                         paymentForm.submitForm();
                     },
@@ -312,14 +359,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
 
                         // Use the new PayPal error handler
                         const errorInfo = handlePayPalError(error, language);
-                        
-                        console.warn('PayPal error occurred:', {
-                            error: error.message,
-                            technicalMessage: errorInfo.technicalMessage,
-                            isRecoverable: errorInfo.isRecoverable,
-                            methodId: method.id,
-                            gateway: method.gateway
-                        });
 
                         // Show user-friendly error message
                         onUnhandledError(new Error(errorInfo.userMessage));
@@ -331,7 +370,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                         if (hasErrors) {
                             paymentForm.setSubmitted(true);
                             
-                            console.warn('Form validation failed - please complete all required fields');
                             
                             // Scroll to the first error using existing system
                             const errorElements = document.querySelectorAll('.form-field--error');
@@ -354,7 +392,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                         return resolve();
                     },
                     onInitButton: async (actions: ButtonActions) => {
-                        console.log('PayPal button actions received');
                         buttonActionsRef.current = actions;
                         await validateButton();
                     },
@@ -364,24 +401,13 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
             });
             
             setIsInitialized(true);
-            console.log('PayPal payment method initialized successfully');
         } catch (error) {
             // Enhanced error handling for initialization failures
             if (error instanceof Error) {
                 const errorInfo = handlePayPalError(error, language);
                 
-                console.error('PayPal payment method initialization failed:', {
-                    error: error.message,
-                    technicalMessage: errorInfo.technicalMessage,
-                    isRecoverable: errorInfo.isRecoverable,
-                    methodId: method.id,
-                    gateway: method.gateway,
-                    stack: error.stack
-                });
-                
                 onUnhandledError(new Error(errorInfo.userMessage));
             } else {
-                console.error('PayPal initialization failed with non-Error object:', error);
                 onUnhandledError(new Error('PayPal initialization failed'));
             }
         }
@@ -403,12 +429,274 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
 
     // Initialize payment when validation errors are resolved
     useEffect(() => {
-        if (!hasValidationErrors && !isInitialized) {
+        if (!hasValidationErrors && !isInitialized && isValidated) {
             void initializePayment();
         } else if (hasValidationErrors && isInitialized) {
             void deinitializePayment();
         }
-    }, [hasValidationErrors, isInitialized]);
+    }, [hasValidationErrors, isInitialized, isValidated]);
+
+    // Monitor validation changes and update PayPal state
+    useEffect(() => {
+        const checkAndUpdatePayPalState = async () => {
+            const hasErrors = hasValidationErrorsCheck();
+            
+            if (hasErrors && !hasValidationErrors) {
+                // Validation just failed
+                setHasValidationErrors(true);
+                setIsValidated(false);
+                
+                // Hide PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'none';
+                }
+                
+                // Deinitialize if already initialized
+                if (isInitialized) {
+                    await deinitializePayment();
+                }
+            } else if (!hasErrors && hasValidationErrors) {
+                // Validation just passed
+                setHasValidationErrors(false);
+                setIsValidated(true);
+                
+                // Show PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'block';
+                }
+                
+                // Force re-initialization by incrementing the counter
+                setForceReinitialize(prev => prev + 1);
+                
+                // Always re-initialize PayPal when validation passes
+                await initializePayment();
+            }
+        };
+
+        // Check validation state periodically
+        const interval = setInterval(checkAndUpdatePayPalState, 500);
+        
+        return () => clearInterval(interval);
+    }, [hasValidationErrors, isInitialized, isValidated]);
+
+    // Enhanced validation monitoring that listens to all form changes
+    useEffect(() => {
+        const checkValidationOnFormChange = async () => {
+            const hasErrors = hasValidationErrorsCheck();
+            
+            if (!hasErrors && !isInitialized) {
+                // No validation errors and PayPal not initialized - initialize it
+                setHasValidationErrors(false);
+                setIsValidated(true);
+                
+                // Show PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'block';
+                }
+                
+                await initializePayment();
+            } else if (!hasErrors && hasValidationErrors) {
+                // Validation just passed - update state and initialize
+                setHasValidationErrors(false);
+                setIsValidated(true);
+                
+                // Show PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'block';
+                }
+                
+                // Force re-initialization
+                setForceReinitialize(prev => prev + 1);
+                await initializePayment();
+            } else if (hasErrors && !hasValidationErrors) {
+                // Validation just failed
+                setHasValidationErrors(true);
+                setIsValidated(false);
+                
+                // Hide PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'none';
+                }
+                
+                // Deinitialize if already initialized
+                if (isInitialized) {
+                    await deinitializePayment();
+                }
+            }
+        };
+
+        // Set up observer to watch for form changes
+        const observer = new MutationObserver(() => {
+            setTimeout(checkValidationOnFormChange, 100);
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'value']
+        });
+
+        // Listen for input events with debouncing
+        let inputTimeout: ReturnType<typeof setTimeout>;
+        const handleInputChange = () => {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(checkValidationOnFormChange, 200);
+        };
+
+        document.addEventListener('input', handleInputChange);
+        document.addEventListener('change', handleInputChange);
+        document.addEventListener('blur', handleInputChange);
+        document.addEventListener('keyup', handleInputChange);
+
+        return () => {
+            observer.disconnect();
+            clearTimeout(inputTimeout);
+            document.removeEventListener('input', handleInputChange);
+            document.removeEventListener('change', handleInputChange);
+            document.removeEventListener('blur', handleInputChange);
+            document.removeEventListener('keyup', handleInputChange);
+        };
+    }, [hasValidationErrors, isInitialized, isValidated]);
+
+    // Function to manually trigger PayPal rendering when validation passes
+    const enablePayPalIframe = () => {
+        const paypalContainer = document.querySelector('#checkout-payment-continue');
+        if (paypalContainer && paypalContainer instanceof HTMLElement) {
+            paypalContainer.style.display = 'block';
+            paypalContainer.classList.remove('has-validation-errors');
+            
+            const paypalIframe = paypalContainer.querySelector('iframe');
+            if (paypalIframe) {
+                paypalIframe.classList.remove('paypal-iframe-disabled');
+                paypalIframe.classList.add('paypal-iframe-enabled');
+            }
+        }
+    };
+
+    // Enable PayPal iframe when validation passes and PayPal is initialized
+    useEffect(() => {
+        if (!hasValidationErrors && isValidated && isInitialized) {
+            enablePayPalIframe();
+        }
+    }, [hasValidationErrors, isValidated, isInitialized]);
+
+    // Force re-initialization when validation passes
+    useEffect(() => {
+        if (!hasValidationErrors && isValidated && forceReinitialize > 0) {
+            const timer = setTimeout(async () => {
+                await initializePayment();
+            }, 100);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [forceReinitialize, hasValidationErrors, isValidated]);
+
+    // Frequent validation check to ensure PayPal is initialized when needed
+    useEffect(() => {
+        const frequentValidationCheck = () => {
+            const hasErrors = hasValidationErrorsCheck();
+            
+            // If no errors and PayPal is not initialized, initialize it
+            if (!hasErrors && !isInitialized) {
+                setHasValidationErrors(false);
+                setIsValidated(true);
+                
+                // Show PayPal container
+                const paypalContainer = document.querySelector('#checkout-payment-continue');
+                if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                    paypalContainer.style.display = 'block';
+                }
+                
+                void initializePayment();
+            }
+        };
+
+        // Check every 1 second
+        const interval = setInterval(frequentValidationCheck, 1000);
+        
+        return () => clearInterval(interval);
+    }, [isInitialized]);
+
+    // Listen for PayPal payment method selection and trigger validation immediately
+    useEffect(() => {
+        const handlePaymentMethodChange = (event: Event) => {
+            const target = event.target as HTMLElement;
+            
+            // Check if PayPal payment method was selected
+            if (target && (
+                target.closest('[data-test="payment-method-paypalcommerce"]') ||
+                target.closest('[data-test="payment-method-paypal"]') ||
+                target.closest('[data-test="payment-method-paypalcredit"]') ||
+                target.closest('[data-test="payment-method-paypalexpress"]') ||
+                target.closest('input[value*="paypal"]') ||
+                target.closest('input[value*="PayPal"]')
+            )) {
+                
+                // Trigger validation immediately
+                setTimeout(async () => {
+                    const hasErrors = await triggerValidation();
+                    
+                    if (hasErrors) {
+                        setHasValidationErrors(true);
+                        setIsValidated(false);
+                        
+                        // Hide the PayPal container immediately
+                        const paypalContainer = document.querySelector('#checkout-payment-continue');
+                        if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                            paypalContainer.style.display = 'none';
+                        }
+                        
+                        // Deinitialize PayPal if it was initialized
+                        if (isInitialized) {
+                            await deinitializePayment();
+                        }
+                        
+                        // Scroll to the first error
+                        const errorElements = document.querySelectorAll('.form-field--error');
+                        if (errorElements.length > 0) {
+                            const firstError = errorElements[0] as HTMLElement;
+                            if (firstError) {
+                                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                // Focus on the first error input
+                                const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
+                                if (errorInput) {
+                                    errorInput.focus();
+                                }
+                            }
+                        }
+                    } else {
+                        setHasValidationErrors(false);
+                        setIsValidated(true);
+                        
+                        // Show the PayPal container
+                        const paypalContainer = document.querySelector('#checkout-payment-continue');
+                        if (paypalContainer && paypalContainer instanceof HTMLElement) {
+                            paypalContainer.style.display = 'block';
+                        }
+                        
+                        // Initialize PayPal
+                        await initializePayment();
+                    }
+                }, 50);
+            }
+        };
+
+        // Listen for clicks on payment method options
+        document.addEventListener('click', handlePaymentMethodChange, true);
+        document.addEventListener('change', handlePaymentMethodChange, true);
+
+        return () => {
+            document.removeEventListener('click', handlePaymentMethodChange, true);
+            document.removeEventListener('change', handlePaymentMethodChange, true);
+        };
+    }, [isInitialized]);
 
     // Cleanup on unmount
     useEffect(() => {

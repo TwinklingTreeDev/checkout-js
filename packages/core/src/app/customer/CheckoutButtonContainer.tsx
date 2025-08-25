@@ -56,8 +56,7 @@ const CheckoutButtonContainer: FunctionComponent<CheckoutButtonContainerProps & 
     const renderButtons = () => availableMethodIds.map((methodId) => {
         if (isPaymentStepActive && isPayPalCommerce(methodId)) {
             //return null;
-            console.log('isPaymentStepActive', isPaymentStepActive);
-            console.log('methodId', methodId);
+            console.log('METHOD ID', methodId);
         }
 
         const ResolvedCheckoutButton = resolveCheckoutButton({ id: methodId });

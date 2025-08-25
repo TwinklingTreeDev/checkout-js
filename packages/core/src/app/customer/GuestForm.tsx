@@ -84,14 +84,12 @@ const GuestForm: FunctionComponent<
     useEffect(() => {
         const syncPrefilledData = async () => {
             if (values.email && values.email.trim()) {
-                console.log('GuestForm: Syncing prefilled email to consignment on mount:', values.email);
                 try {
                     // Use centralized form state manager
                     await updateEmail(values.email, values.shouldSubscribe);
                     
                     // Trigger subscription API if user wants to subscribe (same flow as button)
                     if (canSubscribe) {
-                        console.log('GuestForm: Triggering subscription API for prefilled data:', values.email);
                         try {
                             // Use the actual continueAsGuest API for subscription (same as button)
                             await continueAsGuest({
@@ -100,16 +98,12 @@ const GuestForm: FunctionComponent<
                                 acceptsAbandonedCartEmails: values.shouldSubscribe,
                             });
                             
-                            console.log('GuestForm: Subscription API called successfully for prefilled data');
                         } catch (subscriptionError) {
-                            console.error('GuestForm: Error calling subscription API for prefilled data:', subscriptionError);
                             // Don't fail the main email update for subscription errors
                         }
                     }
                     
-                    console.log('GuestForm: Prefilled data synced successfully');
                 } catch (error) {
-                    console.error('GuestForm: Error syncing prefilled data:', error);
                     if (error instanceof Error && onUnhandledError) {
                         onUnhandledError(error);
                     }

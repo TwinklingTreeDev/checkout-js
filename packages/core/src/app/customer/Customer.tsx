@@ -426,7 +426,11 @@ class Customer extends Component<CustomerProps & WithCheckoutCustomerProps & Ana
 
             await this.executePaymentMethodCheckoutOrContinue();
 
-            this.draftEmail = undefined;
+            // Preserve draftEmail for Google Pay methods to allow auto-population
+            const isGooglePayMethod = this.props.providerWithCustomCheckout?.startsWith('googlepay');
+            if (!isGooglePayMethod) {
+                this.draftEmail = undefined;
+            }
         } catch (error) {
             if (
                 isErrorWithType(error) &&
@@ -520,7 +524,7 @@ class Customer extends Component<CustomerProps & WithCheckoutCustomerProps & Ana
         onChangeViewType(CustomerViewType.Login);
     };
 
-    private executePaymentMethodCheckoutOrContinue: () => void = async () => {
+    private executePaymentMethodCheckoutOrContinue: () => Promise<void> = async () => {
         const {
             executePaymentMethodCheckout,
             onContinueAsGuest = noop,

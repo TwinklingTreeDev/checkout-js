@@ -3,10 +3,11 @@ import { number } from 'card-validator';
 import { WalletButtonInitializationData } from './types';
 
 interface WalletPaymentData {
-    accountMask: string;
-    cardType: string;
+    accountMask?: string;
+    cardType?: string;
     expiryMonth?: string;
     expiryYear?: string;
+    email?: string; // Add email field for Google Pay
 }
 
 const formatAccountMask = (accountMask = '', padding = '****'): string =>
@@ -41,6 +42,11 @@ const isWalletButtonInitializationData = (
         if ('accountNum' in object && 'accountMask' in object && 'expDate' in object) {
             return true;
         }
+
+        // Add check for Google Pay email data
+        if ('email' in object && typeof object.email === 'string') {
+            return true;
+        }
     }
 
     return false;
@@ -50,8 +56,16 @@ const isWalletButtonInitializationData = (
 // order to use it safely, we have to normalize it first.
 const normalizeWalletPaymentData = (data: unknown): WalletPaymentData | undefined => {
     if (isWalletButtonInitializationData(data)) {
+        const result: WalletPaymentData = {};
+
+        // Extract email if available (Google Pay)
+        if (data.email && typeof data.email === 'string') {
+            result.email = data.email;
+        }
+
         if (data.card_information) {
             return {
+                ...result,
                 accountMask: formatAccountMask(data.card_information.number),
                 cardType: data.card_information.type,
             };
@@ -59,6 +73,7 @@ const normalizeWalletPaymentData = (data: unknown): WalletPaymentData | undefine
 
         if (data.cardData) {
             return {
+                ...result,
                 accountMask: formatAccountMask(data.cardData.accountMask),
                 cardType: data.cardData.cardType,
                 expiryMonth: data.cardData.expMonth,
@@ -70,11 +85,17 @@ const normalizeWalletPaymentData = (data: unknown): WalletPaymentData | undefine
             const { card } = number(data.accountNum);
 
             return {
+                ...result,
                 accountMask: formatAccountMask(data.accountMask),
                 expiryMonth: data.expDate && `${data.expDate}`.substr(0, 2),
                 expiryYear: data.expDate && `${data.expDate}`.substr(2, 2),
                 cardType: card ? card.niceType : '',
             };
+        }
+
+        // Return email-only data if no card data but email exists
+        if (result.email) {
+            return result;
         }
     }
 

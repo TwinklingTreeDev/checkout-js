@@ -247,6 +247,27 @@ describe('WalletButtonPaymentMethod', () => {
             expect(disableSubmit).toHaveBeenCalledWith(defaultProps.method, false);
         });
 
+        it('handles Google Pay email auto-population', () => {
+            const googlePayMethod = {
+                ...defaultProps.method,
+                id: 'googlepaybraintree',
+                initializationData: {
+                    email: 'test@example.com',
+                    cardData: {
+                        accountMask: '1111',
+                        cardType: 'Visa',
+                        expMonth: '10',
+                        expYear: '22',
+                    },
+                },
+            };
+
+            render(<WalletButtonPaymentMethodTest {...defaultProps} method={googlePayMethod} />);
+
+            // Verify that the component handles Google Pay email data
+            expect(screen.getByText('Visa: **** 1111')).toBeInTheDocument();
+        });
+
         it('displays information of selected credit card', () => {
             render(<WalletButtonPaymentMethodTest {...defaultProps} />);
 

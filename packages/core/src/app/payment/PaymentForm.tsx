@@ -23,6 +23,8 @@ import PaymentSubmitButton from './PaymentSubmitButton';
 import SpamProtectionField from './SpamProtectionField';
 import { StoreCreditField, StoreCreditOverlay } from './storeCredit';
 
+
+
 export interface PaymentFormProps {
     availableStoreCredit?: number;
     defaultGatewayId?: string;
@@ -227,12 +229,16 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
 
     const handlePaymentMethodSelect = useCallback(
         (method: PaymentMethod) => {
+            // Preserve email for Google Pay methods to allow auto-population
+            const shouldPreserveEmail = method.id.startsWith('googlepay');
+            const currentEmail = shouldPreserveEmail ? values.customerEmail : '';
+            
             resetForm({
                 ...commonValues,
                 ccCustomerCode: '',
                 ccCvv: '',
                 ccDocument: '',
-                customerEmail: '',
+                customerEmail: currentEmail, // Preserve email for Google Pay
                 customerMobile: '',
                 ccExpiry: '',
                 ccName: '',
@@ -248,7 +254,7 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
             setSubmitted(false);
             onMethodSelect(method);
         },
-        [commonValues, onMethodSelect, resetForm, setSubmitted],
+        [commonValues, onMethodSelect, resetForm, setSubmitted, values.customerEmail],
     );
 
     return (

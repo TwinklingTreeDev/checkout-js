@@ -17,4 +17,5 @@ export interface WalletButtonInitializationData {
     accountNum?: string;
     accountMask?: string;
     expDate?: string;
+    email?: string; // Add email field for Google Pay
 }

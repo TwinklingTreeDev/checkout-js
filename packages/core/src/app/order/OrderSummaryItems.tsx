@@ -215,7 +215,6 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
                 // Add remove handler for cached insurance item
                 onRemove: () => this.handleCachedInsuranceRemove(),
             });
-            console.log('Added cached insurance item to display');
         }
 
         return (

@@ -11,13 +11,13 @@ export const useIframePlaceholder = (id: string) => {
         // Find container
         const container = document.getElementById(id)?.closest('.form-input, .optimizedCheckout-form-input') as HTMLElement;
         if (!container) {
-            console.log(`Container not found for ${id}`);
+            //console.log(`Container not found for ${id}`);
             return;
         }
 
         // Show placeholder immediately
         container.classList.remove('form-input--loaded');
-        console.log(`Showing placeholder for ${id}`);
+        // console.log(`Showing placeholder for ${id}`);
         
         // Hide iframe initially and show it after 4 seconds
         const hideIframe = () => {
@@ -25,14 +25,14 @@ export const useIframePlaceholder = (id: string) => {
             if (iframe) {
                 iframeRef.current = iframe;
                 iframe.style.display = 'none';
-                console.log(`Hidden iframe for ${id}`);
+                //console.log(`Hidden iframe for ${id}`);
             }
         };
         
         const showIframe = () => {
             if (iframeRef.current) {
                 iframeRef.current.style.display = 'block';
-                console.log(`Showed iframe for ${id}`);
+                //console.log(`Showed iframe for ${id}`);
             }
         };
         
@@ -49,7 +49,7 @@ export const useIframePlaceholder = (id: string) => {
                             const iframe = element as HTMLIFrameElement;
                             iframeRef.current = iframe;
                             iframe.style.display = 'none';
-                            console.log(`Hidden newly created iframe for ${id}`);
+                            //console.log(`Hidden newly created iframe for ${id}`);
                         }
                     }
                 });
@@ -68,7 +68,7 @@ export const useIframePlaceholder = (id: string) => {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                     const target = mutation.target as HTMLElement;
                     if (target.classList.contains('form-input--loaded') === false) {
-                        console.log(`form-input--loaded class was removed from ${id}, restoring it`);
+                        //console.log(`form-input--loaded class was removed from ${id}, restoring it`);
                         target.classList.add('form-input--loaded');
                     }
                 }
@@ -83,8 +83,6 @@ export const useIframePlaceholder = (id: string) => {
         
         // 4-second timeout to hide placeholder and show iframe
         timeoutRef.current = setTimeout(() => {
-            console.log(`Hiding placeholder and showing iframe for ${id} after 4 seconds`);
-            
             // Show iframe first, then hide placeholder to avoid flicker
             showIframe();
             
