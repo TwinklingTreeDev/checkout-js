@@ -163,14 +163,11 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                 if (hasShippingData) {
                     const validEmail = getValidEmail((shippingAddress as any).email);
                     if (validEmail) {
-                        console.log('Shipping: Syncing prefilled shipping address to consignment on mount');
                         const shippingAddressWithEmail = {
                             ...shippingAddress,
                             email: validEmail,
                         };
                         promises.push(updateShippingAddress(shippingAddressWithEmail));
-                    } else {
-                        console.log('Shipping: Skipping shipping address sync - no valid email available');
                     }
                 }
             }
@@ -200,7 +197,6 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
 
             if (promises.length > 0) {
                 await Promise.allSettled(promises);
-                console.log('Shipping: Prefilled data synced successfully');
             }
         } catch (error) {
             if (error instanceof Error) {

@@ -43,6 +43,8 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
     const [isExpanded, setIsExpanded] = useState(!isBillingSameAsShipping);
     const [formValues, setFormValues] = useState<Partial<Address>>(billingAddress || {});
     const [formKey, setFormKey] = useState(0); // Key to force re-render when clearing
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [showValidation, setShowValidation] = useState(false);
 
     const formRef = useRef<HTMLDivElement>(null);
     const billingAddressRef = useRef(billingAddress);
@@ -277,6 +279,217 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
         }
     }, [localIsBillingSameAsShipping, shippingAddress, customerEmail]); // Removed updateBillingAddress from dependencies
 
+    // Simple validation function
+    const validateForm = useCallback(() => {
+        
+        if (!isExpanded || localIsBillingSameAsShipping) {
+            console.log('🔍 CreditCardBillingAddress: Skipping validation - form collapsed or same as shipping');
+            // If form is collapsed or same as shipping is checked, no validation needed
+            setValidationErrors({});
+            setShowValidation(false);
+            return true;
+        }
+
+        const errors: Record<string, string> = {};
+        
+        // Required field validation - use standard camelCase field names
+        const firstName = formValues.firstName;
+        const lastName = formValues.lastName;
+        const address1 = formValues.address1;
+        const city = formValues.city;
+        const postalCode = formValues.postalCode;
+        const phone = formValues.phone;
+        const countryCode = formValues.countryCode;
+        
+        console.log('🔍 CreditCardBillingAddress: Field values - firstName:', firstName, 'lastName:', lastName, 'address1:', address1, 'city:', city, 'postalCode:', postalCode, 'phone:', phone, 'countryCode:', countryCode);
+        
+        if (!firstName?.trim()) {
+            errors.firstName = 'First Name is required';
+            console.log('🔍 CreditCardBillingAddress: firstName validation failed');
+        }
+        if (!lastName?.trim()) {
+            errors.lastName = 'Last Name is required';
+            console.log('🔍 CreditCardBillingAddress: lastName validation failed');
+        }
+        if (!address1?.trim()) {
+            errors.address1 = 'Address is required';
+            console.log('🔍 CreditCardBillingAddress: address1 validation failed');
+        }
+        if (!city?.trim()) {
+            errors.city = 'City is required';
+            console.log('🔍 CreditCardBillingAddress: city validation failed');
+        }
+        if (!postalCode?.trim()) {
+            errors.postalCode = 'ZIP code is required';
+            console.log('🔍 CreditCardBillingAddress: postalCode validation failed');
+        }
+        if (!phone?.trim()) {
+            errors.phone = 'Phone is required';
+            console.log('🔍 CreditCardBillingAddress: phone validation failed');
+        }
+        if (!countryCode?.trim()) {
+            errors.countryCode = 'Country is required';
+            console.log('🔍 CreditCardBillingAddress: countryCode validation failed');
+        }
+
+        console.log('🔍 CreditCardBillingAddress: Validation errors:', errors);
+        setValidationErrors(errors);
+        setShowValidation(true);
+        
+        const isValid = Object.keys(errors).length === 0;
+        console.log('🔍 CreditCardBillingAddress: Form is valid:', isValid);
+        return isValid;
+    }, [isExpanded, localIsBillingSameAsShipping, formValues]);
+
+    // Listen for validation trigger events
+    useEffect(() => {
+        const handleValidationTrigger = () => {
+            console.log('🎯 CreditCardBillingAddress: triggerValidation event received!');
+            console.log('🎯 CreditCardBillingAddress: formRef.current:', formRef.current);
+            
+            // Run validation and get errors directly
+            const errors: Record<string, string> = {};
+            
+            if (!isExpanded || localIsBillingSameAsShipping) {
+                console.log('🎯 CreditCardBillingAddress: Skipping validation - form collapsed or same as shipping');
+                return;
+            }
+            
+            // Required field validation - use standard camelCase field names
+            const firstName = formValues.firstName;
+            const lastName = formValues.lastName;
+            const address1 = formValues.address1;
+            const city = formValues.city;
+            const postalCode = formValues.postalCode;
+            const phone = formValues.phone;
+            const countryCode = formValues.countryCode;
+            
+            console.log('🎯 CreditCardBillingAddress: Field values - firstName:', firstName, 'lastName:', lastName, 'address1:', address1, 'city:', city, 'postalCode:', postalCode, 'phone:', phone, 'countryCode:', countryCode);
+
+            if (!firstName?.trim()) {
+                errors.firstName = 'First Name is required';
+            }
+            if (!lastName?.trim()) {
+                errors.lastName = 'Last Name is required';
+            }
+            if (!address1?.trim()) {
+                errors.address1 = 'Address is required';
+            }
+            if (!city?.trim()) {
+                errors.city = 'City is required';
+            }
+            if (!postalCode?.trim()) {
+                errors.postalCode = 'ZIP code is required';
+            }
+            if (!phone?.trim()) {
+                errors.phone = 'Phone is required';
+            }
+            if (!countryCode?.trim()) {
+                errors.countryCode = 'Country is required';
+            }
+            
+            console.log('🎯 CreditCardBillingAddress: Validation errors:', errors);
+            const isValid = Object.keys(errors).length === 0;
+            console.log('🎯 CreditCardBillingAddress: Validation result:', isValid);
+            
+            if (!isValid) {
+                console.log('🎯 CreditCardBillingAddress: Form is invalid, adding error styling');
+                // Add red borders to invalid fields and show error messages
+                // Map validation errors to specific CSS selectors based on the actual HTML structure
+                const fieldSelectors: Record<string, string> = {
+                    firstName: '.dynamic-form-field--firstName .form-field',
+                    lastName: '.dynamic-form-field--lastName .form-field',
+                    address1: '.dynamic-form-field--addressLineAutocomplete .form-field',
+                    city: '.dynamic-form-field--city .form-field',
+                    postalCode: '.dynamic-form-field--postCode .form-field',
+                    phone: '.dynamic-form-field--phone .form-field',
+                    countryCode: '.dynamic-form-field--countryCode .form-field',
+                };
+                
+                Object.keys(errors).forEach(fieldName => {
+                    console.log('🎯 CreditCardBillingAddress: Processing field:', fieldName);
+                    
+                    const selector = fieldSelectors[fieldName];
+                    if (!selector) {
+                        console.log('🎯 CreditCardBillingAddress: No selector found for field:', fieldName);
+                        return;
+                    }
+                    
+                    console.log('🎯 CreditCardBillingAddress: Searching with selector:', selector);
+                    console.log('🎯 CreditCardBillingAddress: formRef.current:', formRef.current);
+                    const formFieldElement = formRef.current?.querySelector(selector) as HTMLElement;
+                    console.log('🎯 CreditCardBillingAddress: Found form-field element for', fieldName, ':', formFieldElement);
+                    
+                    if (formFieldElement) {
+                        // Add red border class to the inner .form-field div
+                        formFieldElement.classList.add('form-field--error');
+                        console.log('🎯 CreditCardBillingAddress: Added form-field--error class to form-field for', fieldName);
+                        
+                        // Add error message below the field
+                        const errorMessage = errors[fieldName];
+                        const existingError = formFieldElement.querySelector('.form-field-error-message');
+                        if (!existingError) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'form-field-error-message';
+                            errorDiv.innerHTML = `<label class="form-inlineMessage" role="alert">${errorMessage}</label>`;
+                            formFieldElement.appendChild(errorDiv);
+                            console.log('🎯 CreditCardBillingAddress: Added error message for', fieldName, ':', errorMessage);
+                        }
+                    } else {
+                        console.log('🎯 CreditCardBillingAddress: Could not find form-field element for', fieldName, 'using selector:', selector);
+                    }
+                });
+                
+                                       // Scroll to first error
+                       const firstErrorElement = formRef.current?.querySelector('.form-field--error') as HTMLElement;
+                       if (firstErrorElement) {
+                           firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                           firstErrorElement.focus();
+                           console.log('🎯 CreditCardBillingAddress: Scrolled to first error element');
+                       } else {
+                           // Try to find any error element with the error class
+                           const anyErrorElement = document.querySelector('.form-field--error') as HTMLElement;
+                           if (anyErrorElement) {
+                               anyErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                               anyErrorElement.focus();
+                               console.log('🎯 CreditCardBillingAddress: Scrolled to error element found globally');
+                           } else {
+                               console.log('🎯 CreditCardBillingAddress: No error element found to scroll to');
+                           }
+                       }
+            } else {
+                console.log('🎯 CreditCardBillingAddress: Form is valid, removing error styling');
+                // Remove all error styling when valid
+                const errorFields = formRef.current?.querySelectorAll('.form-field--error');
+                errorFields?.forEach(field => {
+                    field.classList.remove('form-field--error');
+                });
+                
+                const errorMessages = formRef.current?.querySelectorAll('.form-field-error-message');
+                errorMessages?.forEach(message => {
+                    message.remove();
+                });
+            }
+        };
+
+        // Find the correct container - the one with class "credit-card-billing-address"
+        const container = formRef.current?.closest('.credit-card-billing-address') as HTMLElement;
+        console.log('🎯 CreditCardBillingAddress: Setting up event listener on container:', container);
+        if (container) {
+            container.addEventListener('triggerValidation', handleValidationTrigger);
+            console.log('🎯 CreditCardBillingAddress: Event listener added successfully');
+        } else {
+            console.log('🎯 CreditCardBillingAddress: No container found, cannot add event listener');
+        }
+
+        return () => {
+            if (container) {
+                container.removeEventListener('triggerValidation', handleValidationTrigger);
+                console.log('🎯 CreditCardBillingAddress: Event listener removed');
+            }
+        };
+    }, [validateForm]);
+
     // Cleanup debounced function on unmount
     useEffect(() => {
         return () => {
@@ -327,11 +540,49 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
     }, [formKey, isExpanded]);
 
     const handleAddressChange = (fieldName: string, value: string | string[]) => {
+        console.log('🎯 CreditCardBillingAddress: handleAddressChange called with fieldName:', fieldName, 'value:', value);
         if (!localIsBillingSameAsShipping) {
             // Only handle address changes when user wants different billing address
             // Update local form values
             const updatedFormValues = { ...formValues, [fieldName]: value };
             setFormValues(updatedFormValues);
+            
+            // Clear validation error for this field when user starts typing
+            console.log('🎯 CreditCardBillingAddress: showValidation:', showValidation, 'validationErrors:', validationErrors, 'fieldName:', fieldName, 'hasError:', validationErrors[fieldName]);
+            
+            // Always try to clear error styling when user types, regardless of validation state
+            if (value && value.toString().trim()) {
+                // Use the same field selectors as in validation
+                const fieldSelectors: Record<string, string> = {
+                    firstName: '.dynamic-form-field--firstName .form-field',
+                    lastName: '.dynamic-form-field--lastName .form-field',
+                    address1: '.dynamic-form-field--addressLineAutocomplete .form-field',
+                    city: '.dynamic-form-field--city .form-field',
+                    postalCode: '.dynamic-form-field--postCode .form-field',
+                    phone: '.dynamic-form-field--phone .form-field',
+                    countryCode: '.dynamic-form-field--countryCode .form-field',
+                };
+                
+                const selector = fieldSelectors[fieldName];
+                if (selector) {
+                    const formFieldElement = formRef.current?.querySelector(selector) as HTMLElement;
+                    if (formFieldElement) {
+                        formFieldElement.classList.remove('form-field--error');
+                        const errorMessage = formFieldElement.querySelector('.form-field-error-message');
+                        if (errorMessage) {
+                            errorMessage.remove();
+                        }
+                        console.log('🎯 CreditCardBillingAddress: Removed error styling for', fieldName);
+                    }
+                }
+                
+                // Remove error from state if it exists
+                if (validationErrors[fieldName]) {
+                    const newErrors = { ...validationErrors };
+                    delete newErrors[fieldName];
+                    setValidationErrors(newErrors);
+                }
+            }
             
             // Create updated address using current form values to preserve all fields
             const updatedAddress = { 

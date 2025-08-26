@@ -845,8 +845,6 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         // Get the insurance amount dynamically
         const insuranceAmount = this.getInsuranceAmount();
         
-        console.log('Insurance toggle:', { shouldSelect, insuranceAmount, exists });
-        
         // Update insurance cache context for total calculation
         const { 
             setCachedInsuranceAmount, 
@@ -861,19 +859,14 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
             // Set transition state and cached amount (for UI display) regardless of caching mode
             if (shouldSelect) {
                 setCachedInsuranceAmount(insuranceAmount);
-                console.log('Setting cached insurance amount to:', insuranceAmount);
             } else {
                 setCachedInsuranceAmount(0);
-                console.log('Setting cached insurance amount to 0 (removing)');
             }
             
             // Only set transition state if advanced caching is enabled
             if (isAdvancedCachingEnabled) {
                 setIsInsuranceTransitioning(true);
                 setLastOperation(shouldSelect ? 'add' : 'remove');
-                console.log('Advanced caching enabled - setting transition state');
-            } else {
-                console.log('Advanced caching disabled - not setting transition state');
             }
             
             // Update cached totals for both states (only if advanced caching is enabled)
@@ -895,8 +888,6 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 } catch (error) {
                     console.error('Error updating insurance totals cache:', error);
                 }
-            } else if (!isAdvancedCachingEnabled) {
-                console.log('Advanced caching disabled - letting BigCommerce handle totals');
             }
         }
         
@@ -939,7 +930,6 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 operation: shouldSelect ? 'add' : 'remove'
             }
         }));
-        console.log('Insurance toggle event dispatched');
         
         // Clear transition state after a longer delay to avoid stale API responses (only if caching is enabled)
         if (isAdvancedCachingEnabled) {

@@ -81,8 +81,6 @@ class OrderSummaryItems extends React.Component<OrderSummaryItemsProps, OrderSum
         
         const { isSelected, cachedItem, operation } = evt.detail;
         
-        console.log('Insurance toggle event received:', { isSelected, cachedItem, operation });
-        
         if (operation === 'rollback') {
             // Rollback to previous state
             this.setState({
