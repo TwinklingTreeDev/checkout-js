@@ -81,6 +81,11 @@ interface WithCheckoutPaymentProps {
     submitOrder(values: OrderRequestBody): Promise<CheckoutSelectors>;
     checkoutServiceSubscribe: CheckoutService['subscribe'];
     checkoutService: CheckoutService;
+    // Add billing address update functionality
+    updateBillingAddress(address: any): Promise<CheckoutSelectors>;
+    billingAddress: any;
+    shippingAddress: any;
+    customer: any;
 }
 
 interface PaymentState {
@@ -244,6 +249,11 @@ class Payment extends Component<
                             onUnhandledError={this.handleError}
                             onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                             selectedMethod={selectedMethod}
+                            // Add billing address update functionality
+                            updateBillingAddress={rest.updateBillingAddress}
+                            billingAddress={rest.billingAddress}
+                            shippingAddress={rest.shippingAddress}
+                            customer={rest.customer}
 
                             shouldHidePaymentSubmitButton={
                                 (uniqueSelectedMethodId &&
@@ -524,6 +534,7 @@ class Payment extends Component<
 
         // Trigger validation for all forms by clicking their submit buttons
         try {
+            console.log('🚀 Payment: Starting form validation process');
             // Set a flag to indicate we're just validating, not actually submitting
             (window as any).__isValidatingForms = true;
 
@@ -537,6 +548,18 @@ class Payment extends Component<
             const shippingSubmitButton = document.querySelector('#checkout-shipping-continue') as HTMLButtonElement;
             if (shippingSubmitButton && !shippingSubmitButton.disabled) {
                 shippingSubmitButton.click();
+            }
+
+            // Trigger credit card billing address form validation
+            const creditCardBillingContainer = document.querySelector('.credit-card-billing-address') as HTMLElement;
+            console.log('🚀 Payment: Looking for credit card billing container:', creditCardBillingContainer);
+            if (creditCardBillingContainer) {
+                // Trigger validation by dispatching a custom event that the component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                creditCardBillingContainer.dispatchEvent(validationEvent);
+                console.log('🚀 Payment: Dispatched triggerValidation event to credit card billing container');
+            } else {
+                console.log('🚀 Payment: Credit card billing container not found');
             }
 
             // Wait a bit for validation to complete and errors to show
@@ -719,7 +742,6 @@ class Payment extends Component<
 
         // Check if this is an insurance-only change that doesn't require payment method reload
         if (this.isInsuranceOnlyChange()) {
-            console.log('[Payment] Skipping payment method reload for insurance-only change');
             return;
         }
 
@@ -745,13 +767,11 @@ class Payment extends Component<
             const timeSinceCartLineItemRemoving = now - lastCartLineItemRemoving;
             
             if (timeSinceInsuranceToggle < 3000 || timeSinceCartLineItemRemoving < 3000) {
-                console.log('[Payment] Detected recent insurance event, skipping payment method reload');
                 return true;
             }
             
             return false;
         } catch (error) {
-            console.warn('[Payment] Error checking if change is insurance-only:', error);
             return false; // Default to reloading payment methods if we can't determine
         }
     }
@@ -761,7 +781,6 @@ class Payment extends Component<
      */
     private handleInsuranceEvent = (): void => {
         (window as any).__last_insurance_toggle = Date.now();
-        console.log('[Payment] Insurance toggle event detected');
     };
 
     /**
@@ -769,7 +788,6 @@ class Payment extends Component<
      */
     private handleCartLineItemRemoving = (): void => {
         (window as any).__last_cart_line_item_removing = Date.now();
-        console.log('[Payment] Cart line item removing event detected');
     };
 
     /**
@@ -848,6 +866,8 @@ export function mapToPaymentProps({
             getPaymentMethods,
             isPaymentDataRequired,
             getPaymentProviderCustomer,
+            getBillingAddress,
+            getShippingAddress,
         },
         errors: { getFinalizeOrderError, getSubmitOrderError },
         statuses: { isInitializingPayment, isSubmittingOrder },
@@ -858,6 +878,8 @@ export function mapToPaymentProps({
     const customer = getCustomer();
     const consignments = getConsignments();
     const paymentProviderCustomer = getPaymentProviderCustomer();
+    const billingAddress = getBillingAddress();
+    const shippingAddress = getShippingAddress();
 
     const { isComplete = false } = getOrder() || {};
     let methods = getPaymentMethods() || EMPTY_ARRAY;
@@ -950,6 +972,11 @@ export function mapToPaymentProps({
         submitOrderError: getSubmitOrderError(),
         checkoutServiceSubscribe: checkoutService.subscribe,
         checkoutService,
+        // Add billing address update functionality
+        updateBillingAddress: checkoutService.updateBillingAddress,
+        billingAddress,
+        shippingAddress,
+        customer,
         termsConditionsText:
             isTermsConditionsRequired && termsConditionsType === TermsConditionsType.TextArea
                 ? termsCondtitionsText

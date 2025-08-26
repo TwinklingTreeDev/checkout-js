@@ -109,7 +109,7 @@
             content: '';
             position: absolute;
             top: 50%;
-            left: 39%;
+            left: 50%;
             width: 70px;
             height: 70px;
             border-radius: 70px;
@@ -121,7 +121,7 @@
             visibility: hidden;
             transition: opacity 0.25s ease-out, visibility 0.25s ease-out;
             pointer-events: none;
-            animation: embedded-checkout-loading-indicator-rotation 500ms cubic-bezier(0.69, 0.31, 0.56, 0.83) 0s infinite normal none running;
+            animation: checkout-loading-indicator-rotation 500ms cubic-bezier(0.69, 0.31, 0.56, 0.83) 0s infinite normal none running;
         }
         
         // Activate loading state when the checkout button has a visible second div (loading indicator)
@@ -147,7 +147,7 @@
 }
 
 // Animation for the loading spinner
-@keyframes embedded-checkout-loading-indicator-rotation {
+@keyframes checkout-loading-indicator-rotation {
     0% {
         transform: translate(-50%, -50%) rotate(0deg);
     }

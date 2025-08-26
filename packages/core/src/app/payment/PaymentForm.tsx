@@ -51,6 +51,11 @@ export interface PaymentFormProps {
     onUnhandledError?(error: Error): void;
     // Billing address callback
     onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
+    // Add billing address update functionality
+    updateBillingAddress?(address: any): Promise<any>;
+    billingAddress?: any;
+    shippingAddress?: any;
+    customer?: any;
 }
 
 const PaymentForm: FunctionComponent<
@@ -77,6 +82,11 @@ const PaymentForm: FunctionComponent<
     termsConditionsUrl,
     usableStoreCredit = 0,
     values,
+    // Add billing address update functionality
+    updateBillingAddress,
+    billingAddress,
+    shippingAddress,
+    customer,
 }) => {
     const selectedMethodId = useMemo(() => {
         if (!selectedMethod) {
@@ -140,6 +150,10 @@ const PaymentForm: FunctionComponent<
                 onBillingSameAsShippingChange={onBillingSameAsShippingChange}
                 resetForm={resetForm}
                 values={values}
+                updateBillingAddress={updateBillingAddress}
+                billingAddress={billingAddress}
+                shippingAddress={shippingAddress}
+                customer={customer}
             />
 
             {/* <PaymentRedeemables /> */}
@@ -210,6 +224,11 @@ interface PaymentMethodListFieldsetProps {
     resetForm(nextValues?: PaymentFormValues): void;
     // Billing address callback
     onBillingSameAsShippingChange?(isBillingSameAsShipping: boolean): void;
+    // Add billing address update functionality
+    updateBillingAddress?(address: any): Promise<any>;
+    billingAddress?: any;
+    shippingAddress?: any;
+    customer?: any;
 }
 
 const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProps> = ({
@@ -222,13 +241,43 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
     onBillingSameAsShippingChange,
     resetForm,
     values,
+    // Add billing address update functionality
+    updateBillingAddress,
+    billingAddress,
+    shippingAddress,
+    customer,
 }) => {
     const { setSubmitted } = useContext(FormContext);
 
     const commonValues = useMemo(() => ({ terms: values.terms }), [values.terms]);
 
+    // Helper function to check if a method is PayPal
+    const isPayPalMethod = useCallback((method: PaymentMethod): boolean => {
+        const paypalMethodIds = [
+            'paypal',
+            'paypalcommerce',
+            'paypalcommercecredit',
+            'paypalcommercecreditcards',
+            'paypalcommercealternativemethods',
+            'paypalcommercevenmo',
+            'paypalexpress',
+            'paypalpaymentspro'
+        ];
+        
+        const paypalMethodTypes = [
+            'paypal',
+            'paypal-credit',
+            'paypal-venmo'
+        ];
+        
+        return paypalMethodIds.includes(method.id) || 
+               paypalMethodTypes.includes(method.method) ||
+               method.gateway === 'paypal' ||
+               method.gateway === 'paypalcommerce';
+    }, []);
+
     const handlePaymentMethodSelect = useCallback(
-        (method: PaymentMethod) => {
+        async (method: PaymentMethod) => {
             // Preserve email for Google Pay methods to allow auto-population
             const shouldPreserveEmail = method.id.startsWith('googlepay');
             const currentEmail = shouldPreserveEmail ? values.customerEmail : '';
@@ -252,9 +301,40 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
             });
 
             setSubmitted(false);
+            
+            // Automate billing address setup for PayPal methods
+            if (isPayPalMethod(method)) {
+                try {
+                    console.log('PayPal method selected - automating billing address setup');
+                    
+                    // 1. Set billing same as shipping to true
+                    if (onBillingSameAsShippingChange) {
+                        onBillingSameAsShippingChange(true);
+                        console.log('Set billing same as shipping to true');
+                    }
+                    
+                    // 2. Update billing address with shipping address data
+                    if (updateBillingAddress && shippingAddress && customer) {
+                        const billingAddressWithEmail = {
+                            ...shippingAddress,
+                            email: (billingAddress as any)?.email || customer.email || (shippingAddress as any).email,
+                        };
+                        
+                        await updateBillingAddress(billingAddressWithEmail);
+                        console.log('Updated billing address with shipping address data');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error automating billing address for PayPal:', error);
+                    if (onUnhandledError && error instanceof Error) {
+                        onUnhandledError(error);
+                    }
+                }
+            }
+            
             onMethodSelect(method);
         },
-        [commonValues, onMethodSelect, resetForm, setSubmitted, values.customerEmail],
+        [commonValues, onMethodSelect, resetForm, setSubmitted, values.customerEmail, isPayPalMethod, onBillingSameAsShippingChange, updateBillingAddress, shippingAddress, billingAddress, customer, onUnhandledError],
     );
 
     return (
