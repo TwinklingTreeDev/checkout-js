@@ -94,6 +94,10 @@ const RedeemableForm: FunctionComponent<
             return;
         }
 
+        // Set operation flags immediately when form is submitted
+        (window as any).__coupon_operation_in_progress = true;
+        (window as any).__gift_certificate_operation_in_progress = true;
+
         setSubmitted(true);
         submitForm();
     }
@@ -162,6 +166,11 @@ const RedeemableForm: FunctionComponent<
                                 aria-label="Discount Code"
                                 className="form-input optimizedCheckout-form-input"
                                 onKeyDown={handleKeyDown(setSubmitted)}
+                                onFocus={() => {
+                                    // Set operation flags when user focuses on input
+                                    (window as any).__coupon_operation_in_progress = true;
+                                    (window as any).__gift_certificate_operation_in_progress = true;
+                                }}
                                 testId="redeemableEntry-input"
                                 placeholder=" "                            
                             />
@@ -177,7 +186,12 @@ const RedeemableForm: FunctionComponent<
                                 disabled={isSubmittingOrder() || !field.value?.trim()}
                                 id="applyRedeemableButton"
                                 isLoading={isApplyingRedeemable}
-                                onClick={handleSubmit(setSubmitted)}
+                                onClick={() => {
+                                    // Set operation flags immediately when button is clicked
+                                    (window as any).__coupon_operation_in_progress = true;
+                                    (window as any).__gift_certificate_operation_in_progress = true;
+                                    handleSubmit(setSubmitted)();
+                                }}
                                 testId="redeemableEntry-submit"
                                 variant={ButtonVariant.Secondary}
                             >
@@ -295,6 +309,10 @@ export default withLanguage(
         ) {
             const code = redeemableCode.trim();
 
+            // Set operation flags immediately when submit is triggered
+            (window as any).__coupon_operation_in_progress = true;
+            (window as any).__gift_certificate_operation_in_progress = true;
+
             try {
                 await applyGiftCertificate(code);
             } catch (error) {
@@ -302,7 +320,17 @@ export default withLanguage(
                     clearError(error);
                 }
 
-                applyCoupon(code);
+                try {
+                    await applyCoupon(code);
+                } catch (couponError) {
+                    throw couponError;
+                }
+            } finally {
+                // Clear operation flags after completion with a delay
+                setTimeout(() => {
+                    (window as any).__coupon_operation_in_progress = false;
+                    (window as any).__gift_certificate_operation_in_progress = false;
+                }, 2000); // 2 second delay
             }
         },
 

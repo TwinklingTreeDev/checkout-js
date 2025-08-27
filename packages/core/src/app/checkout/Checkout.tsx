@@ -671,10 +671,25 @@ class Checkout extends Component<
                     if (!redeemable) return;
                     
                     try {
+                        // Set operation flags immediately when user clicks remove
                         if (redeemable.type === 'gift_certificate') {
+                            (window as any).__gift_certificate_operation_in_progress = true;
+                            // Dispatch custom event for gift certificate removal before the operation
+                            window.dispatchEvent(new CustomEvent('gift-certificate-remove', { detail: { code } }));
                             await checkoutService.removeGiftCertificate(code);
+                            // Clear operation flag after completion with a delay
+                            setTimeout(() => {
+                                (window as any).__gift_certificate_operation_in_progress = false;
+                            }, 2000); // 2 second delay
                         } else {
+                            (window as any).__coupon_operation_in_progress = true;
+                            // Dispatch custom event for coupon removal before the operation
+                            window.dispatchEvent(new CustomEvent('coupon-remove', { detail: { code } }));
                             await checkoutService.removeCoupon(code);
+                            // Clear operation flag after completion with a delay
+                            setTimeout(() => {
+                                (window as any).__coupon_operation_in_progress = false;
+                            }, 2000); // 2 second delay
                         }
                     } catch (error) {
                         console.error('Failed to remove redeemable:', error);

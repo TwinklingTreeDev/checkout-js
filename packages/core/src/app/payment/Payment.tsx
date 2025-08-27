@@ -162,6 +162,10 @@ class Payment extends Component<
         window.addEventListener('beforeunload', this.handleBeforeUnload);
         window.addEventListener('insurance-toggle-changed', this.handleInsuranceEvent as EventListener);
         window.addEventListener('cart-line-item-removing', this.handleCartLineItemRemoving as EventListener);
+        window.addEventListener('coupon-apply', this.handleCouponApply as EventListener);
+        window.addEventListener('coupon-remove', this.handleCouponRemove as EventListener);
+        window.addEventListener('gift-certificate-apply', this.handleGiftCertificateApply as EventListener);
+        window.addEventListener('gift-certificate-remove', this.handleGiftCertificateRemove as EventListener);
         this.setState({ isReady: true });
         onReady();
     }
@@ -181,6 +185,10 @@ class Payment extends Component<
         window.removeEventListener('beforeunload', this.handleBeforeUnload);
         window.removeEventListener('insurance-toggle-changed', this.handleInsuranceEvent as EventListener);
         window.removeEventListener('cart-line-item-removing', this.handleCartLineItemRemoving as EventListener);
+        window.removeEventListener('coupon-apply', this.handleCouponApply as EventListener);
+        window.removeEventListener('coupon-remove', this.handleCouponRemove as EventListener);
+        window.removeEventListener('gift-certificate-apply', this.handleGiftCertificateApply as EventListener);
+        window.removeEventListener('gift-certificate-remove', this.handleGiftCertificateRemove as EventListener);
     }
 
     render(): ReactNode {
@@ -742,9 +750,17 @@ class Payment extends Component<
 
         // Check if this is an insurance-only change that doesn't require payment method reload
         if (this.isInsuranceOnlyChange()) {
+            console.log('[Payment] Skipping payment reload - insurance-only change detected');
             return;
         }
 
+        // Check if this is a coupon/discount-only change that doesn't require payment method reload
+        if (this.isCouponDiscountOnlyChange()) {
+            console.log('[Payment] Skipping payment reload - coupon/discount-only change detected');
+            return;
+        }
+
+        console.log('[Payment] Proceeding with payment method reload');
         this.setState({ isReady: false });
 
         await this.loadPaymentMethodsOrThrow();
@@ -788,6 +804,64 @@ class Payment extends Component<
      */
     private handleCartLineItemRemoving = (): void => {
         (window as any).__last_cart_line_item_removing = Date.now();
+    };
+
+    /**
+     * Check if the cart change is coupon/discount-only and doesn't require payment method reload
+     */
+    private isCouponDiscountOnlyChange(): boolean {
+        try {
+            // Check if coupon/discount operations are in progress
+            const isCouponOperationInProgress = (window as any).__coupon_operation_in_progress || false;
+            const isGiftCertificateOperationInProgress = (window as any).__gift_certificate_operation_in_progress || false;
+            
+            console.log('[Payment] Coupon/Discount operation flags:', {
+                isCouponOperationInProgress,
+                isGiftCertificateOperationInProgress
+            });
+            
+            // If any coupon/discount operation is in progress, skip payment reload
+            if (isCouponOperationInProgress || isGiftCertificateOperationInProgress) {
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('[Payment] Error in isCouponDiscountOnlyChange:', error);
+            return false; // Default to reloading payment methods if we can't determine
+        }
+    }
+
+    /**
+     * Handle coupon apply events to track when coupons are added
+     */
+    private handleCouponApply = (): void => {
+        console.log('[Payment] Coupon apply event received');
+        (window as any).__coupon_operation_in_progress = true;
+    };
+
+    /**
+     * Handle coupon remove events to track when coupons are removed
+     */
+    private handleCouponRemove = (): void => {
+        console.log('[Payment] Coupon remove event received');
+        (window as any).__coupon_operation_in_progress = true;
+    };
+
+    /**
+     * Handle gift certificate apply events to track when gift certificates are added
+     */
+    private handleGiftCertificateApply = (): void => {
+        console.log('[Payment] Gift certificate apply event received');
+        (window as any).__gift_certificate_operation_in_progress = true;
+    };
+
+    /**
+     * Handle gift certificate remove events to track when gift certificates are removed
+     */
+    private handleGiftCertificateRemove = (): void => {
+        console.log('[Payment] Gift certificate remove event received');
+        (window as any).__gift_certificate_operation_in_progress = true;
     };
 
     /**

@@ -143,6 +143,10 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         
         // Initialize insurance cache if available
         this.initializeInsuranceCache();
+        
+        // Set initial operation flags for coupon/discount operations
+        (window as any).__coupon_operation_in_progress = false;
+        (window as any).__gift_certificate_operation_in_progress = false;
     }
 
     componentDidUpdate(prevProps: Readonly<CheckoutStepProps>): void {
@@ -403,13 +407,22 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                         value={this.state.discountCode}
                                         onChange={this.handleDiscountCodeChange}
                                         onKeyDown={this.handleDiscountKeyDown}
+                                        onFocus={() => {
+                                            (window as any).__coupon_operation_in_progress = true;
+                                            (window as any).__gift_certificate_operation_in_progress = true;
+                                        }}
                                         disabled={this.state.isApplyingDiscount}
                                     />
                                     <button
                                         type="button"
                                         className={`form-prefixPostfix-button--postfix ${this.state.discountCode.trim() ? 'enabled' : 'disabled'}`}
                                         disabled={this.state.isApplyingDiscount || !this.state.discountCode.trim()}
-                                        onClick={this.handleApplyDiscount}
+                                        onClick={() => {
+                                            // Set operation flags immediately when button is clicked
+                                            (window as any).__coupon_operation_in_progress = true;
+                                            (window as any).__gift_certificate_operation_in_progress = true;
+                                            this.handleApplyDiscount();
+                                        }}
                                     >
                                         {this.state.isApplyingDiscount ? (
                                             <div className="loading-spinner" />
@@ -443,7 +456,15 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                     <button
                                         type="button"
                                         className="remove-discount-btn"
-                                        onClick={() => this.handleRemoveRedeemable(redeemable.code)}
+                                        onClick={() => {
+                                            // Set operation flags immediately when remove button is clicked
+                                            if (redeemable.type === 'gift_certificate') {
+                                                (window as any).__gift_certificate_operation_in_progress = true;
+                                            } else {
+                                                (window as any).__coupon_operation_in_progress = true;
+                                            }
+                                            this.handleRemoveRedeemable(redeemable.code, redeemable.type);
+                                        }}
                                         disabled={this.state.removingRedeemable === redeemable.code}
                                         aria-label={`Remove ${redeemable.code}`}
                                     >
@@ -589,10 +610,14 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         this.setState({ isClosed: true });
     };
 
-    private handleDiscountCodeChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        this.setState({ 
+        private handleDiscountCodeChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+        // Set operation flags when user starts typing in discount field
+        (window as any).__coupon_operation_in_progress = true;
+        (window as any).__gift_certificate_operation_in_progress = true;
+        
+        this.setState({
             discountCode: event.target.value,
-            discountError: undefined 
+            discountError: undefined
         });
     };
 
@@ -621,8 +646,14 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         try {
             const code = discountCode.trim();
             
+            // Set operation flags immediately when user clicks apply
+            (window as any).__coupon_operation_in_progress = true;
+            (window as any).__gift_certificate_operation_in_progress = true;
+            
             // Try to apply as gift certificate first, then as coupon
             try {
+                // Dispatch custom event for gift certificate application before the operation
+                window.dispatchEvent(new CustomEvent('gift-certificate-apply', { detail: { code } }));
                 await applyGiftCertificate(code);
             } catch (error) {
                 try {
@@ -636,6 +667,8 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 
                 // Try as coupon if gift certificate fails
                 try {
+                    // Dispatch custom event for coupon application before the operation
+                    window.dispatchEvent(new CustomEvent('coupon-apply', { detail: { code } }));
                     await applyCoupon(code);
                 } catch (couponError) {
                     // If both fail, throw the original error
@@ -647,11 +680,23 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                 discountCode: '',
                 isApplyingDiscount: false 
             });
+            
+            // Clear operation flags after successful completion with a delay
+            setTimeout(() => {
+                (window as any).__coupon_operation_in_progress = false;
+                (window as any).__gift_certificate_operation_in_progress = false;
+            }, 2000); // 2 second delay
         } catch (error) {
             this.setState({ 
                 isApplyingDiscount: false,
                 discountError: error instanceof Error ? error.message : 'Failed to apply discount code'
             });
+            
+            // Clear operation flags after error with a delay
+            setTimeout(() => {
+                (window as any).__coupon_operation_in_progress = false;
+                (window as any).__gift_certificate_operation_in_progress = false;
+            }, 2000); // 2 second delay
         }
     };
 
@@ -662,7 +707,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         }
     };
 
-    private handleRemoveRedeemable = async (code: string): Promise<void> => {
+    private handleRemoveRedeemable = async (code: string, type?: string): Promise<void> => {
         const { onRemoveRedeemable } = this.props;
         
         if (!onRemoveRedeemable) {
@@ -674,10 +719,42 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         this.setState({ removingRedeemable: code });
 
         try {
+            // Set operation flags immediately when user clicks remove
+            if (type === 'gift_certificate') {
+                (window as any).__gift_certificate_operation_in_progress = true;
+            } else {
+                (window as any).__coupon_operation_in_progress = true;
+            }
+            
+            // Dispatch custom event based on the redeemable type before the operation
+            if (type === 'gift_certificate') {
+                window.dispatchEvent(new CustomEvent('gift-certificate-remove', { detail: { code } }));
+            } else {
+                window.dispatchEvent(new CustomEvent('coupon-remove', { detail: { code } }));
+            }
+            
             await onRemoveRedeemable(code);
+            
+            // Clear operation flags after successful completion with a delay
+            setTimeout(() => {
+                if (type === 'gift_certificate') {
+                    (window as any).__gift_certificate_operation_in_progress = false;
+                } else {
+                    (window as any).__coupon_operation_in_progress = false;
+                }
+            }, 2000); // 2 second delay
         } catch (error) {
             console.error('Failed to remove redeemable:', error);
             // Could add error state here if needed
+            
+            // Clear operation flags after error with a delay
+            setTimeout(() => {
+                if (type === 'gift_certificate') {
+                    (window as any).__gift_certificate_operation_in_progress = false;
+                } else {
+                    (window as any).__coupon_operation_in_progress = false;
+                }
+            }, 2000); // 2 second delay
         } finally {
             // Clear loading state
             this.setState({ removingRedeemable: undefined });

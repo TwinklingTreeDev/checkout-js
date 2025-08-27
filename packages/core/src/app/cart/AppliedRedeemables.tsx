@@ -18,6 +18,8 @@ const AppliedCouponChecklistItem: FunctionComponent<AppliedCouponProps> = ({
     isRemoving = false,
 }) => {
     const handleRemove = useCallback(() => {
+        // Set operation flag immediately when coupon remove is triggered
+        (window as any).__coupon_operation_in_progress = true;
         onRemoved(coupon.code);
     }, [coupon, onRemoved]);
 
@@ -42,6 +44,8 @@ const AppliedGiftCertificateChecklistItem: FunctionComponent<AppliedGiftCertific
     isRemoving = false,
 }) => {
     const handleRemove = useCallback(() => {
+        // Set operation flag immediately when gift certificate remove is triggered
+        (window as any).__gift_certificate_operation_in_progress = true;
         onRemoved(giftCertificate.code);
     }, [giftCertificate, onRemoved]);
 
