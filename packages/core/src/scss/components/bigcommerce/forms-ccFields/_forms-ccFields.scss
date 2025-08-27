@@ -122,10 +122,19 @@
     }
 }
 
-// Ensure hosted form iframes also respect font sizing
+// Font face declaration for hosted fields
+@font-face {
+    font-family: AvenirLTPro;
+    src: url(https://store-5k26roxhw.mybigcommerce.com/content/fonts/AvenirLTProRoman.otf) format("opentype");
+    font-weight: 400;
+    font-style: normal;
+}
+
+// Ensure hosted form iframes also respect font sizing and family
 .form-ccFields {
     iframe {
         font-size: 15px !important;
+        font-family: AvenirLTPro, sans-serif !important;
         
         @media (max-width: 768px) {
             font-size: 14px !important;
