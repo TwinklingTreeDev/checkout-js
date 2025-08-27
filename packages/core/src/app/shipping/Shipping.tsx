@@ -71,6 +71,8 @@ export interface WithCheckoutShippingProps {
     shouldShowOrderComments: boolean;
     providerWithCustomCheckout?: string;
     isFloatingLabelEnabled?: boolean;
+    // Add selected payment method for PayPal detection
+    selectedPaymentMethod?: any;
     assignItem(consignment: ConsignmentAssignmentRequestBody): Promise<CheckoutSelectors>;
     deinitializeShippingMethod(options: ShippingRequestOptions): Promise<CheckoutSelectors>;
     deleteConsignments(): Promise<Address | undefined>;
@@ -219,6 +221,8 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
             step,
             isFloatingLabelEnabled,
             shouldRenderStripeForm,
+            selectedPaymentMethod,
+            updateBillingAddress,
             ...shippingFormProps
         } = this.props;
 
@@ -269,6 +273,8 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                         onUseNewAddress={this.handleUseNewAddress}
                         shouldShowSaveAddress={!isGuest}
                         updateAddress={updateShippingAddress}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        updateBillingAddress={updateBillingAddress}
                     />
                 </div>
             </AddressFormSkeleton>
@@ -442,6 +448,7 @@ export function mapToShippingProps({
             getBillingAddress,
             getShippingAddressFields,
             getShippingCountries,
+            getPaymentMethods,
         },
         statuses: {
             isShippingStepPending,
@@ -482,23 +489,42 @@ export function mapToShippingProps({
         isSelectingShippingOption() ||
         isUpdatingConsignment() ||
         isCreatingConsignments() ||
+        isCreatingCustomerAddress() ||
         isUpdatingBillingAddress() ||
-        isUpdatingCheckout() ||
-        isCreatingCustomerAddress();
-    const shouldShowMultiShipping =
-        hasMultiShippingEnabled && !methodId && shippableItemsCount > 1;
+        isUpdatingCheckout();
+
     const countriesWithAutocomplete = ['US', 'CA', 'AU', 'NZ'];
 
     if (features['CHECKOUT-4183.checkout_google_address_autocomplete_uk']) {
         countriesWithAutocomplete.push('GB');
     }
 
-    const shippingAddress =
-        !shouldShowMultiShipping && consignments.length > 1 ? undefined : getShippingAddress();
-
+    const shouldShowMultiShipping = hasMultiShippingEnabled && shippableItemsCount > 1;
     const providerWithCustomCheckout = getProviderWithCustomCheckout(
         config.checkoutSettings.providerWithCustomCheckout,
     );
+
+    // Get selected payment method for PayPal detection
+    const paymentMethods = getPaymentMethods() || [];
+    const selectedPaymentMethod = paymentMethods.find(method => 
+        method.id === checkout.payments?.[0]?.providerId || 
+        method.id === methodId
+    );
+
+    // Alternative approach: Check if PayPal is available and potentially selected
+    const paypalMethod = paymentMethods.find(method => 
+        method.id === 'paypal' || 
+        method.id === 'paypalcommerce' || 
+        method.id === 'paypalcommercecredit' ||
+        method.gateway === 'paypal' ||
+        method.gateway === 'paypalcommerce'
+    );
+
+    // Use PayPal method if available, otherwise use the original logic
+    const finalSelectedPaymentMethod = paypalMethod || selectedPaymentMethod;
+
+    const shippingAddress =
+        !shouldShowMultiShipping && consignments.length > 1 ? undefined : getShippingAddress();
 
     return {
         assignItem: checkoutService.assignItemsToAddress,
@@ -524,6 +550,8 @@ export function mapToShippingProps({
         loadShippingOptions: checkoutService.loadShippingOptions,
         methodId,
         providerWithCustomCheckout,
+        // Add selected payment method
+        selectedPaymentMethod: finalSelectedPaymentMethod,
         shippingAddress,
         shouldShowMultiShipping,
         shouldShowAddAddressInCheckout:

@@ -55,6 +55,8 @@ export interface SingleShippingFormProps {
     shouldShowSaveAddress?: boolean;
     shouldShowOrderComments: boolean;
     isFloatingLabelEnabled?: boolean;
+    // Add selected payment method for PayPal detection
+    selectedPaymentMethod?: any;
     deinitialize(options: ShippingRequestOptions): Promise<CheckoutSelectors>;
     deleteConsignments(): Promise<Address | undefined>;
     getFields(countryCode?: string): FormField[];
@@ -67,6 +69,8 @@ export interface SingleShippingFormProps {
         address: Partial<Address>,
         options?: RequestOptions<CheckoutParams>,
     ): Promise<CheckoutSelectors>;
+    // Add billing address update functionality
+    updateBillingAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
 }
 
 export interface SingleShippingFormValues {
@@ -91,6 +95,35 @@ function shouldHaveCustomValidation(methodId?: string): boolean {
 }
 
 export const SHIPPING_AUTOSAVE_DELAY = 1700;
+
+// Helper function to check if a method is PayPal
+function isPayPalMethod(method?: any): boolean {
+    if (!method) {
+        return false;
+    }
+
+    const paypalMethodIds = [
+        'paypal',
+        'paypalcommerce',
+        'paypalcommercecredit',
+        'paypalcommercecreditcards',
+        'paypalcommercealternativemethods',
+        'paypalcommercevenmo',
+        'paypalexpress',
+        'paypalpaymentspro'
+    ];
+    
+    const paypalMethodTypes = [
+        'paypal',
+        'paypal-credit',
+        'paypal-venmo'
+    ];
+    
+    return paypalMethodIds.includes(method.id) || 
+           paypalMethodTypes.includes(method.method) ||
+           method.gateway === 'paypal' ||
+           method.gateway === 'paypalcommerce';
+}
 
 class SingleShippingForm extends PureComponent<
     SingleShippingFormProps & WithLanguageProps & FormikProps<SingleShippingFormValues>
@@ -127,6 +160,36 @@ class SingleShippingForm extends PureComponent<
                     if (includeShippingOptions) {
                         this.setState({ hasRequestedShippingOptions: true });
                     }
+
+                    // Sync billing address for PayPal methods
+                    // Check if we have a selected payment method or if PayPal is available
+                    const shouldSyncForPayPal = this.props.selectedPaymentMethod && isPayPalMethod(this.props.selectedPaymentMethod);
+                    
+                    // Alternative: Check if any PayPal method is available (as a fallback)
+                    const hasPayPalAvailable = this.props.methodId && (
+                        this.props.methodId === 'paypal' || 
+                        this.props.methodId === 'paypalcommerce' || 
+                        this.props.methodId === 'paypalcommercecredit'
+                    );
+                    
+                    if ((shouldSyncForPayPal || hasPayPalAvailable) && this.props.updateBillingAddress) {
+                        try {
+                            console.log('SingleShippingForm: Syncing billing address for PayPal method');
+                            await this.props.updateBillingAddress(address);
+                            console.log('SingleShippingForm: Billing address synced successfully');
+                        } catch (billingError) {
+                            console.error('SingleShippingForm: Error syncing billing address:', billingError);
+                            // Don't throw the error - shipping address update was successful
+                        }
+                    } else {
+                        console.log('SingleShippingForm: PayPal method not detected or updateBillingAddress not available', {
+                            hasSelectedPaymentMethod: !!this.props.selectedPaymentMethod,
+                            isPayPalMethod: this.props.selectedPaymentMethod ? isPayPalMethod(this.props.selectedPaymentMethod) : false,
+                            hasPayPalAvailable,
+                            methodId: this.props.methodId,
+                            hasUpdateBillingAddress: !!this.props.updateBillingAddress
+                        });
+                    }
                 } catch (error) {
                     console.error('SingleShippingForm: Error updating address:', error);
                 } finally {
@@ -140,8 +203,12 @@ class SingleShippingForm extends PureComponent<
     componentDidMount(): void {
         const { isBillingSameAsShipping, setFieldValue } = this.props;
         
-        // Initialize the form value with the prop value
-        setFieldValue('billingSameAsShipping', isBillingSameAsShipping);
+        // Debug: Log the selected payment method
+        console.log('SingleShippingForm: componentDidMount - selectedPaymentMethod:', this.props.selectedPaymentMethod);
+        
+        if (isBillingSameAsShipping) {
+            setFieldValue('billingSameAsShipping', true);
+        }
     }
 
     componentDidUpdate(prevProps: SingleShippingFormProps & WithLanguageProps & FormikProps<SingleShippingFormValues>): void {

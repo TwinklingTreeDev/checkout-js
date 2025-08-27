@@ -42,6 +42,8 @@ export interface ShippingFormProps {
     shouldShowOrderComments: boolean;
     shouldShowAddAddressInCheckout: boolean;
     isFloatingLabelEnabled?: boolean;
+    // Add selected payment method for PayPal detection
+    selectedPaymentMethod?: any;
     assignItem(consignment: ConsignmentAssignmentRequestBody): Promise<CheckoutSelectors>;
     deinitialize(options: ShippingRequestOptions): Promise<CheckoutSelectors>;
     deleteConsignments(): Promise<Address | undefined>;
@@ -60,6 +62,8 @@ export interface ShippingFormProps {
         address: Partial<Address>,
         options: RequestOptions<CheckoutParams>,
     ): Promise<CheckoutSelectors>;
+    // Add billing address update functionality
+    updateBillingAddress?(address: Partial<Address>): Promise<CheckoutSelectors>;
 }
 
 const ShippingForm = ({
@@ -97,6 +101,8 @@ const ShippingForm = ({
     updateAddress,
     isShippingStepPending,
     isFloatingLabelEnabled,
+    selectedPaymentMethod,
+    updateBillingAddress,
 }: ShippingFormProps & WithLanguageProps) => {
     // TODO: remove PayPal Fastlane related code and useEffect when PayPal Fastlane will not be available for Store members
     const {
@@ -167,6 +173,8 @@ const ShippingForm = ({
             signOut={signOut}
             updateAddress={updateAddress}
             onCheckBillingSameAsShipping={onCheckBillingSameAsShipping}
+            selectedPaymentMethod={selectedPaymentMethod}
+            updateBillingAddress={updateBillingAddress}
         />
     );
 };
