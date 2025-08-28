@@ -164,27 +164,6 @@ const PaymentForm: FunctionComponent<
                     termsConditionsUrl={termsConditionsUrl}
                 />
             )}
-            {/* Discount Offer Section */}
-            <div className="discount-offer-section">
-                <div className="discount-offer-container">
-                    <input
-                        type="checkbox"
-                        id="discount-offer"
-                        className="discount-offer-checkbox"
-                    />
-                    <div>
-                        <div className="discount-offer-title">
-                            Get 25% OFF on Your Next Order
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="discount-offer-description">
-                Want exclusive deals? Check this box to receive the best offers to your phone. You can reply STOP to cancel or HELP for help. Msg frequency varies. Msg & data rates may apply.
-                See <a href="#" className="discount-offer-link discount-offer-link-terms">Terms</a>
-                &amp;
-                <a href="#" className="discount-offer-link discount-offer-link-privacy">Privacy</a>.
-            </div>
 
             <div className="form-actions">
                 {shouldHidePaymentSubmitButton ? (
