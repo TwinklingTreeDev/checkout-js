@@ -152,6 +152,7 @@
             "returning_customer_text": "Cliente existente",
             "sign_in_action": "Iniciar sesión",
             "sign_in_error": "El correo electrónico o la contraseña que ha introducido no son válidos.",
+            "sign_in_text": "Iniciar sesión",
             "sign_in_throttled_error": "Debido que hubo una cantidad excesiva de intentos de acceso, espere 10 segundos antes de intentar acceder de nuevo.",
             "sign_out_action": "Cerrar sesión",
             "sign_out_error": "Se ha producido un error al cerrar sesión. Vuelva a intentarlo.",

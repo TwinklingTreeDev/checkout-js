@@ -152,6 +152,7 @@
             "returning_customer_text": "Wiederkehrender Kunde",
             "sign_in_action": "Anmelden",
             "sign_in_error": "Die eingegebene E-Mail-Adresse oder das eingegebene Passwort sind nicht gültig.",
+            "sign_in_text": "Anmelden",
             "sign_in_throttled_error": "Aufgrund zu vieler Anmeldeversuche müssen Sie zehn Sekunden warten, bevor Sie erneut versuchen können, sich anzumelden.",
             "sign_out_action": "Abmelden",
             "sign_out_error": "Beim Abmelden ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",

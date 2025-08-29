@@ -152,6 +152,7 @@
             "returning_customer_text": "Returnerende kunde",
             "sign_in_action": "Registrer deg",
             "sign_in_error": "E-postadressen eller passordet du skrev inn er ikke gyldig.",
+            "sign_in_text": "Registrer deg",
             "sign_in_throttled_error": "På grunn av for mange påloggingsforsøk, må du vent 10 sekunder før du prøver å logge på igjen.",
             "sign_out_action": "Logg ut",
             "sign_out_error": "Det oppsto en feil da vi skulle logge deg ut. Prøv igjen.",

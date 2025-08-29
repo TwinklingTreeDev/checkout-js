@@ -152,6 +152,7 @@
             "returning_customer_text": "Returning Customer",
             "sign_in_action": "Sign In",
             "sign_in_error": "The email or password you entered is not valid.",
+            "sign_in_text": "Sign in",
             "sign_in_throttled_error": "Due to excessive login attempts, please wait 10 seconds before attempting to log in again.",
             "sign_out_action": "Sign Out",
             "sign_out_error": "An error occurred while signing out. Please try again.",

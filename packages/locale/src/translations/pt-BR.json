@@ -152,6 +152,7 @@
             "returning_customer_text": "Cliente recorrente",
             "sign_in_action": "Entrar",
             "sign_in_error": "O email ou a senha que você inseriu não é válido.",
+            "sign_in_text": "Entrar",
             "sign_in_throttled_error": "Você fez muitas tentativas de acesso, aguarde 10 segundos para tentar novamente.",
             "sign_out_action": "Sair",
             "sign_out_error": "Ocorreu um erro ao sair. Tente novamente.",

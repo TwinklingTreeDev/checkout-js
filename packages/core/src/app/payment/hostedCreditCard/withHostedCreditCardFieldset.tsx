@@ -214,6 +214,7 @@ export default function withHostedCreditCardFieldset<
                               default: {
                                   ...(await getCreditCardInputStyles(styleContainerId, styleProps)),
                                   fontSize: '15px',
+                                  fontFamily: 'AvenirLTPro, sans-serif',
                               },
                               error: {
                                   ...(await getCreditCardInputStyles(
@@ -222,6 +223,7 @@ export default function withHostedCreditCardFieldset<
                                       CreditCardInputStylesType.Error,
                                   )),
                                   fontSize: '15px',
+                                  fontFamily: 'AvenirLTPro, sans-serif',
                               },
                               focus: {
                                   ...(await getCreditCardInputStyles(
@@ -230,17 +232,21 @@ export default function withHostedCreditCardFieldset<
                                       CreditCardInputStylesType.Focus,
                                   )),
                                   fontSize: '15px',
+                                  fontFamily: 'AvenirLTPro, sans-serif',
                               },
                           }
                         : {
                               default: {
                                   fontSize: '15px',
+                                  fontFamily: 'AvenirLTPro, sans-serif',
                               },
                               error: {
                                   fontSize: '15px',
+                                  fontFamily: 'AvenirLTPro, sans-serif',
                               },
                               focus: {
                                   fontSize: '15px',
+                                  fontFamily: 'AvenirLTPro, sans-serif',
                               },
                           },
                     onBlur: ({ fieldType }) => {
