@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { debounce } from 'lodash';
 import { FieldProps, FormikProps, withFormik } from 'formik';
-import React, { FunctionComponent, memo, ReactNode, useCallback, useState, useEffect } from 'react';
+import React, { FunctionComponent, memo, ReactNode, useCallback, useState, useEffect, useRef } from 'react';
 import { object, string } from 'yup';
 import { useCheckoutForm } from '../checkout/CheckoutFormContext';
 
@@ -76,6 +76,7 @@ const GuestForm: FunctionComponent<
     setFieldTouched,
 }) => {
     const [isUpdatingGuestData, setIsUpdatingGuestData] = useState(false);
+    const formRef = useRef<HTMLDivElement>(null);
 
     // Use centralized form state manager
     const { updateEmail } = useCheckoutForm();
@@ -119,8 +120,191 @@ const GuestForm: FunctionComponent<
 
     // Helper function to check if email is valid
     const isEmailValid = useCallback((email: string): boolean => {
-        return email.trim() !== '' && EMAIL_REGEXP.test(email);
+        const isValid = email.trim() !== '' && EMAIL_REGEXP.test(email);
+        return isValid;
     }, []);
+
+    // Validation methods for guest form
+    const handleValidationTrigger = useCallback((_event?: Event, specificFieldName?: string): void => {
+        // Ignore the event parameter if not needed
+        validateFields(specificFieldName);
+    }, []);
+
+    const validateFields = useCallback((specificFieldName?: string): void => {
+        const { current } = formRef;
+        if (!current) return;
+
+        
+        // Only run validation for guest form
+        const guestContainer = current.querySelector('#checkout-customer-guest') || current.closest('#checkout-customer-guest');
+        if (!guestContainer) {
+            return;
+        }
+
+        // Check if there's an existing validation system that's already handling errors
+        const existingErrorSystems = current.querySelectorAll('.form-field-errors');
+        if (existingErrorSystems.length > 0) {
+            // If existing error system is present, let it handle validation completely
+            return;
+        }
+
+        // Run validation and get errors directly
+        const errors: Record<string, string> = {};
+        
+        // Get email value directly from DOM input to ensure we have the current value
+        const emailInput = current.querySelector('input[name="email"], input[id="email"]') as HTMLInputElement;
+        const emailValue = emailInput?.value || values.email;
+        
+        // If a specific field is provided, only validate that field (for blur events)
+        if (specificFieldName) {
+            if (specificFieldName === 'email') {
+                if (!emailValue?.trim()) {
+                    errors.email = 'Email address is required';
+                } else if (!isEmailValid(emailValue)) {
+                    errors.email = 'Please enter a valid email address';
+                }
+            }
+        } else {
+            // If no specific field provided, validate all fields (for triggerValidation events)
+            if (!emailValue?.trim()) {
+                errors.email = 'Email address is required';
+            } else if (!isEmailValid(emailValue)) {
+                errors.email = 'Please enter a valid email address';
+            }
+        }
+        
+        const isValid = Object.keys(errors).length === 0;
+        
+        if (!isValid) {
+            // Add red borders to invalid fields and show error messages
+            const fieldSelectors: Record<string, string> = {
+                email: '.form-field, .customerEmail-container .form-field',
+            };
+            
+            Object.keys(errors).forEach(fieldName => {
+                const selector = fieldSelectors[fieldName];
+                if (!selector) {
+                    return;
+                }
+                
+                const formFieldElement = current.querySelector(selector) as HTMLElement;
+
+                if (formFieldElement) {
+                    // Add error styling and custom error message
+                    formFieldElement.classList.add('form-field--error');
+                    
+                    // Add error message below the field - ensure only one error message per field
+                    const errorMessage = errors[fieldName];
+                    
+                    // Remove any existing error messages for this field first
+                    const existingErrors = formFieldElement.querySelectorAll('.form-field-error-message');
+                    existingErrors.forEach(error => error.remove());
+                    
+                    // Add new error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'form-field-error-message';
+                    errorDiv.innerHTML = `<label class="form-inlineMessage" role="alert">${errorMessage}</label>`;
+                    formFieldElement.appendChild(errorDiv);
+                }
+            });
+        } else {
+            // Clear validation error for the specific field when it becomes valid
+            if (specificFieldName) {
+                clearFieldValidationError(specificFieldName);
+            }
+        }
+    }, [values.email, isEmailValid]);
+
+    const clearFieldValidationError = useCallback((fieldName: string): void => {
+        const { current } = formRef;
+        if (!current) return;
+
+        // Only clear validation for guest form
+        const guestContainer = current.querySelector('#checkout-customer-guest') || current.closest('#checkout-customer-guest');
+        if (!guestContainer) {
+            return;
+        }
+
+        // Check if there's an existing validation system that's already handling errors
+        const existingErrorSystems = current.querySelectorAll('.form-field-errors');
+        if (existingErrorSystems.length > 0) {
+            // If existing error system is present, let it handle validation completely
+            return;
+        }
+
+        // Map field names to selectors
+        const fieldSelectors: Record<string, string> = {
+            email: '.form-field, .customerEmail-container .form-field',
+        };
+
+        const selector = fieldSelectors[fieldName];
+        if (!selector) return;
+
+        const formFieldElement = current.querySelector(selector) as HTMLElement;
+        if (formFieldElement) {
+            // Remove error styling
+            formFieldElement.classList.remove('form-field--error');
+            
+            // Remove our custom error message
+            const errorMessage = formFieldElement.querySelector('.form-field-error-message');
+            if (errorMessage) {
+                errorMessage.remove();
+            }
+        }
+    }, []);
+
+
+
+    const handleInputChange = useCallback((event: Event): void => {
+        const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        if (!target) return;
+
+        // Only handle input changes for guest form
+        const guestContainer = target.closest('#checkout-customer-guest');
+        if (!guestContainer) {
+            return;
+        }
+
+        // Get the field name from the input element
+        const fieldName = target.name || target.id;
+        if (!fieldName) {
+            return;
+        }
+        // Only show validation errors on blur events, not while typing
+        if (event.type === 'blur') {
+            // Check if the field has a valid value and clear its validation error
+            if (target.value && target.value.trim()) {
+                // For email field, check if it's actually valid before clearing error
+                if (fieldName === 'email') {
+                    if (isEmailValid(target.value)) {
+                        clearFieldValidationError(fieldName);
+                    } else {
+                        // Trigger validation to show error for invalid email (specific field only)
+                        setTimeout(() => {
+                            validateFields(fieldName);
+                        }, 100);
+                    }
+                } else {
+                    // For non-email fields, clear error if they have any value
+                    clearFieldValidationError(fieldName);
+                }
+            } else {
+                // If field is empty, trigger validation to show error (specific field only)
+                setTimeout(() => {
+                    validateFields(fieldName);
+                }, 100);
+            }
+        } else {
+            // For input/change events, only clear errors if field becomes valid
+            if (target.value && target.value.trim()) {
+                if (fieldName === 'email' && isEmailValid(target.value)) {
+                    clearFieldValidationError(fieldName);
+                } else if (fieldName !== 'email') {
+                    clearFieldValidationError(fieldName);
+                }
+            }
+        }
+    }, [clearFieldValidationError, validateFields, isEmailValid]);
 
     // Create debounced update function using centralized form state manager
     const debouncedUpdateGuestData = useCallback(
@@ -128,12 +312,10 @@ const GuestForm: FunctionComponent<
             async (email: string, shouldSubscribe: boolean) => {
                 // Only update if email is valid
                 if (!isEmailValid(email)) {
-                    console.log('GuestForm: Skipping update for invalid email:', email);
                     return;
                 }
 
                 try {
-                    console.log('GuestForm: Starting centralized email sync for:', email, 'shouldSubscribe:', shouldSubscribe);
                     setIsUpdatingGuestData(true);
                     
                     // Use centralized form state manager (consignment API)
@@ -141,7 +323,6 @@ const GuestForm: FunctionComponent<
                     
                     // Trigger subscription API if user wants to subscribe (same flow as button)
                     if (canSubscribe) {
-                        console.log('GuestForm: Triggering subscription API for:', email);
                         try {
                             // Use the actual continueAsGuest API for subscription (same as button)
                             await continueAsGuest({
@@ -150,15 +331,12 @@ const GuestForm: FunctionComponent<
                                 acceptsAbandonedCartEmails: shouldSubscribe,
                             });
                             
-                            console.log('GuestForm: Subscription API called successfully');
-                        } catch (subscriptionError) {
-                            console.error('GuestForm: Error calling subscription API:', subscriptionError);
-                            // Don't fail the main email update for subscription errors
+                        } catch (_subscriptionError) {
+                           // Don't fail the main email update for subscription errors
                         }
                     }
                     
                 } catch (error) {
-                    console.error('GuestForm: Error updating email:', error);
                     if (error instanceof Error && onUnhandledError) {
                         onUnhandledError(error);
                     }
@@ -182,26 +360,20 @@ const GuestForm: FunctionComponent<
 
             // Handle email changes
             if (fieldName === 'email' && typeof value === 'string') {
-                console.log('GuestForm: handleFieldChange called for email:', value, 'current values.email:', values.email);
                 onChangeEmail(value);
                 
                 // Only trigger auto-save when email is valid and not empty
                 if (value.trim() && isEmailValid(value)) {
-                    console.log('GuestForm: Email changed and valid, triggering auto-save:', value);
                     setIsUpdatingGuestData(true);
                     debouncedUpdateGuestData(value, values.shouldSubscribe);
-                } else {
-                    console.log('GuestForm: Email change condition not met - value.trim():', value.trim(), 'isValid:', isEmailValid(value));
                 }
             }
 
             // Handle subscription changes
             if (fieldName === 'shouldSubscribe' && typeof value === 'boolean') {
-                console.log('GuestForm: handleFieldChange called for shouldSubscribe:', value, 'current values.shouldSubscribe:', values.shouldSubscribe);
                 
                 // Only trigger auto-save when we have a valid email
                 if (values.email && isEmailValid(values.email)) {
-                    console.log('GuestForm: Marketing consent changed, triggering auto-save:', value);
                     setIsUpdatingGuestData(true);
                     debouncedUpdateGuestData(values.email, value);
                 }
@@ -213,14 +385,11 @@ const GuestForm: FunctionComponent<
     // Handle email field blur - validate and update when user finishes typing
     const handleEmailBlur = useCallback(
         async (email: string) => {
-            console.log('GuestForm: Email blur event for:', email);
-            
             // Mark field as touched for validation
             setFieldTouched('email', true);
             
             // If email is valid, update immediately
             if (email.trim() && isEmailValid(email)) {
-                console.log('GuestForm: Email blur - updating with valid email:', email);
                 setIsUpdatingGuestData(true);
                 try {
                     // Use centralized form state manager (consignment API)
@@ -228,7 +397,6 @@ const GuestForm: FunctionComponent<
                     
                     // Trigger subscription API if user wants to subscribe (same flow as button)
                     if (canSubscribe) {
-                        console.log('GuestForm: Triggering subscription API on blur for:', email);
                         try {
                             // Use the actual continueAsGuest API for subscription (same as button)
                             await continueAsGuest({
@@ -237,14 +405,11 @@ const GuestForm: FunctionComponent<
                                 acceptsAbandonedCartEmails: values.shouldSubscribe,
                             });
                             
-                            console.log('GuestForm: Subscription API called successfully on blur');
-                        } catch (subscriptionError) {
-                            console.error('GuestForm: Error calling subscription API on blur:', subscriptionError);
-                            // Don't fail the main email update for subscription errors
+                        } catch (_subscriptionError) {
+                                // Don't fail the main email update for subscription errors
                         }
                     }
                 } catch (error) {
-                    console.error('GuestForm: Error updating email on blur:', error);
                     if (error instanceof Error && onUnhandledError) {
                         onUnhandledError(error);
                     }
@@ -263,6 +428,42 @@ const GuestForm: FunctionComponent<
         };
     }, [debouncedUpdateGuestData]);
 
+    // Set up validation listener for guest form
+    useEffect(() => {
+        const { current } = formRef;
+        if (!current) return;
+
+        // Find the correct container - the one with id "checkout-customer-guest"
+        const container = (current.querySelector('#checkout-customer-guest') || current.closest('#checkout-customer-guest')) as HTMLElement;
+        if (container) {
+            // Remove existing listener to avoid duplicates
+            container.removeEventListener('triggerValidation', handleValidationTrigger);
+            container.addEventListener('triggerValidation', handleValidationTrigger);
+        }
+
+        // Only attach listeners to inputs within the guest form container
+        const guestInputs = current.querySelectorAll('input, select, textarea');
+        guestInputs.forEach(input => {
+            input.addEventListener('input', handleInputChange);
+            input.addEventListener('change', handleInputChange);
+            input.addEventListener('blur', handleInputChange);
+        });
+
+        return () => {
+            if (container) {
+                container.removeEventListener('triggerValidation', handleValidationTrigger);
+            }
+
+            // Remove input event listeners from guest inputs only
+            const guestInputs = current.querySelectorAll('input, select, textarea');
+            guestInputs.forEach(input => {
+                input.removeEventListener('input', handleInputChange);
+                input.removeEventListener('change', handleInputChange);
+                input.removeEventListener('blur', handleInputChange);
+            });
+        };
+    }, [handleValidationTrigger, handleInputChange, validateFields]);
+
     const renderField = useCallback(
         (fieldProps: FieldProps<boolean>) => (
             <SubscribeField {...fieldProps} requiresMarketingConsent={requiresMarketingConsent} />
@@ -271,11 +472,12 @@ const GuestForm: FunctionComponent<
     );
 
     return (
-        <Form
-            className="checkout-form"
-            id="checkout-customer-guest"
-            testId="checkout-customer-guest"
-        >
+        <div ref={formRef}>
+            <Form
+                className="checkout-form"
+                id="checkout-customer-guest"
+                testId="checkout-customer-guest"
+            >
             <Fieldset
                 legend={
                     <Legend hidden>
@@ -343,6 +545,7 @@ const GuestForm: FunctionComponent<
                 />
             )}
         </Form>
+        </div>
     );
 };
 

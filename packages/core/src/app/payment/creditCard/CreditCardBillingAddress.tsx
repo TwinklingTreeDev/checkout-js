@@ -134,7 +134,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
             });
         } else {
             // When unchecking, clear the form and sync to billing consignment
-            console.log('CreditCardBillingAddress: Unchecking checkbox - clearing form');
             isSyncingFormRef.current = true;
             
             // Reset local form values first
@@ -162,14 +161,12 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
                             // Also call change handlers to ensure React state is updated
             const fieldNames = ['firstName', 'lastName', 'company', 'address1', 'address2', 'city', 'stateOrProvince', 'stateOrProvinceCode', 'postalCode', 'phone', 'countryCode'];
             fieldNames.forEach(fieldName => {
-                console.log('CreditCardBillingAddress: Calling handleAddressChange for', fieldName, 'with empty value');
                 handleAddressChange(fieldName, '');
             });
             
             // Force React to recognize the changes by triggering a synthetic change event on the form
             const formElement = formRef.current?.querySelector('form') || formRef.current;
             if (formElement) {
-                console.log('CreditCardBillingAddress: Triggering synthetic form change event');
                 formElement.dispatchEvent(new Event('change', { bubbles: true }));
             }
                 
@@ -179,7 +176,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
                     // Reset the flag after syncing
                     setTimeout(() => {
                         isSyncingFormRef.current = false;
-                        console.log('CreditCardBillingAddress: Form clearing completed, syncing flag reset');
                     }, 100);
                 }, 50);
             }, 50);
@@ -195,16 +191,13 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
     useEffect(() => {
         // Don't update form values if we're in the process of syncing the form
         if (isSyncingFormRef.current) {
-            console.log('CreditCardBillingAddress: Skipping billingAddress update due to syncing flag');
             return;
         }
         
         if (billingAddress) {
-            console.log('CreditCardBillingAddress: Updating form values from billingAddress:', billingAddress);
             setFormValues(billingAddress);
         } else {
             // Initialize with empty values to prevent controlled/uncontrolled warning
-            console.log('CreditCardBillingAddress: Setting empty form values');
             setFormValues({
                 firstName: '',
                 lastName: '',
@@ -295,7 +288,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
         const address1 = formValues.address1;
         const city = formValues.city;
         const postalCode = formValues.postalCode;
-        const phone = formValues.phone;
         const countryCode = formValues.countryCode;
         
         if (!firstName?.trim()) {
@@ -312,9 +304,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
         }
         if (!postalCode?.trim()) {
             errors.postalCode = 'ZIP code is required';
-        }
-        if (!phone?.trim()) {
-            errors.phone = 'Phone is required';
         }
         if (!countryCode?.trim()) {
             errors.countryCode = 'Country is required';
@@ -333,6 +322,8 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
             // Run validation and get errors directly
             const errors: Record<string, string> = {};
             
+            // Only validate if the form is expanded and not using same as shipping
+            // If form is collapsed or same as shipping is checked, skip validation
             if (!isExpanded || localIsBillingSameAsShipping) {
                 return;
             }
@@ -343,7 +334,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
             const address1 = formValues.address1;
             const city = formValues.city;
             const postalCode = formValues.postalCode;
-            const phone = formValues.phone;
             const countryCode = formValues.countryCode;
             
 
@@ -362,9 +352,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
             if (!postalCode?.trim()) {
                 errors.postalCode = 'ZIP code is required';
             }
-            if (!phone?.trim()) {
-                errors.phone = 'Phone is required';
-            }
             if (!countryCode?.trim()) {
                 errors.countryCode = 'Country is required';
             }
@@ -380,7 +367,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
                     address1: '.dynamic-form-field--addressLineAutocomplete .form-field',
                     city: '.dynamic-form-field--city .form-field',
                     postalCode: '.dynamic-form-field--postCode .form-field',
-                    phone: '.dynamic-form-field--phone .form-field',
                     countryCode: '.dynamic-form-field--countryCode .form-field',
                 };
                 
@@ -408,20 +394,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
                         }
                     }
                 });
-                
-                                       // Scroll to first error
-                       const firstErrorElement = formRef.current?.querySelector('.form-field--error') as HTMLElement;
-                       if (firstErrorElement) {
-                           firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                           firstErrorElement.focus();
-                       } else {
-                           // Try to find any error element with the error class
-                           const anyErrorElement = document.querySelector('.form-field--error') as HTMLElement;
-                           if (anyErrorElement) {
-                               anyErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                               anyErrorElement.focus();
-                           }
-                       }
             } else {
                 // Remove all error styling when valid
                 const errorFields = formRef.current?.querySelectorAll('.form-field--error');
@@ -491,7 +463,7 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
         if (formKey > 0 && !isExpanded) {
             // When form key changes (indicating a clear operation), ensure form is empty
             const timeoutId = setTimeout(() => {
-                console.log('CreditCardBillingAddress: Form key changed, ensuring form is empty');
+                console.log('Form key changed, ensuring form is empty');
             }, 200);
 
             return () => clearTimeout(timeoutId);
@@ -515,7 +487,6 @@ const CreditCardBillingAddress: React.FC<CreditCardBillingAddressProps> = ({
                     address1: '.dynamic-form-field--addressLineAutocomplete .form-field',
                     city: '.dynamic-form-field--city .form-field',
                     postalCode: '.dynamic-form-field--postCode .form-field',
-                    phone: '.dynamic-form-field--phone .form-field',
                     countryCode: '.dynamic-form-field--countryCode .form-field',
                 };
                 

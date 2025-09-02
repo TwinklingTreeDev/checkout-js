@@ -3,7 +3,7 @@ import React, { FunctionComponent } from 'react';
 import withIconContainer from './withIconContainer';
 
 const IconCardMastercard: FunctionComponent = () => (
-    <svg width="36" height="24" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg aria-labelledby="iconCardMasterTitle" width="36" height="24" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="1.1064" y="0.34676" width="34.3595" height="23.4043" rx="2.7388" fill="white" stroke="#BDBABA" strokeWidth="1.2"/>
         <path fillRule="evenodd" clipRule="evenodd" d="M18.5351 17.1848C17.3484 18.2089 15.809 18.8271 14.1269 18.8271C10.3736 18.8271 7.33093 15.7491 7.33093 11.9523C7.33093 8.15537 10.3736 5.07739 14.1269 5.07739C15.809 5.07739 17.3484 5.69562 18.5351 6.71972C19.7218 5.69563 21.2612 5.07741 22.9433 5.07741C26.6966 5.07741 29.7393 8.15539 29.7393 11.9523C29.7393 15.7492 26.6966 18.8271 22.9433 18.8271C21.2612 18.8271 19.7218 18.2089 18.5351 17.1848Z" fill="#ED0006"/>
         <path fillRule="evenodd" clipRule="evenodd" d="M18.5351 17.1848C19.9963 15.9238 20.9229 14.0475 20.9229 11.9523C20.9229 9.85701 19.9963 7.98068 18.5351 6.71971C19.7218 5.69562 21.2612 5.07739 22.9433 5.07739C26.6966 5.07739 29.7393 8.15537 29.7393 11.9523C29.7393 15.7491 26.6966 18.8271 22.9433 18.8271C21.2612 18.8271 19.7218 18.2089 18.5351 17.1848Z" fill="#F9A000"/>

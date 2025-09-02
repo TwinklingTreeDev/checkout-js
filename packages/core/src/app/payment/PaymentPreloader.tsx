@@ -79,10 +79,7 @@ const PaymentPreloader: React.FC<PaymentPreloaderProps> = ({
                         preloadedMethods.current.add(method.id);
                         
                         console.log('[PaymentPreloader] Successfully preloaded:', method.id);
-                    } catch (error) {
-                        // Silently handle preload errors - they shouldn't affect the main flow
-                        console.warn('[PaymentPreloader] Failed to preload payment method:', method.id, error);
-                        
+                    } catch (_error) {
                         // Still mark as attempted to avoid retrying
                         preloadedMethods.current.add(method.id);
                     }

@@ -185,14 +185,11 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                 if (hasBillingData) {
                     const validEmail = getValidEmail((billingAddress as any).email);
                     if (validEmail) {
-                        console.log('Shipping: Syncing prefilled billing address to consignment on mount');
                         const billingAddressWithEmail = {
                             ...billingAddress,
                             email: validEmail,
                         };
                         promises.push(updateBillingAddress(billingAddressWithEmail));
-                    } else {
-                        console.log('Shipping: Skipping billing address sync - no valid email available');
                     }
                 }
             }

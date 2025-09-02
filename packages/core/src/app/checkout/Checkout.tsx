@@ -205,7 +205,7 @@ class Checkout extends Component<
             if (args[0] && typeof args[0] === 'string' && args[0].includes('Do not render the PayPal button into a button element')) {
                 return; // Suppress PayPal button rendering error
             }
-            this.originalConsoleError?.apply(console, args);
+            return;
         };
 
         const {
@@ -288,8 +288,7 @@ class Checkout extends Component<
                 const alreadyHasInsurance = Boolean(insuranceItem);
 
                 if (hasInsuranceConfigured && !alreadyHasInsurance && cart?.id) {
-                    console.log('[Insurance] Attempting to auto-add insurance product', { insuranceProductId, checkoutId, cartId: cart?.id });
-                    // Extra server-side validation using Storefront Get Cart API
+                // Extra server-side validation using Storefront Get Cart API
                     try {
                         const verifyRes = await fetch(`/api/storefront/carts/${cart.id}`, { credentials: 'include' });
                         if (verifyRes.ok) {
@@ -298,13 +297,11 @@ class Checkout extends Component<
                                 verifyJson?.lineItems?.digitalItems?.some((i: any) => String(i.productId) === insuranceProductId),
                             );
                             if (serverHasInsurance) {
-                                console.log('[Insurance] Skipping add; item already present on server');
                                 await loadCheckout(checkoutId);
                                 return;
                             }
                         }
-                    } catch (e) {
-                        console.warn('[Insurance] Verify cart failed; proceeding with cautious add', e);
+                    } catch (_e) {
                     }
                     const createRes = await fetch(`/api/storefront/carts/${cart.id}/items`, {
                         method: 'POST',
@@ -323,15 +320,12 @@ class Checkout extends Component<
                         let body = '';
                         try { body = await createRes.text(); } catch {}
                         console.warn('[Insurance] Add-to-cart failed', { status: createRes.status, body });
-                    } else {
-                        console.log('[Insurance] Added insurance to cart');
                     }
                     // Soft refresh of checkout/cart state without full page reload
                     await loadCheckout(checkoutId);
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Non-blocking: log and continue
-                console.warn('Failed to auto-add insurance product:', e);
             }
 
             const hasMultiShippingEnabled =
@@ -691,9 +685,7 @@ class Checkout extends Component<
                                 (window as any).__coupon_operation_in_progress = false;
                             }, 2000); // 2 second delay
                         }
-                    } catch (error) {
-                        console.error('Failed to remove redeemable:', error);
-                    }
+                    } catch (_error) {}
                 }}
             >
                 <LazyContainer loadingSkeleton={<AddressFormSkeleton />}>
@@ -989,10 +981,8 @@ class Checkout extends Component<
     private handleSoftCartRefresh = async (): Promise<void> => {
         try {
             const { checkoutId, loadCheckout } = this.props;
-            console.log('[Cart] Soft refresh requested');
             await loadCheckout(checkoutId);
-        } catch (e) {
-            console.warn('Soft cart refresh failed:', e);
+        } catch (_e) {
         }
     };
 
@@ -1052,10 +1042,7 @@ class Checkout extends Component<
         // Save user preference to session storage for persistence across page reloads
         try {
             sessionStorage.setItem('billingSameAsShipping', isBillingSameAsShipping.toString());
-        } catch (error) {
-            // Ignore session storage errors (e.g., in private browsing)
-            console.warn('Could not save billing preference to session storage:', error);
-        }
+        } catch (_error) {}
     };
 
     private handleShippingSignIn: () => void = () => {

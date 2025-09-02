@@ -8,6 +8,70 @@ import { IconBolt } from '../ui/icon';
 
 import { PaymentMethodId, PaymentMethodType } from './paymentMethod';
 
+// Simple global event listener for form-actions (submit button)
+if (typeof window !== 'undefined') {
+    const handlePaymentButtonClick = () => {
+        // Trigger validation for all forms by clicking their submit buttons
+        try {
+            // Set a flag to indicate we're just validating, not actually submitting
+            (window as any).__isValidatingForms = true;
+
+            // Trigger customer/email form validation
+            const customerContainer = document.querySelector('#checkout-customer-guest') as HTMLElement;
+            if (customerContainer) {
+                // Trigger validation by dispatching a custom event that the customer component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                customerContainer.dispatchEvent(validationEvent);
+            }
+
+            // Trigger shipping form validation
+            const shippingContainer = document.querySelector('#checkoutShippingAddress') as HTMLElement;
+            if (shippingContainer) {
+                // Trigger validation by dispatching a custom event that the shipping component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                shippingContainer.dispatchEvent(validationEvent);
+            }
+
+            // Trigger credit card billing address form validation
+            const creditCardBillingContainer = document.querySelector('.credit-card-billing-address') as HTMLElement;
+            if (creditCardBillingContainer) {
+                // Trigger validation by dispatching a custom event that the component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                creditCardBillingContainer.dispatchEvent(validationEvent);}
+
+            // Trigger credit card form validation by submitting the payment form
+            const paymentForm = document.querySelector('form[data-test="payment-form"]') as HTMLFormElement;
+            if (paymentForm) {
+                // Also dispatch triggerValidation event to enable smooth scrolling
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                document.dispatchEvent(validationEvent);
+               
+
+            }
+
+            // Wait a bit for validation to complete and errors to show
+            setTimeout(() => {
+                // Clear the validation flag
+                (window as any).__isValidatingForms = false;
+            }, 300);
+
+        } catch (_validationError) {
+            // Clear the validation flag in case of error
+            (window as any).__isValidatingForms = false;
+        }
+    };
+
+    // Add global document listener for form-actions clicks (the actual submit button)
+    document.addEventListener('click', (event) => {
+        const target = event.target as HTMLElement;
+        
+        // Check if the click is on the form-actions div (the submit button container)
+        if (target.className.includes('form-actions') || target.closest('.form-actions')) {
+            handlePaymentButtonClick();
+        }
+    });
+}
+
 interface PaymentSubmitButtonTextProps {
     methodGateway?: string;
     methodId?: string;
@@ -220,26 +284,26 @@ const PaymentSubmitButton: FunctionComponent<
         };
     }, [isPayPalMethod]);
 
-    // Enhanced click handler for PayPal methods
+    // Enhanced click handler for PayPal methods (keeping as backup)
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        if (isPayPalMethod && hasFormErrors) {
+        // Always prevent default for PayPal methods to handle validation
+        if (isPayPalMethod) {
             event.preventDefault();
             event.stopPropagation();
             
-            console.warn('Payment button clicked but forms have validation errors');
-            
-            // Scroll to the first error using existing system
-            const errorElements = document.querySelectorAll('.form-field--error');
-            if (errorElements.length > 0) {
-                const firstError = errorElements[0] as HTMLElement;
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    // Focus on the first error input
-                    const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
-                    if (errorInput) {
-                        errorInput.focus();
-                    }
+            if (hasFormErrors) {
+                // Trigger validation by clicking customer and shipping submit buttons
+                // This will trigger the same validation system used by Form components
+                const customerSubmitButton = document.querySelector('[data-test="customer-continue-button"]') as HTMLButtonElement;
+                const shippingSubmitButton = document.querySelector('[data-test="shipping-continue-button"]') as HTMLButtonElement;
+                
+
+                if (customerSubmitButton) {
+                    customerSubmitButton.click();
+                }
+                
+                if (shippingSubmitButton) {
+                    shippingSubmitButton.click();
                 }
             }
             
@@ -248,6 +312,7 @@ const PaymentSubmitButton: FunctionComponent<
     };
 
     // Determine if button should be disabled
+    // We need the button to be clickable to trigger validation
     const shouldDisableButton = isInitializing || isSubmitting || (isPayPalMethod && hasFormErrors);
 
     return (

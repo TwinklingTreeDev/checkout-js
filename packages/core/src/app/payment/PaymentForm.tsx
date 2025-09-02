@@ -284,12 +284,10 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
             // Automate billing address setup for PayPal methods
             if (isPayPalMethod(method)) {
                 try {
-                    console.log('PayPal method selected - automating billing address setup');
                     
                     // 1. Set billing same as shipping to true
                     if (onBillingSameAsShippingChange) {
                         onBillingSameAsShippingChange(true);
-                        console.log('Set billing same as shipping to true');
                     }
                     
                     // 2. Update billing address with shipping address data
@@ -300,11 +298,9 @@ const PaymentMethodListFieldset: FunctionComponent<PaymentMethodListFieldsetProp
                         };
                         
                         await updateBillingAddress(billingAddressWithEmail);
-                        console.log('Updated billing address with shipping address data');
                     }
                     
                 } catch (error) {
-                    console.error('Error automating billing address for PayPal:', error);
                     if (onUnhandledError && error instanceof Error) {
                         onUnhandledError(error);
                     }

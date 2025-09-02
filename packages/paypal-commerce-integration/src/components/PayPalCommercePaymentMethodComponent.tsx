@@ -70,16 +70,20 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
             // Set a flag to indicate we're just validating, not actually submitting
             (window as any).__isValidatingForms = true;
 
-            // Trigger customer/email form validation
-            const customerSubmitButton = document.querySelector('[data-test="customer-continue-as-guest-button"]') as HTMLButtonElement;
-            if (customerSubmitButton && !customerSubmitButton.disabled) {
-                customerSubmitButton.click();
+            // Trigger customer/email form validation using CustomEvent
+            const customerContainer = document.querySelector('#checkout-customer-guest') as HTMLElement;
+            if (customerContainer) {
+                // Trigger validation by dispatching a custom event that the customer component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                customerContainer.dispatchEvent(validationEvent);
             }
 
-            // Trigger shipping form validation
-            const shippingSubmitButton = document.querySelector('#checkout-shipping-continue') as HTMLButtonElement;
-            if (shippingSubmitButton && !shippingSubmitButton.disabled) {
-                shippingSubmitButton.click();
+            // Trigger shipping form validation using CustomEvent
+            const shippingContainer = document.querySelector('#checkoutShippingAddress') as HTMLElement;
+            if (shippingContainer) {
+                // Trigger validation by dispatching a custom event that the shipping component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                shippingContainer.dispatchEvent(validationEvent);
             }
 
             // Wait a bit for validation to complete and errors to show
@@ -217,22 +221,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                 event.stopPropagation();
                 event.stopImmediatePropagation();
                 
-                
-                // Scroll to the first error
-                const errorElements = document.querySelectorAll('.form-field--error');
-                if (errorElements.length > 0) {
-                    const firstError = errorElements[0] as HTMLElement;
-                    if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        
-                        // Focus on the first error input
-                        const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
-                        if (errorInput) {
-                            errorInput.focus();
-                        }
-                    }
-                }
-                
                 return false;
             }
         };
@@ -273,21 +261,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                 const paypalContainer = document.querySelector('#checkout-payment-continue');
                 if (paypalContainer && paypalContainer instanceof HTMLElement) {
                     paypalContainer.style.display = 'none';
-                }
-                
-                // Scroll to the first error
-                const errorElements = document.querySelectorAll('.form-field--error');
-                if (errorElements.length > 0) {
-                    const firstError = errorElements[0] as HTMLElement;
-                    if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        
-                        // Focus on the first error input
-                        const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
-                        if (errorInput) {
-                            errorInput.focus();
-                        }
-                    }
                 }
             } else {
                 setHasValidationErrors(false);
@@ -368,23 +341,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                         const hasErrors = await triggerValidation();
 
                         if (hasErrors) {
-                            paymentForm.setSubmitted(true);
-                            
-                            
-                            // Scroll to the first error using existing system
-                            const errorElements = document.querySelectorAll('.form-field--error');
-                            if (errorElements.length > 0) {
-                                const firstError = errorElements[0] as HTMLElement;
-                                if (firstError) {
-                                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    
-                                    // Focus on the first error input
-                                    const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
-                                    if (errorInput) {
-                                        errorInput.focus();
-                                    }
-                                }
-                            }
 
                             return reject();
                         }
@@ -655,21 +611,6 @@ const PayPalCommercePaymentMethodComponent: FunctionComponent<
                         // Deinitialize PayPal if it was initialized
                         if (isInitialized) {
                             await deinitializePayment();
-                        }
-                        
-                        // Scroll to the first error
-                        const errorElements = document.querySelectorAll('.form-field--error');
-                        if (errorElements.length > 0) {
-                            const firstError = errorElements[0] as HTMLElement;
-                            if (firstError) {
-                                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                
-                                // Focus on the first error input
-                                const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
-                                if (errorInput) {
-                                    errorInput.focus();
-                                }
-                            }
                         }
                     } else {
                         setHasValidationErrors(false);

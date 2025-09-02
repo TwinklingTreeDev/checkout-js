@@ -228,8 +228,7 @@ class Payment extends Component<
                                 onUnhandledError={this.handleError}
                             />
                         );
-                    } catch (error) {
-                        console.warn('[Payment] PaymentPreloader failed to render:', error);
+                    } catch (_error) {
                         return null;
                     }
                 })()}
@@ -435,8 +434,7 @@ class Payment extends Component<
                         // Clear any error messages after successful reload
                         this.setState({ paymentMethodChangeMessage: undefined });
                         return;
-                    } catch (reloadError) {
-                        console.error('[Payment] Failed to reload checkout:', reloadError);
+                    } catch (_reloadError) {
                         // Fall back to cart redirect only if reload fails
                         window.location.replace(cartUrl || '/');
                         return;
@@ -542,33 +540,40 @@ class Payment extends Component<
 
         // Trigger validation for all forms by clicking their submit buttons
         try {
-            console.log('🚀 Payment: Starting form validation process');
             // Set a flag to indicate we're just validating, not actually submitting
             (window as any).__isValidatingForms = true;
 
             // Trigger customer/email form validation
-            const customerSubmitButton = document.querySelector('[data-test="customer-continue-as-guest-button"]') as HTMLButtonElement;
-            if (customerSubmitButton && !customerSubmitButton.disabled) {
-                customerSubmitButton.click();
+            const customerContainer = document.querySelector('#checkout-customer-guest') as HTMLElement;
+            if (customerContainer) {
+                // Trigger validation by dispatching a custom event that the customer component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                customerContainer.dispatchEvent(validationEvent);
             }
 
             // Trigger shipping form validation
-            const shippingSubmitButton = document.querySelector('#checkout-shipping-continue') as HTMLButtonElement;
-            if (shippingSubmitButton && !shippingSubmitButton.disabled) {
-                shippingSubmitButton.click();
+            const shippingContainer = document.querySelector('#checkoutShippingAddress') as HTMLElement;
+            if (shippingContainer) {
+                // Trigger validation by dispatching a custom event that the shipping component can listen to
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                shippingContainer.dispatchEvent(validationEvent);
             }
 
             // Trigger credit card billing address form validation
             const creditCardBillingContainer = document.querySelector('.credit-card-billing-address') as HTMLElement;
-            console.log('🚀 Payment: Looking for credit card billing container:', creditCardBillingContainer);
             if (creditCardBillingContainer) {
                 // Trigger validation by dispatching a custom event that the component can listen to
                 const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
                 creditCardBillingContainer.dispatchEvent(validationEvent);
-                console.log('🚀 Payment: Dispatched triggerValidation event to credit card billing container');
-            } else {
-                console.log('🚀 Payment: Credit card billing container not found');
             }
+
+            const paymentForm = document.querySelector('form[data-test="payment-form"]') as HTMLFormElement;
+            if (paymentForm) {
+                const validationEvent = new CustomEvent('triggerValidation', { bubbles: true });
+                document.dispatchEvent(validationEvent);
+            }
+
+
 
             // Wait a bit for validation to complete and errors to show
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -579,23 +584,9 @@ class Payment extends Component<
             // Check if there are any validation errors
             const errorElements = document.querySelectorAll('.form-field--error');
             if (errorElements.length > 0) {
-                // Scroll to the first error
-                const firstError = errorElements[0] as HTMLElement;
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    // Focus on the first error input
-                    const errorInput = firstError.querySelector('input, select, textarea') as HTMLElement;
-                    if (errorInput) {
-                        errorInput.focus();
-                    }
-                }
-                
-                console.warn('Form validation failed - please complete all required fields');
                 return; // Don't proceed with order submission
             }
-        } catch (validationError) {
-            console.error('Error during form validation:', validationError);
+        } catch (_validationError) {
             // Clear the validation flag in case of error
             (window as any).__isValidatingForms = false;
             // Continue with submission if validation fails
@@ -618,8 +609,6 @@ class Payment extends Component<
 
             if (isErrorWithType(error) && error.type === 'payment_method_invalid') {
                 // Enhanced handling for payment method invalid errors
-                console.warn('Payment method became invalid, reloading payment methods:', error);
-                
                 // Clear the selected method to force user to reselect
                 this.setState({ selectedMethod: undefined });
                 
@@ -640,8 +629,7 @@ class Payment extends Component<
                     // Don't call onSubmitError for payment method invalid errors
                     // This prevents the error modal from showing
                     return;
-                } catch (reloadError) {
-                    console.error('Failed to reload payment methods:', reloadError);
+                } catch (_reloadError) {
                     // Only show error modal if we can't reload payment methods
                     onSubmitError(error);
                 }
@@ -750,17 +738,14 @@ class Payment extends Component<
 
         // Check if this is an insurance-only change that doesn't require payment method reload
         if (this.isInsuranceOnlyChange()) {
-            console.log('[Payment] Skipping payment reload - insurance-only change detected');
             return;
         }
 
         // Check if this is a coupon/discount-only change that doesn't require payment method reload
         if (this.isCouponDiscountOnlyChange()) {
-            console.log('[Payment] Skipping payment reload - coupon/discount-only change detected');
             return;
         }
 
-        console.log('[Payment] Proceeding with payment method reload');
         this.setState({ isReady: false });
 
         await this.loadPaymentMethodsOrThrow();
@@ -815,10 +800,6 @@ class Payment extends Component<
             const isCouponOperationInProgress = (window as any).__coupon_operation_in_progress || false;
             const isGiftCertificateOperationInProgress = (window as any).__gift_certificate_operation_in_progress || false;
             
-            console.log('[Payment] Coupon/Discount operation flags:', {
-                isCouponOperationInProgress,
-                isGiftCertificateOperationInProgress
-            });
             
             // If any coupon/discount operation is in progress, skip payment reload
             if (isCouponOperationInProgress || isGiftCertificateOperationInProgress) {
@@ -826,8 +807,7 @@ class Payment extends Component<
             }
             
             return false;
-        } catch (error) {
-            console.error('[Payment] Error in isCouponDiscountOnlyChange:', error);
+        } catch (_error) {
             return false; // Default to reloading payment methods if we can't determine
         }
     }
@@ -836,7 +816,6 @@ class Payment extends Component<
      * Handle coupon apply events to track when coupons are added
      */
     private handleCouponApply = (): void => {
-        console.log('[Payment] Coupon apply event received');
         (window as any).__coupon_operation_in_progress = true;
     };
 
@@ -844,7 +823,6 @@ class Payment extends Component<
      * Handle coupon remove events to track when coupons are removed
      */
     private handleCouponRemove = (): void => {
-        console.log('[Payment] Coupon remove event received');
         (window as any).__coupon_operation_in_progress = true;
     };
 
@@ -852,7 +830,6 @@ class Payment extends Component<
      * Handle gift certificate apply events to track when gift certificates are added
      */
     private handleGiftCertificateApply = (): void => {
-        console.log('[Payment] Gift certificate apply event received');
         (window as any).__gift_certificate_operation_in_progress = true;
     };
 
@@ -860,7 +837,6 @@ class Payment extends Component<
      * Handle gift certificate remove events to track when gift certificates are removed
      */
     private handleGiftCertificateRemove = (): void => {
-        console.log('[Payment] Gift certificate remove event received');
         (window as any).__gift_certificate_operation_in_progress = true;
     };
 
@@ -879,9 +855,7 @@ class Payment extends Component<
                 };
                 
                 sessionStorage.setItem('googlepay_payment_state', JSON.stringify(currentState));
-            } catch (error) {
-                console.warn('[Payment] Failed to persist Google Pay state:', error);
-            }
+            } catch (_error) {}
         }
     }
 
@@ -917,8 +891,7 @@ class Payment extends Component<
                         sessionStorage.removeItem('googlepay_payment_state');
                     }
                 }
-            } catch (error) {
-                console.warn('[Payment] Failed to restore Google Pay state:', error);
+            } catch (_error) {
                 sessionStorage.removeItem('googlepay_payment_state');
             }
         }

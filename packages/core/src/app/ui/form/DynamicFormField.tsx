@@ -136,7 +136,7 @@ const DynamicFormField: FunctionComponent<DynamicFormFieldProps> = ({
         ({ field }: FieldProps<string>) => (
             <DynamicInput
                 {...field}
-                aria-labelledby={`${fieldInputId}-label ${fieldInputId}-field-error-message`}
+                aria-labelledby={`${fieldInputId}-label`} //  ${fieldInputId}-field-error-message
                 autoComplete={autocomplete}
                 fieldType={dynamicFormFieldType}
                 id={fieldInputId}

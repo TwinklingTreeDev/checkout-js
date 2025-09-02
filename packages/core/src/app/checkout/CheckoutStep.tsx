@@ -368,6 +368,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                 </div>
                                 <div className="shipping-protection-checkbox">
                                     <input
+                                        id="shipping-protection-checkbox"
                                         type="checkbox"
                                         checked={this.state.isShippingProtectionSelected}
                                         onClick={(e) => e.stopPropagation()}
@@ -401,6 +402,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                 )}
                                 <div className="form-prefixPostfix redeemable-entry-container">
                                     <input
+                                        id="discount-code-input"
                                         type="text"
                                         placeholder="Gift card or discount code"
                                         className="form-input optimizedCheckout-form-input"
@@ -414,6 +416,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                                         disabled={this.state.isApplyingDiscount}
                                     />
                                     <button
+                                        id="discount-code-apply-button"
                                         type="button"
                                         className={`form-prefixPostfix-button--postfix ${this.state.discountCode.trim() ? 'enabled' : 'disabled'}`}
                                         disabled={this.state.isApplyingDiscount || !this.state.discountCode.trim()}
@@ -998,7 +1001,6 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         }
         
         // Emit event for cart item to update immediately
-        console.log('Emitting insurance toggle event:', { shouldSelect, hasCachedItem: !!cachedItem, cachedItem });
         
         window.dispatchEvent(new CustomEvent('insurance-toggle-changed', {
             detail: { 

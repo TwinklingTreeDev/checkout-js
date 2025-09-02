@@ -172,7 +172,8 @@ const RedeemableForm: FunctionComponent<
                                     (window as any).__gift_certificate_operation_in_progress = true;
                                 }}
                                 testId="redeemableEntry-input"
-                                placeholder=" "                            
+                                placeholder=" "   
+                                id="redeemableCode"                         
                             />
                             <Label
                                 htmlFor="redeemableCode"

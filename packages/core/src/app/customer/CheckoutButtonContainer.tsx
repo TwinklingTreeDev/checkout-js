@@ -26,14 +26,6 @@ interface WithCheckoutCheckoutButtonContainerProps {
     isLoading: boolean;
 }
 
-const paypalCommerceIds = [
-    'paypalcommerce',
-    'paypalcommercecredit',
-    'paypalcommercevenmo',
-];
-
-const isPayPalCommerce = (methodId: string): boolean => paypalCommerceIds.includes(methodId);
-
 const CheckoutButtonContainer: FunctionComponent<CheckoutButtonContainerProps & WithCheckoutCheckoutButtonContainerProps> = (
     {
         availableMethodIds,
@@ -41,7 +33,6 @@ const CheckoutButtonContainer: FunctionComponent<CheckoutButtonContainerProps & 
         checkoutState,
         checkEmbeddedSupport,
         isLoading,
-        isPaymentStepActive,
         onUnhandledError,
         onWalletButtonClick,
     }) => {
@@ -54,10 +45,6 @@ const CheckoutButtonContainer: FunctionComponent<CheckoutButtonContainerProps & 
     }
 
     const renderButtons = () => availableMethodIds.map((methodId) => {
-        if (isPaymentStepActive && isPayPalCommerce(methodId)) {
-            //return null;
-            console.log('METHOD ID', methodId);
-        }
 
         const ResolvedCheckoutButton = resolveCheckoutButton({ id: methodId });
 

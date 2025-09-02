@@ -204,8 +204,6 @@ class SingleShippingForm extends PureComponent<
         const { isBillingSameAsShipping, setFieldValue } = this.props;
         
         // Debug: Log the selected payment method
-        console.log('SingleShippingForm: componentDidMount - selectedPaymentMethod:', this.props.selectedPaymentMethod);
-        
         if (isBillingSameAsShipping) {
             setFieldValue('billingSameAsShipping', true);
         }
